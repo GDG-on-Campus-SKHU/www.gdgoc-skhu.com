@@ -23,7 +23,3 @@ yarn start
 - Emotion
 - Three.js with react-three/fiber and drei
 - Eslint, Prettier
-
-## History
-
-[릴리즈 확인하기](https://github.com/GDSC-SKHU/www.gdsc-skhu.com/releases)
