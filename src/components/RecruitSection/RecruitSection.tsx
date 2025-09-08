@@ -51,11 +51,11 @@ export default function RecruitSection() {
           <br />
         </motion.h2>
         {/* <RecruitAnchor href={CORE_RECRUIT_LINK} text="✨ 25-26 Core 멤버 지원하기" /> */}
-        <RecruitAnchor href={PM_RECRUIT_LINK} text="🧭 PM 파트 멤버 지원하기" />
-        <RecruitAnchor href={DESIGN_RECRUIT_LINK} text="🎨 Design 파트 멤버 지원하기" />
-        <RecruitAnchor href={WEB_RECRUIT_LINK} text="🌎 Web 파트 멤버 지원하기" />
-        <RecruitAnchor href={MOBILE_RECRUIT_LINK} text="📱 Mobile 파트 멤버 지원하기" />
-        <RecruitAnchor href={SERVER_RECRUIT_LINK} text="🔧 Server 파트 멤버 지원하기" />
+        <RecruitAnchor href={PM_RECRUIT_LINK} text="🧭 PM 파트 멤버 지원하기" disable />
+        <RecruitAnchor href={DESIGN_RECRUIT_LINK} text="🎨 Design 파트 멤버 지원하기" disable />
+        <RecruitAnchor href={WEB_RECRUIT_LINK} text="🌎 Web 파트 멤버 지원하기" disable />
+        <RecruitAnchor href={MOBILE_RECRUIT_LINK} text="📱 Mobile 파트 멤버 지원하기" disable />
+        <RecruitAnchor href={SERVER_RECRUIT_LINK} text="🔧 Server 파트 멤버 지원하기" disable />
       </motion.div>
     </section>
   );
@@ -73,7 +73,7 @@ function RecruitAnchor({ href, text, disable = false }: RecruitAnchorProps) {
       <motion.button
         variants={defaultFadeInUpVariants}
         onClick={() => {
-          alert('모집 기간이 아닙니다.');
+          alert('현재 기수 모집은 마감되었습니다. 다음 기수 모집을 기다려주세요!');
         }}
         css={css`
           ${glassButtonCss}
