@@ -6,14 +6,12 @@ import { toggleContainerCss, toggleCircleCss } from '../styles/toggle';
 interface ToggleProps {
     defaultChecked?: boolean;
     checked?: boolean;
-    onChange?: (checked: boolean) => void;
     disabled?: boolean;
 }
 
 export default function Toggle({ 
     defaultChecked = false,
     checked: controlledChecked,
-    onChange,
     disabled = false
 }: ToggleProps) {
     const [internalChecked, setInternalChecked] = useState(defaultChecked);
@@ -30,7 +28,6 @@ export default function Toggle({
             setInternalChecked(newValue);
         }
         
-        onChange?.(newValue);
     };
 
     return (
