@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -11,12 +9,11 @@ import {
   selectBoxListCss,
   selectBoxPlaceholderCss,
   selectBoxSearchCss,
-  selectBoxSelectedCss,
+  selectBoxSelectedTextCss,
   selectBoxWrapperCss,
 } from '../styles/selectbox';
-import Chip from './Chip';
 
-interface SelectBoxProps {
+interface SelectBoxBasicProps {
   options: string[];
   placeholder?: string;
   multiple?: boolean;
@@ -25,14 +22,14 @@ interface SelectBoxProps {
   className?: string;
 }
 
-export default function SelectBox({
+export default function SelectBoxBasic({
   options,
-  placeholder = '보유하고 있는 기술 스택을 선택해주세요.',
-  multiple = true,
-  searchable = true,
+  placeholder = options[0],
+  multiple = false,
+  searchable = false,
   onChange,
   className,
-}: SelectBoxProps) {
+}: SelectBoxBasicProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -71,32 +68,23 @@ export default function SelectBox({
     onChange?.(newSelected);
   };
 
-  const handleRemove = (option: string) => {
-    const newSelected = selected.filter(item => item !== option);
-    setSelected(newSelected);
-    onChange?.(newSelected);
-  };
-
-  const handleHeaderClick = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('[data-chip-close]')) {
-      return;
-    }
-    setIsOpen(!isOpen);
+  const getDisplayText = () => {
+    if (selected.length === 0) return null;
+    if (selected.length === 1) return selected[0];
+    return `${selected[0]} 외 ${selected.length - 1}개`;
   };
 
   return (
     <div css={selectBoxWrapperCss} className={className} ref={wrapperRef}>
-      <div css={selectBoxHeaderCss} className={isOpen ? 'open' : ''} onClick={handleHeaderClick}>
+      <div
+        css={selectBoxHeaderCss}
+        className={isOpen ? 'open' : ''}
+        onClick={() => setIsOpen(!isOpen)}
+      >
         {selected.length === 0 ? (
           <span css={selectBoxPlaceholderCss}>{placeholder}</span>
         ) : (
-          <div css={selectBoxSelectedCss}>
-            {selected.map(item => (
-              <Chip key={item} onClose={() => handleRemove(item)}>
-                {item}
-              </Chip>
-            ))}
-          </div>
+          <span css={selectBoxSelectedTextCss}>{getDisplayText()}</span>
         )}
         <svg
           css={selectBoxArrowCss}
@@ -116,7 +104,7 @@ export default function SelectBox({
             <input
               css={selectBoxSearchCss}
               type="text"
-              placeholder="기술 스택을 검색해주세요."
+              placeholder="검색해주세요."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               onClick={e => e.stopPropagation()}

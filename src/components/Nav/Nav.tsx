@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { css } from '@emotion/react';
 
 import { layoutCss } from '../../styles/constants/layout';
-import SelectBox from '../../features/team-building/components/SelectBox';
 
 const GDG_OC_LINK = 'https://sites.google.com/view/gdeveloperskorea/gdg-on-campus';
 
@@ -47,12 +46,6 @@ export default function Nav() {
         <Link href="/contact" scroll={false}>
           Contact
         </Link>
-        <SelectBox 
-          options={['z','s', '에에ㅔㅇ']}
-          placeholder="보유하고 있는 기술 스택을 선택해주세요."
-          multiple
-          onChange={(selected) => console.log(selected)}
-        />
       </div>
     </nav>
   );
