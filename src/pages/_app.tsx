@@ -18,12 +18,10 @@ export default function App({ Component, pageProps, router }: AppProps) {
         <meta property="og:url" content={CURRENT_URL} />
       </Head>
       <GlobalStyle />
-
       <Nav />
       <Scene />
-
       <AnimatePresence
-        exitBeforeEnter
+        mode="wait"
         onExitComplete={() => {
           window.scrollTo(0, 0);
         }}
