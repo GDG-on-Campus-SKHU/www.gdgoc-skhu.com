@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/d42c3ca7-5b1d-41e0-91cc-a5957feb5b7c" width="350" />
+  <img src="https://github.com/user-attachments/assets/4348e185-f18d-49f1-8ec1-021ca64d7273" width="350" />
 </div>
 
 # GDGoC SKHU homepage
