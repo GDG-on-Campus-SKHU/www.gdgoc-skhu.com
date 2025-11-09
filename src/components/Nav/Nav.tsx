@@ -23,16 +23,16 @@ export default function Nav() {
         z-index: 100;
       `}
     >
-      <Link href="/" scroll={false}>
-        <a>
-          <h1
-            css={css`
-              line-height: 1.25rem;
-            `}
-          >
-            Google Developer Groups on Campus SKHU
-          </h1>
-        </a>
+      <Link
+        href="/"
+        scroll={false}
+        css={css`
+          line-height: 1.25rem;
+          font-weight: 700;
+          cursor: pointer;
+        `}
+      >
+        Google Developer Groups on Campus SKHU
       </Link>
 
       <div
@@ -45,7 +45,10 @@ export default function Nav() {
           About
         </a>
         <Link href="/contact" scroll={false}>
-          <a>Contact</a>
+          Contact
+        </Link>
+        <Link href="/login" scroll={false}>
+          Login
         </Link>
       </div>
     </nav>

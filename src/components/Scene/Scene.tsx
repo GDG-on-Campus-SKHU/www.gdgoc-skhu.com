@@ -24,13 +24,21 @@ export default function Scene() {
         height: 100vh;
       `}
     >
-      <Canvas camera={{ position: [0, -10, 65], fov: isSmallToFov ? 80 : 50 }} dpr={[1, 2]}>
-        <pointLight position={[100, 100, 100]} intensity={0.8} />
+      <Canvas
+        camera={{ position: [0, -10, 65], fov: isSmallToFov ? 80 : 50 }}
+        dpr={[1, 2]}
+        gl={{
+          outputColorSpace: THREE.SRGBColorSpace,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 4.9,
+        }}
+      >
+        <pointLight position={[100, 100, 100]} intensity={1.2} />
         <hemisphereLight
           color="#ffffff"
-          groundColor="#b9b9b9"
+          groundColor="#919191"
           position={[-7, 25, 13]}
-          intensity={0.85}
+          intensity={1.0}
         />
         {isDesktop() && <OrbitControls enableZoom={false} />}
 

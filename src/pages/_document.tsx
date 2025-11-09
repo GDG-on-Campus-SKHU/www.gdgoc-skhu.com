@@ -3,8 +3,8 @@ import { Head, Html, Main, NextScript } from 'next/document';
 import { IS_PRODUCTION } from '../constants/common';
 
 const TITLE = 'GDGoC SKHU';
-const DESCRIPTION = 'Google Developer Group on Campus SKHU';
-const IMAGE = '/gdsc_skhu.png';
+const DESCRIPTION = 'Google Developer Groups on Campus SKHU';
+const IMAGE = '/gdgoc_skhu.png';
 
 const GA_ID = 'G-SF5GEJR7Z9';
 
@@ -14,8 +14,7 @@ export default function Document() {
       <Head>
         <link
           rel="stylesheet"
-          as="style"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard-dynamic-subset.css"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css"
         />
 
         <meta httpEquiv="Content-type" content="text/html; charset=utf-8" />

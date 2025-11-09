@@ -47,7 +47,9 @@ export const glassButtonCss = css`
 
   border: 2px solid rgba(255, 255, 255, 0.8);
 
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 
   &::before {
     content: '';
@@ -78,6 +80,8 @@ export const glassButtonCss = css`
 
   &:hover {
     transform: translateY(-6px);
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    box-shadow:
+      0 30px 60px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
   }
 `;
