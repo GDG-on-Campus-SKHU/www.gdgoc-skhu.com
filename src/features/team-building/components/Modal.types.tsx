@@ -1,4 +1,4 @@
-export type ModalType = 'default' | 'textOnly' | 'confirm' | 'textConfirm';
+export type ModalType = 'default' | 'textOnly' | 'confirm' | 'textConfirm' | 'scroll';
 
 export interface ModalProps {
     type?: ModalType;

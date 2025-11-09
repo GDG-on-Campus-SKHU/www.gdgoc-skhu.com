@@ -10,6 +10,7 @@ import {
     buttonCss,
     buttonRowCss,
     buttonSecondaryCss,
+    scrollBoxCss,
 } from '../styles/modalStyles';
 import { ModalProps } from './Modal.types';
 
@@ -50,13 +51,12 @@ export default function Modal({
     return (
         <div css={[overlayCss, closing && closingOverlayCss]} onClick={handleClose}>
             <div css={[boxCss, closing && closingBoxCss]} onClick={(e) => e.stopPropagation()}>
-                {(type === 'default' || type === 'confirm') && title && (
-                    <h2 css={titleCss}>{title}</h2>
-                )}
-                <p css={messageCss}>{message}</p>
+                {title && <h2 css={titleCss}>{title}</h2>}
+                {(type === 'default' || type === 'textOnly') && <p css={messageCss}>{message}</p>}
+                {type === 'scroll' && <div css={scrollBoxCss}>{message}</div>}
                 {subText && <p css={subTextCss}>{subText}</p>}
 
-                {(type === 'default' || type === 'textOnly') && (
+                {(type === 'default' || type === 'textOnly' || type === 'scroll') && (
                     <button css={buttonCss} onClick={handleClose}>
                         {buttonText}
                     </button>

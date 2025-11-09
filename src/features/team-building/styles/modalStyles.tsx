@@ -71,6 +71,7 @@ export const titleCss = css`
   color: ${colors.grayscale[1000]};
   margin-bottom: 20px;
 `;
+
 export const messageCss = css`
   ${typography.b4};
   color: ${colors.grayscale[600]};
@@ -133,5 +134,28 @@ export const buttonSecondaryCss = css`
 
   &:active {
     transform: translateY(0);
+  }
+`;
+
+export const scrollBoxCss = css`
+  max-height: 380px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  padding-right: 6px;
+  text-align: left;
+  ${typography.b4};
+  color: ${colors.grayscale[700]};
+  line-height: 1.6;
+  white-space: pre-line;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: ${colors.grayscale[300]};
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: ${colors.grayscale[400]};
   }
 `;

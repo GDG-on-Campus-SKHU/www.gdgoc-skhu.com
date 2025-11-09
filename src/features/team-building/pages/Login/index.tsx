@@ -105,7 +105,6 @@ function LoginForm({
                     onChange={onPasswordChange}
                     hasError={!!error}
                 />
-
                 <div css={helperRowCss}>
                     <p css={errorCss}>{error}</p>
                     <Link href="/forgot-password" css={forgotPasswordCss}>
@@ -131,7 +130,7 @@ const mainCss = (visible: boolean) => css`
     justify-content: center;
     align-items: center;
     width: 100vw;
-    height: 100vh;
+    min-height: 100vh;
     background: rgba(255, 255, 255, 0.45);
     backdrop-filter: blur(22px);
     opacity: ${visible ? 1 : 0};
@@ -143,7 +142,7 @@ const formCss = css`
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 455px;
+    width: 420px;
     padding: 40px;
     border-radius: 12px;
     background: ${colors.white};
@@ -178,14 +177,17 @@ const forgotPasswordCss = css`
     font-size: 13px;
     color: ${colors.grayscale[700]};
     cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
     &:hover {
-        text-decoration: underline;
+        color: ${colors.grayscale[900]};
     }
 `;
 
 const buttonGroupCss = css`
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: 10px;
     width: 100%;
     margin-top: 36px;
