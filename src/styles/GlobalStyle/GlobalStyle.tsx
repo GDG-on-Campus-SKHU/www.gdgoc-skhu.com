@@ -1,6 +1,6 @@
 import { css, Global } from '@emotion/react';
-
-import { colors, mediaQuery } from '../constants';
+import { colors } from '../constants/colors';
+import { mediaQuery } from '../constants/media';
 import { resetCss } from './resetCss';
 
 export default function GlobalStyle() {
@@ -13,7 +13,8 @@ const globalCss = css`
   :root {
     max-width: 100vw;
     overflow-x: hidden;
-
+    color: ${colors.black};
+    background-color: ${colors.white};
     font-family:
       Pretendard,
       -apple-system,
@@ -29,24 +30,21 @@ const globalCss = css`
       'Segoe UI Emoji',
       'Segoe UI Symbol',
       sans-serif;
-    color: ${colors.black};
-    background-color: ${colors.white};
     font-size: 16px;
+  }
 
-    * {
-      font-family: inherit;
+  * {
+    font-family: inherit;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    word-break: keep-all;
+    word-wrap: break-word;
 
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      word-break: keep-all;
-      word-wrap: break-word;
-
-      -ms-overflow-style: none; /* IE 11 */
-      scrollbar-width: none; /* Firefox 64 */
-      ::-webkit-scrollbar {
-        display: none !important;
-      }
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    ::-webkit-scrollbar {
+      display: none !important;
     }
   }
 
