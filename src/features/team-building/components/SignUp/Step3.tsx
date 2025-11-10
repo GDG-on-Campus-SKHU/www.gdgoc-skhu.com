@@ -1,10 +1,10 @@
 /** @jsxImportSource @emotion/react */
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
-
 import { colors } from '../../../../styles/constants/colors';
 import { typography } from '../../../../styles/constants/text';
-import { primaryBtn, step1Desc } from '../../../../styles/GlobalStyle/SignUpStyle';
+import { primaryBtn, step1Desc } from '../../../../styles/GlobalStyle/AuthStyle';
 import Button2 from '../Button2';
 import FieldOfSignUp from '../FieldOfSignUp';
 import Modal from '../Modal';
@@ -41,6 +41,7 @@ export default function Step3({
   onPrev,
   onSubmit,
 }: Step3Props) {
+  const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
 
@@ -51,6 +52,16 @@ export default function Step3({
 
   const handleShowTerms = () => setShowModal(true);
   const handleCloseModal = () => setShowModal(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowModal(true);
+  };
+
+  const handleComplete = () => {
+    setShowModal(false);
+    router.push('/login');
+  };
 
   const termsContent = `
 Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정보 처리방침
@@ -73,20 +84,14 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
 
   useEffect(() => {
     const newErrors: Record<string, string> = {};
-
     if (orgType !== 'internal') {
-      if (!school.trim()) {
-        newErrors.school = '학교명을 입력해주세요.';
-      } else if (!/^[A-Za-z가-힣]+$/.test(school)) {
-        newErrors.school = '학교명은 영문 또는 한글만 입력 가능합니다.';
-      }
+      if (!school.trim()) newErrors.school = '학교명을 입력해주세요.';
+      else if (!/^[A-Za-z가-힣]+$/.test(school)) newErrors.school = '학교명은 영문 또는 한글만 입력 가능합니다.';
     }
-
     if (!cohort) newErrors.cohort = '기수를 선택해주세요.';
     if (!part) newErrors.part = '파트를 선택해주세요.';
     if (!role) newErrors.role = '분류를 선택해주세요.';
     if (!agree) newErrors.agree = '약관에 동의해주세요.';
-
     setLocalErrors(newErrors);
   }, [school, cohort, part, role, agree, orgType]);
 
@@ -101,7 +106,7 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
 
       <p css={[typography.b4, step1Desc]}>동아리 정보를 입력해주세요.</p>
 
-      <form css={formBox} onSubmit={onSubmit}>
+      <form css={formBox} onSubmit={handleSubmit}>
         <div css={fieldBox}>
           <label css={labelThin}>학교</label>
           <div css={inputSpacingTight}>
@@ -183,21 +188,11 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
 
       {showModal && (
         <Modal
-          type="scroll"
-          title="이용 약관 및 개인정보 처리 방침"
-          message={
-            <div
-              css={css`
-                text-align: left;
-                white-space: pre-line;
-              `}
-            >
-              {termsContent}
-            </div>
-          }
+          type="default"
+          title="회원가입 완료 🎉"
+          message={`회원가입이 정상적으로 완료되었습니다.\n관리자의 승인 후 로그인 가능합니다.`}
           buttonText="확인"
-          onClose={handleCloseModal}
-          customTitleAlign="left"
+          onClose={handleComplete}
         />
       )}
     </section>

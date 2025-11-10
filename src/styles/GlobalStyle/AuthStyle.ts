@@ -433,3 +433,42 @@ export const descCssStep3 = css`
   color: ${colors.grayscale[600]};
   margin-bottom: 36px;
 `;
+
+export const authStepSection = css`
+  width: 420px;
+  background: ${colors.white};
+  border-radius: 12px;
+  box-shadow: 0 8px 36px rgba(0, 0, 0, 0.08);
+  padding: 36px 36px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+`;
+
+export const authStepTitle = css`
+  font-size: 28px;
+  font-weight: 600;
+  color: ${colors.black};
+  margin-bottom: 8px;
+`;
+
+export const authStepDesc = css`
+  font-size: 15px;
+  font-weight: 400;
+  color: ${colors.grayscale[700]};
+  margin-bottom: 28px;
+`;
+
+export const authStepButtonBox = css`
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+`;
+
+export const authSubText = css`
+  font-size: 12px;
+  color: ${colors.grayscale[600]};
+  margin-top: -8px;
+  margin-bottom: 22px;
+`;

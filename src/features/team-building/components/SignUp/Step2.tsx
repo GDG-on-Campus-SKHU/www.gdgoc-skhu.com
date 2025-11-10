@@ -3,7 +3,7 @@ import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants/colors';
 import { typography } from '../../../../styles/constants/text';
-import { primaryBtn, step1Desc } from '../../../../styles/GlobalStyle/SignUpStyle';
+import { primaryBtn, step1Desc } from '../../../../styles/GlobalStyle/AuthStyle';
 import type { Step } from '../../../team-building/pages/SignUp/index';
 import Button2 from '../Button2';
 import FieldOfSignUp from '../FieldOfSignUp';

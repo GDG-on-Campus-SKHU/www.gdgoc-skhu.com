@@ -8,7 +8,7 @@ import {
   primaryBtn,
   sectionCss,
   step1Desc,
-} from '../../../../styles/GlobalStyle/SignUpStyle';
+} from '../../../../styles/GlobalStyle/AuthStyle';
 import type { Step } from '../../../team-building/pages/SignUp/index';
 
 interface Step1Props {
