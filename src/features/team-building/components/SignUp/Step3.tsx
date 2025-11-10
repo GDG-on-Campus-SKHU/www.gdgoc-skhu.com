@@ -2,12 +2,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
+
 import { colors } from '../../../../styles/constants/colors';
 import { typography } from '../../../../styles/constants/text';
 import {
+  headerCss,
   primaryBtn,
   step1Desc,
-  headerCss,
   titleCss,
 } from '../../../../styles/GlobalStyle/AuthStyle';
 import Button2 from '../Button2';
@@ -54,7 +55,7 @@ export default function Step3({
     if (!cohort) setCohort('25-26');
     if (!part) setPart('BE');
     if (!role) setRole('Member');
-  }, [cohort, part, setCohort, setPart]);
+  }, [cohort, part, role, setCohort, setPart, setRole]);
 
   const handleShowTerms = () => setShowTermsModal(true);
   const handleCloseTerms = () => setShowTermsModal(false);
@@ -92,7 +93,8 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
     const newErrors: Record<string, string> = {};
     if (orgType !== 'internal') {
       if (!school.trim()) newErrors.school = '학교명을 입력해주세요.';
-      else if (!/^[A-Za-z가-힣]+$/.test(school)) newErrors.school = '학교명은 영문 또는 한글만 입력 가능합니다.';
+      else if (!/^[A-Za-z가-힣]+$/.test(school))
+        newErrors.school = '학교명은 영문 또는 한글만 입력 가능합니다.';
     }
     if (!cohort) newErrors.cohort = '기수를 선택해주세요.';
     if (!part) newErrors.part = '파트를 선택해주세요.';
@@ -286,7 +288,8 @@ const radioInput = (checked: boolean) => css`
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 ${checked ? `6px ${colors.primary[600]}` : `1.5px ${colors.grayscale[400]}`};
+  box-shadow: inset 0 0 0
+    ${checked ? `6px ${colors.primary[600]}` : `1.5px ${colors.grayscale[400]}`};
   cursor: pointer;
   transition: box-shadow 0.15s ease;
 `;
