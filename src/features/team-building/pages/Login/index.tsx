@@ -150,7 +150,7 @@ const formCss = css`
 `;
 
 const titleCss = css`
-    margin-bottom: 28px;
+    margin-bottom: 23px;
     text-align: center;
 `;
 

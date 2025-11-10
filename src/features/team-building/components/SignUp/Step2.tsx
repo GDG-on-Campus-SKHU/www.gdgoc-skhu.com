@@ -202,7 +202,7 @@ export const sectionCss = (visible: boolean, step: Step, isMobile: boolean) => c
   flex-direction: column;
   justify-content: flex-start;
   align-items: stretch;
-  gap: 8px;
+  gap: 4px;
   min-height: fit-content;
   height: auto;
   max-width: 90vw;

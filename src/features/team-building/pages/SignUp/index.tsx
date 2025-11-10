@@ -159,8 +159,12 @@ export default function SignUpPage() {
             {showCompleteModal && (
                 <Modal
                     type="default"
-                    title="가입 완료 🎉"
-                    message="회원가입이 성공적으로 완료되었습니다."
+                    title="회원가입 완료 🎉"
+                    message= {
+                    <>
+                    회원가입이 정상적으로 완료되었습니다.{"\n"}
+                    관리자의 승인 후 로그인 가능합니다.
+                    </>}
                     buttonText="확인"
                     onClose={handleCloseModal}
                 />

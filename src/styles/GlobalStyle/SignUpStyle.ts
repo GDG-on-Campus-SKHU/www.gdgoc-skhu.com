@@ -117,7 +117,7 @@ export const step1Box = css`
 
 export const step1Desc = css`
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 400;
   color: ${colors.grayscale[600]};
   margin-bottom: 28px;
 `;

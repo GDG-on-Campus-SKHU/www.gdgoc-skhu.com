@@ -45,7 +45,7 @@ const titleCss = css`
     color: ${colors.black};
     font-size: 28px;
     font-weight: 700;
-    margin-bottom:3px;
+    margin-bottom: 1px;
     padding-top: 10px;
 `;
 
