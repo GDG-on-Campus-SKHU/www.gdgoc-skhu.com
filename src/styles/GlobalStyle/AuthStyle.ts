@@ -86,7 +86,7 @@ export const headerCss = css`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 10px;
+  margin-bottom: 1px;
   padding-top: 10px;
 `;
 
@@ -450,7 +450,7 @@ export const authStepTitle = css`
   font-size: 28px;
   font-weight: 600;
   color: ${colors.black};
-  margin-bottom: 8px;
+  margin-bottom: 1px;
 `;
 
 export const authStepDesc = css`

@@ -4,7 +4,12 @@ import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
 import { colors } from '../../../../styles/constants/colors';
 import { typography } from '../../../../styles/constants/text';
-import { primaryBtn, step1Desc } from '../../../../styles/GlobalStyle/AuthStyle';
+import {
+  primaryBtn,
+  step1Desc,
+  headerCss,
+  titleCss,
+} from '../../../../styles/GlobalStyle/AuthStyle';
 import Button2 from '../Button2';
 import FieldOfSignUp from '../FieldOfSignUp';
 import Modal from '../Modal';
@@ -39,10 +44,10 @@ export default function Step3({
   setRole,
   setAgree,
   onPrev,
-  onSubmit,
 }: Step3Props) {
   const router = useRouter();
-  const [showModal, setShowModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -50,16 +55,16 @@ export default function Step3({
     if (!part) setPart('BE');
   }, [cohort, part, setCohort, setPart]);
 
-  const handleShowTerms = () => setShowModal(true);
-  const handleCloseModal = () => setShowModal(false);
+  const handleShowTerms = () => setShowTermsModal(true);
+  const handleCloseTerms = () => setShowTermsModal(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setShowModal(true);
+    setShowCompleteModal(true);
   };
 
   const handleComplete = () => {
-    setShowModal(false);
+    setShowCompleteModal(false);
     router.push('/login');
   };
 
@@ -107,48 +112,42 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
       <p css={[typography.b4, step1Desc]}>동아리 정보를 입력해주세요.</p>
 
       <form css={formBox} onSubmit={handleSubmit}>
-        <div css={fieldBox}>
-          <label css={labelThin}>학교</label>
-          <div css={inputSpacingTight}>
-            <FieldOfSignUp
-              label=""
-              placeholder={orgType === 'internal' ? '성공회대학교' : '예: 숙명여자대학교'}
-              value={school}
-              onChange={e => setSchool(e.target.value)}
-              disabled={orgType === 'internal'}
-              error={!!localErrors.school}
-              errorMessage={localErrors.school}
-            />
-          </div>
+        <div css={formGroup}>
+          <label css={labelCss}>학교</label>
+          <FieldOfSignUp
+            label=""
+            placeholder={orgType === 'internal' ? '성공회대학교' : '예: 숙명여자대학교'}
+            value={school}
+            onChange={e => setSchool(e.target.value)}
+            disabled={orgType === 'internal'}
+            error={!!localErrors.school}
+            errorMessage={localErrors.school}
+          />
         </div>
 
-        <div css={twoColumnBox}>
-          <div css={fieldBox}>
+        <div css={gridRow}>
+          <div css={formGroup}>
             <label css={labelCss}>기수</label>
-            <div css={inputSpacing}>
-              <SelectBoxBasic
-                options={['25-26', '24-25', '23-24', '22-23', 'Other']}
-                placeholder="25-26"
-                onChange={([value]) => setCohort(value)}
-              />
-            </div>
+            <SelectBoxBasic
+              options={['25-26', '24-25', '23-24', '22-23', 'Other']}
+              placeholder="25-26"
+              onChange={([value]) => setCohort(value)}
+            />
             {!!localErrors.cohort && <p css={errorText}>{localErrors.cohort}</p>}
           </div>
 
-          <div css={fieldBox}>
+          <div css={formGroup}>
             <label css={labelCss}>파트</label>
-            <div css={inputSpacing}>
-              <SelectBoxBasic
-                options={['BE', 'FE', 'PM', 'Design', 'AI/ML']}
-                placeholder="BE"
-                onChange={([value]) => setPart(value)}
-              />
-            </div>
+            <SelectBoxBasic
+              options={['BE', 'FE', 'PM', 'Design', 'AI/ML']}
+              placeholder="BE"
+              onChange={([value]) => setPart(value)}
+            />
             {!!localErrors.part && <p css={errorText}>{localErrors.part}</p>}
           </div>
         </div>
 
-        <div css={radioBox}>
+        <div css={formGroup}>
           <label css={labelCss}>분류</label>
           <div css={radioGroup}>
             {['Member', 'Core', 'Organizer'].map(r => (
@@ -159,14 +158,14 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
                   onChange={() => setRole(r)}
                   css={radioInput(role === r)}
                 />
-                <span css={radioText}>{r}</span>
+                <span>{r}</span>
               </label>
             ))}
           </div>
           {!!localErrors.role && <p css={errorText}>{localErrors.role}</p>}
         </div>
 
-        <div css={agreeBox}>
+        <div css={formGroup}>
           <div css={agreeRow}>
             <div css={agreeCheck(agree)} onClick={() => setAgree(!agree)}>
               {agree && '✓'}
@@ -186,7 +185,29 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
         </div>
       </form>
 
-      {showModal && (
+      {showTermsModal && (
+        <Modal
+          type="scroll"
+          title="이용 약관 및 개인정보 처리 방침"
+          message={
+            <div
+              css={css`
+                white-space: pre-line;
+                text-align: left;
+                font-size: 13px;
+                color: ${colors.grayscale[700]};
+              `}
+            >
+              {termsContent}
+            </div>
+          }
+          buttonText="확인"
+          onClose={handleCloseTerms}
+          customTitleAlign="left"
+        />
+      )}
+
+      {showCompleteModal && (
         <Modal
           type="default"
           title="회원가입 완료 🎉"
@@ -209,20 +230,7 @@ const sectionCss = css`
   margin-bottom: 200px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-`;
-
-const headerCss = css`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-`;
-
-const titleCss = css`
-  color: ${colors.black};
-  font-size: 28px;
-  font-weight: 700;
+  gap: 8px;
 `;
 
 const stepCountCss = css`
@@ -234,54 +242,32 @@ const stepCountCss = css`
 const formBox = css`
   display: flex;
   flex-direction: column;
-  gap: 19px;
+  gap: 24px;
   margin-top: 8px;
 `;
 
-const fieldBox = css`
+const formGroup = css`
   display: flex;
   flex-direction: column;
-`;
-
-const inputSpacingTight = css`
-  margin-top: 4px;
-`;
-
-const inputSpacing = css`
-  margin-top: 8px;
-`;
-
-const twoColumnBox = css`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-`;
-
-const radioBox = css`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 12px;
+  gap: 6px;
 `;
 
 const labelCss = css`
   font-weight: 700;
   font-size: 15px;
   color: ${colors.black};
-  margin-bottom: 6px;
 `;
 
-const labelThin = css`
-  font-weight: 700;
-  font-size: 15px;
-  color: ${colors.black};
-  margin-bottom: 4px;
+const gridRow = css`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
 `;
 
 const radioGroup = css`
   display: flex;
-  gap: 20px;
-  align-items: center;
+  gap: 18px;
+  margin-top: 4px;
 `;
 
 const radioLabel = css`
@@ -289,6 +275,9 @@ const radioLabel = css`
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  color: ${colors.black};
 `;
 
 const radioInput = (checked: boolean) => css`
@@ -296,55 +285,46 @@ const radioInput = (checked: boolean) => css`
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 ${checked ? `6px ${colors.gdscBlue}` : `1.5px ${colors.grayscale[500]}`};
+  box-shadow: inset 0 0 0 ${checked ? `6px ${colors.primary[600]}` : `1.5px ${colors.grayscale[400]}`};
   cursor: pointer;
   transition: box-shadow 0.15s ease;
-`;
-
-const radioText = css`
-  font-size: 15px;
-  font-weight: 500;
-  color: ${colors.black};
-`;
-
-const agreeBox = css`
-  margin-top: 16px;
 `;
 
 const agreeRow = css`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  margin-top: 4px;
 `;
 
-const agreeCheck = (agree: boolean) => css`
+const agreeCheck = (checked: boolean) => css`
   width: 18px;
   height: 18px;
   border-radius: 4px;
-  background: ${agree ? colors.gdscBlue : colors.grayscale[200]};
+  background: ${checked ? colors.primary[600] : colors.grayscale[300]};
   display: flex;
   align-items: center;
   justify-content: center;
   color: ${colors.white};
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease;
 `;
 
 const agreeBtn = css`
+  font-size: 15px;
+  font-weight: 500;
   color: ${colors.black};
-  font-weight: 400;
   text-decoration: underline;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 15px;
 `;
 
 const errorText = css`
-  color: ${colors.gdscRed};
+  color: ${colors.point.red};
   font-size: 13px;
-  margin-top: 10px;
+  margin-top: 6px;
 `;
 
 const buttonBox = css`
