@@ -1,7 +1,8 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { colors } from '../../styles/constants/colors';
+
 import type { Step } from '../../features/team-building/pages/SignUp/index';
+import { colors } from '../../styles/constants/colors';
 
 export const mainCss = (visible: boolean, step?: Step) => css`
   width: 100vw;
@@ -49,7 +50,7 @@ export const primaryBtn = ({ disabled }: { disabled: boolean }) => css`
   justify-content: center;
   transition: background 0.2s ease;
   &:hover {
-    background: ${disabled ? colors.grayscale[300] : '#1669C1'};
+    background: ${disabled ? colors.grayscale[300] : colors.primary[700]};
   }
 `;
 
@@ -90,7 +91,11 @@ export const headerCss = css`
 `;
 
 export const titleCss = css`
-  font-family: Pretendard, system-ui, -apple-system, sans-serif;
+  font-family:
+    Pretendard,
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 28px;
   font-weight: 700;
   color: ${colors.black};
@@ -169,8 +174,7 @@ export const inputCss = (err: boolean) => css`
   transition: all 0.15s ease;
   &:focus {
     border-color: ${err ? colors.point.red : colors.primary[600]};
-    box-shadow: 0 0 0 3px
-      ${err ? 'rgba(234,67,53,0.1)' : 'rgba(66,133,244,0.15)'};
+    box-shadow: 0 0 0 3px ${err ? 'rgba(234,67,53,0.1)' : 'rgba(66,133,244,0.15)'};
     outline: none;
   }
 `;
@@ -288,7 +292,7 @@ export const scrollContainer = css`
     width: 6px;
   }
   &::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: ${colors.grayscale[400]};
     border-radius: 3px;
   }
 `;
@@ -386,7 +390,7 @@ export const doneButtonCss = css`
   cursor: pointer;
   transition: background 0.2s ease;
   &:hover {
-    background-color: #3367d6;
+    background-color: ${colors.primary[700]};
   }
 `;
 

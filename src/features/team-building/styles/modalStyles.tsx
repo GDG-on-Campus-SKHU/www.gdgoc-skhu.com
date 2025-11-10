@@ -1,4 +1,5 @@
 import { css, keyframes } from '@emotion/react';
+
 import { colors } from '../../../styles/constants/colors';
 import { typography } from '../../../styles/constants/text';
 
@@ -96,7 +97,9 @@ export const buttonCss = css`
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
 
   &:hover {
     background-color: ${colors.primary[700]};
@@ -125,7 +128,9 @@ export const buttonSecondaryCss = css`
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
 
   &:hover {
     background-color: ${colors.primary[100]};
