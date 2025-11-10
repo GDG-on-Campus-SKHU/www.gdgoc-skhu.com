@@ -53,6 +53,7 @@ export default function Step3({
   useEffect(() => {
     if (!cohort) setCohort('25-26');
     if (!part) setPart('BE');
+    if (!role) setRole('Member');
   }, [cohort, part, setCohort, setPart]);
 
   const handleShowTerms = () => setShowTermsModal(true);

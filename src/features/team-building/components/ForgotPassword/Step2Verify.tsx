@@ -9,7 +9,7 @@ import {
     authStepDesc,
 } from '../../../../styles/GlobalStyle/AuthStyle';
 import Button2 from '../Button2';
-import FieldOfSignUp from '../FieldOfSignUp';
+import FieldOfAuth from '../FieldOfAuth';
 
 interface Props {
     email: string;
@@ -42,7 +42,7 @@ export default function Step2Verify({ email, code, setCode, onNext, onPrev }: Pr
                 받은 메일함을 확인해주세요.
             </p>
 
-            <FieldOfSignUp
+            <FieldOfAuth
                 placeholder="인증번호 6자리 입력"
                 value={code}
                 onChange={e => setCode(e.target.value)}

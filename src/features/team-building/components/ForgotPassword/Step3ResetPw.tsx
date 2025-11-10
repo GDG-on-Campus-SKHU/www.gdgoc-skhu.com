@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
-import { colors } from '../../../../styles/constants/colors';
 import { typography } from '../../../../styles/constants/text';
 import {
     primaryBtn,
@@ -11,7 +10,7 @@ import {
     authStepDesc,
 } from '../../../../styles/GlobalStyle/AuthStyle';
 import Button2 from '../Button2';
-import FieldOfSignUp from '../FieldOfSignUp';
+import FieldOfAuth from '../FieldOfAuth';
 import Modal from '../Modal';
 
 interface Props {
@@ -24,23 +23,35 @@ export default function Step3ResetPw({ email, onPrev, onComplete }: Props) {
     const router = useRouter();
     const [pw, setPw] = useState('');
     const [pw2, setPw2] = useState('');
-    const [error, setError] = useState('');
+    const [formatError, setFormatError] = useState('');
+    const [mismatchError, setMismatchError] = useState('');
     const [showModal, setShowModal] = useState(false);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
+        setFormatError('');
+        setMismatchError('');
 
-        if (pw.length < 8 || !/[!@#$%^&*]/.test(pw))
-            return setError('8자 이상, 특수문자가 포함된 비밀번호를 입력해주세요.');
-        if (pw !== pw2) return setError('비밀번호가 일치하지 않습니다.');
+        let hasError = false;
+
+        if (pw.length < 8 || !/[!@#$%^&*]/.test(pw)) {
+            setFormatError('8자 이상, 특수문자가 포함된 비밀번호를 입력해주세요.');
+            hasError = true;
+        }
+
+        if (pw !== pw2) {
+            setMismatchError('비밀번호가 일치하지 않습니다.');
+            hasError = true;
+        }
+
+        if (hasError) return;
 
         if (pw === '12341234!') {
             setShowModal(true);
             return;
         }
 
-        setError('비밀번호 변경 중 오류가 발생했습니다.');
+        setFormatError('비밀번호 변경 중 오류가 발생했습니다.');
     };
 
     const handleModalClose = () => {
@@ -56,29 +67,26 @@ export default function Step3ResetPw({ email, onPrev, onComplete }: Props) {
                     새로운 비밀번호를 설정해주세요.
                 </p>
 
-                <div css={fieldBox}>
-                    <FieldOfSignUp
-                        label="새 비밀번호"
-                        type="password"
-                        placeholder="새로운 비밀번호를 입력해주세요."
-                        value={pw}
-                        onChange={e => setPw(e.target.value)}
-                        error={!!error}
-                    />
-                    <p css={subText}>8자리 이상, 특수문자 포함</p>
-                </div>
+                <FieldOfAuth
+                    label="새 비밀번호"
+                    type="password"
+                    placeholder="새로운 비밀번호를 입력해주세요."
+                    value={pw}
+                    onChange={e => setPw(e.target.value)}
+                    error={!!formatError}
+                    errorMessage={formatError}
+                    helperText="8자리 이상, 특수문자 포함"
+                />
 
-                <div css={fieldBox}>
-                    <FieldOfSignUp
-                        label="새 비밀번호 확인"
-                        type="password"
-                        placeholder="새로운 비밀번호를 다시 입력해주세요."
-                        value={pw2}
-                        onChange={e => setPw2(e.target.value)}
-                        error={!!error}
-                        errorMessage={error}
-                    />
-                </div>
+                <FieldOfAuth
+                    label="새 비밀번호 확인"
+                    type="password"
+                    placeholder="새로운 비밀번호를 다시 입력해주세요."
+                    value={pw2}
+                    onChange={e => setPw2(e.target.value)}
+                    error={!!mismatchError}
+                    errorMessage={mismatchError}
+                />
 
                 <div css={buttonBox}>
                     <Button2 title="이전" onClick={onPrev} />
@@ -104,19 +112,6 @@ export default function Step3ResetPw({ email, onPrev, onComplete }: Props) {
         </>
     );
 }
-
-const fieldBox = css`
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-`;
-
-const subText = css`
-    font-size: 12px;
-    color: ${colors.grayscale[600]};
-    margin-top: -10px;
-    margin-bottom: 22px;
-`;
 
 const buttonBox = css`
     display: flex;
