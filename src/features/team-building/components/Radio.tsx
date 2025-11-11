@@ -1,49 +1,24 @@
-'use client';
-
-import { useState } from 'react';
+import { forwardRef, InputHTMLAttributes } from 'react';
 
 import { radioButtonCss, radioLabelCss, radioWrapperCss } from '../styles/radio';
 
-interface RadioButtonProps {
-  label?: string;
-  defaultChecked?: boolean;
+interface RadioProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange'> {
+  label: string;
   disabled?: boolean;
   onChange?: (checked: boolean) => void;
-  className?: string;
 }
 
-export default function RadioButton({
-  label = 'Radio button',
-  defaultChecked = true,
-  disabled = true,
-  onChange,
-  className,
-}: RadioButtonProps) {
-  const [checked, setChecked] = useState(defaultChecked);
+const Radio = forwardRef<HTMLInputElement, RadioProps>(
+  ({ label, disabled = false, onChange, className, ...rest }, ref) => {
+    return (
+      <label css={radioWrapperCss} className={`${disabled ? 'disabled' : ''} ${className || ''}`}>
+        <input ref={ref} type="checkbox" css={radioButtonCss} disabled={disabled} {...rest} />
+        <span css={radioLabelCss}>{label}</span>
+      </label>
+    );
+  }
+);
 
-  const handleClick = () => {
-    if (disabled) return;
-    setChecked(!checked);
-    onChange?.(!checked);
-  };
+Radio.displayName = 'Radio';
 
-  return (
-    <label
-      css={radioWrapperCss}
-      className={`${disabled ? 'disabled' : ''} ${className || ''}`}
-      onClick={handleClick}
-    >
-      <div
-        css={radioButtonCss}
-        className={`${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''}`}
-        role="radio"
-        aria-checked={checked}
-        aria-disabled={disabled}
-        tabIndex={disabled ? -1 : 0}
-      />
-      <span css={radioLabelCss} className={disabled ? 'disabled' : ''}>
-        {label}
-      </span>
-    </label>
-  );
-}
+export default Radio;

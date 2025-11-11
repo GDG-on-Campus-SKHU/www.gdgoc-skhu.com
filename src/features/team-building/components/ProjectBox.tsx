@@ -1,28 +1,32 @@
-import Image from 'next/image';
-
-import { colors } from '../../../styles/constants/colors';
 import { img, wrap } from '../styles/projectBox';
 
 interface ProjectBoxProps {
+  /**
+   * 프로젝트 제목
+   */
   title: string;
+  /**
+   * 프로젝트 설명
+   */
   description: string;
+  /**
+   * 프로젝트 이미지 URL
+   */
   imageUrl: string;
+  /**
+   * 프로젝트 박스 클릭 핸들러
+   */
+  onClick?: () => void;
 }
 
-export default function ProjectBox({ title, description, imageUrl }: ProjectBoxProps) {
+export default function ProjectBox({ title, description, imageUrl, onClick }: ProjectBoxProps) {
   return (
-    <div css={wrap}>
+    <div css={wrap} onClick={onClick}>
       <div css={img}>
-        <Image
-          src={imageUrl}
-          alt={title}
-          fill
-          style={{ objectFit: 'cover', borderRadius: '8px' }}
-          sizes="(max-width: 768px) 100vw, 420px"
-        />
+        <img src={imageUrl} alt={title} />
       </div>
-      <h3 css={{ color: colors.grayscale[1000] }}>{title}</h3>
-      <p css={{ color: colors.grayscale[500] }}>{description}</p>
+      <h3>{title}</h3>
+      <p>{description}</p>
     </div>
   );
 }

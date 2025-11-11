@@ -5,7 +5,7 @@ import { colors } from '../../../styles/constants/colors';
 export const wrap = css`
   display: flex;
   flex-direction: row;
-  gap: 1.2rem;
+  gap: 1rem;
 `;
 
 export const icon = css`
@@ -24,15 +24,15 @@ export const textWrap = css`
 `;
 
 export const subject = css`
-  font-size: 1.1rem;
-  font-weight: '700';
+  font-size: 0.8rem;
+  font-weight: 600;
   color: #040405;
   margin: 0;
   line-height: 1;
 `;
 
 export const period = css`
-  font-size: 1rem;
+  font-size: 0.7rem;
   color: ${colors.gdscBlue};
   margin: 0;
   line-height: 1;

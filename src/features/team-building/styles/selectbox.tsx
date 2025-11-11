@@ -17,6 +17,7 @@ export const selectBoxHeaderCss = css`
   cursor: pointer;
   transition: border-color 0.2s ease;
   box-sizing: border-box;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -44,8 +45,8 @@ export const selectBoxSelectedCss = css`
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  scrollbar-width: none;
 
+  scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
   }

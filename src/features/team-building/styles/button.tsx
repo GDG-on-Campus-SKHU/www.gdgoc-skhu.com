@@ -2,40 +2,50 @@ import { css } from '@emotion/react';
 
 import { colors } from '../../../styles/constants/colors';
 
-export const ButtonWrap = css`
+export const buttonWrap = css`
+  width: 100%;
+  height: 2.5rem;
   box-sizing: border-box;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 40px;
   border-radius: 8px;
   background-color: ${colors.gdscBlue};
   color: white;
-  &:hover {
+  border: none;
+  font-weight: 500;
+  &:hover:not(:disabled) {
     background-color: #3770cd;
   }
-  &:active {
+
+  &:active:not(:disabled) {
     background-color: #2d5aa6;
   }
-  &.disabled {
+
+  &:disabled {
     background-color: #ededef;
     color: #c3c6cb;
+    cursor: not-allowed;
   }
-  &#second {
+
+  &[data-variant='secondary'] {
     background-color: white;
     color: ${colors.gdscBlue};
     border: 1px solid ${colors.gdscBlue};
-    &:hover {
+
+    &:hover:not(:disabled) {
       background-color: #d9e7fd;
     }
-    &:active {
+
+    &:active:not(:disabled) {
       background-color: #9dc0f9;
     }
-    &.disabled {
+
+    &:disabled {
       background-color: #ededef;
       color: #c3c6cb;
-      border: 0;
+      border: none;
     }
   }
 `;

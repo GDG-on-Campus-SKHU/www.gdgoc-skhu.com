@@ -1,32 +1,46 @@
+import { forwardRef, InputHTMLAttributes } from 'react';
+
 import { errorText, field } from '../styles/field';
 
-interface FieldProps {
+interface FieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
+  /**
+   * 입력 필드 placeholder
+   */
   placeholder?: string;
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  /**
+   * 비활성화 여부
+   * @default false
+   */
   disabled?: boolean;
+  /**
+   * 에러 상태 여부
+   * @default false
+   */
   error?: boolean;
+  /**
+   * 에러 메시지
+   */
   errorMessage?: string;
 }
 
-export default function Field({
-  placeholder = 'PlaceHolder',
-  value,
-  onChange,
-  disabled = false,
-  error = false,
-  errorMessage = '실패 힌트 텍스트',
-}: FieldProps) {
-  return (
-    <div>
-      <input
-        css={field(error)}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        disabled={disabled}
-      />
-      {error && <div css={errorText}>{errorMessage}</div>}
-    </div>
-  );
-}
+const Field = forwardRef<HTMLInputElement, FieldProps>(
+  ({ placeholder, disabled = false, error = false, errorMessage, ...rest }, ref) => {
+    return (
+      <div>
+        <input
+          ref={ref}
+          css={field(error)}
+          placeholder={placeholder}
+          disabled={disabled}
+          type="text"
+          {...rest}
+        />
+        {error && errorMessage && <div css={errorText}>{errorMessage}</div>}
+      </div>
+    );
+  }
+);
+
+Field.displayName = 'Field';
+
+export default Field;

@@ -15,10 +15,11 @@ export const radioWrapperCss = css`
 `;
 
 export const radioButtonCss = css`
+  appearance: none;
   width: 1.25rem;
   height: 1.25rem;
   border-radius: 50%;
-  border: 0.125rem solid #000;
+  border: 1px solid #000;
   background-color: white;
   position: relative;
   transition: all 0.2s ease;
@@ -28,17 +29,8 @@ export const radioButtonCss = css`
   justify-content: center;
   align-items: center;
 
-  &.checked {
-    background-color: ${colors.gdscBlue};
-    border-color: ${colors.gdscBlue};
-
-    &::after {
-      content: '';
-      width: 0.625rem;
-      height: 0.625rem;
-      border-radius: 50%;
-      background-color: white;
-    }
+  &:checked {
+    border: 6px solid ${colors.gdscBlue};
   }
 
   &.disabled {
@@ -52,7 +44,7 @@ export const radioButtonCss = css`
 `;
 
 export const radioLabelCss = css`
-  font-size: 1rem; /* 16px */
+  font-size: 1rem;
   font-weight: 400;
   color: #000;
   user-select: none;
