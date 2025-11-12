@@ -9,7 +9,7 @@ import {
   authStepTitle,
   primaryBtn,
 } from '../../../../styles/GlobalStyle/AuthStyle';
-import Button2 from '../Button2';
+import Button from '../Button';
 import FieldOfSignUp from '../FieldOfSignUp';
 
 interface Step1EmailProps {
@@ -51,7 +51,7 @@ export default function Step1Email({ email, setEmail, onNext }: Step1EmailProps)
       />
 
       <div css={buttonBox}>
-        <Button2 title="이전" onClick={() => history.back()} />
+        <Button variant="secondary" title="이전" onClick={() => history.back()} />
         <button
           css={primaryBtn({ disabled: !email.trim() })}
           disabled={!email.trim()}

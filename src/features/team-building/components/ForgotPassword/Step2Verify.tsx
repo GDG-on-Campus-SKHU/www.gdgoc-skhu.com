@@ -9,7 +9,7 @@ import {
   authStepTitle,
   primaryBtn,
 } from '../../../../styles/GlobalStyle/AuthStyle';
-import Button2 from '../Button2';
+import Button from '../Button';
 import FieldOfAuth from '../FieldOfAuth';
 
 interface Props {
@@ -52,7 +52,7 @@ export default function Step2Verify({ email: _, code, setCode, onNext, onPrev }:
       />
 
       <div css={buttonBox}>
-        <Button2 title="이전" onClick={onPrev} />
+        <Button title="이전" onClick={onPrev} />
         <button
           css={primaryBtn({ disabled: code.length !== 6 })}
           disabled={code.length !== 6}

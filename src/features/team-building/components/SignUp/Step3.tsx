@@ -11,7 +11,7 @@ import {
   step1Desc,
   titleCss,
 } from '../../../../styles/GlobalStyle/AuthStyle';
-import Button2 from '../Button2';
+import Button from '../Button';
 import FieldOfSignUp from '../FieldOfSignUp';
 import Modal from '../Modal';
 import SelectBoxBasic from '../SelectBoxBasic';
@@ -181,7 +181,7 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
         </div>
 
         <div css={buttonBox}>
-          <Button2 title="이전" onClick={onPrev} />
+          <Button variant="secondary" title="이전" onClick={onPrev} />
           <button css={primaryBtn({ disabled: isDisabled })} disabled={isDisabled}>
             완료
           </button>

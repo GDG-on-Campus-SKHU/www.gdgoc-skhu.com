@@ -10,7 +10,7 @@ import {
   authStepTitle,
   primaryBtn,
 } from '../../../../styles/GlobalStyle/AuthStyle';
-import Button2 from '../Button2';
+import Button from '../Button';
 import FieldOfAuth from '../FieldOfAuth';
 import Modal from '../Modal';
 
@@ -88,7 +88,7 @@ export default function Step3ResetPw({ email: _email, onPrev, onComplete: _ }: P
         />
 
         <div css={buttonBox}>
-          <Button2 title="이전" onClick={onPrev} />
+          <Button variant="secondary" title="이전" onClick={onPrev} />
           <button css={primaryBtn({ disabled: !pw || !pw2 })} disabled={!pw || !pw2} type="submit">
             완료
           </button>

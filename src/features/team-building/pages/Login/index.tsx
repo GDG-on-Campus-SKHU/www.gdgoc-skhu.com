@@ -7,7 +7,6 @@ import { css } from '@emotion/react';
 import { colors } from '../../../../styles/constants/colors';
 import { typography } from '../../../../styles/constants/text';
 import Button from '../../../team-building/components/Button';
-import Button2 from '../../../team-building/components/Button2';
 import FieldOfLogin from '../../../team-building/components/FieldOfLogin';
 import Modal from '../../../team-building/components/Modal';
 
@@ -118,7 +117,7 @@ function LoginForm({
           <Button title="로그인" />
         </button>
         <Link href="/signup">
-          <Button2 title="회원가입" />
+          <Button variant="secondary" title="회원가입" />
         </Link>
       </div>
     </form>

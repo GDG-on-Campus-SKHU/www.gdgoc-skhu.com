@@ -5,7 +5,7 @@ import { colors } from '../../../../styles/constants/colors';
 import { typography } from '../../../../styles/constants/text';
 import { primaryBtn, step1Desc } from '../../../../styles/GlobalStyle/AuthStyle';
 import type { Step } from '../../../team-building/pages/SignUp/index';
-import Button2 from '../Button2';
+import Button from '../Button';
 import FieldOfSignUp from '../FieldOfSignUp';
 
 interface Step2Props {
@@ -143,7 +143,7 @@ export default function Step2({
       </div>
 
       <div css={buttonBox}>
-        <Button2 title="이전" onClick={onPrev} />
+        <Button variant="secondary" onClick={onPrev} />
         <button css={primaryBtn({ disabled: isDisabled })} onClick={onNext} disabled={isDisabled}>
           다음
         </button>

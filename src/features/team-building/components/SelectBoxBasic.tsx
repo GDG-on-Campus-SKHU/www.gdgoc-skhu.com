@@ -144,6 +144,7 @@ export default function SelectBoxBasic({
         role="combobox"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
+        aria-controls="selectbox-listbox"
         aria-disabled={disabled}
         tabIndex={disabled ? -1 : 0}
       >
@@ -166,7 +167,7 @@ export default function SelectBoxBasic({
       </div>
 
       {isOpen && !disabled && (
-        <div css={selectBoxDropdownCss} role="listbox">
+        <div css={selectBoxDropdownCss} role="listbox" id="selectbox-listbox">
           {searchable && (
             <input
               css={selectBoxSearchCss}
