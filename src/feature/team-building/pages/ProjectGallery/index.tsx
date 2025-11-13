@@ -1,8 +1,9 @@
-import { css } from '@emotion/react';
-import { useRouter } from 'next/router';
 import { useState } from 'react';
-import { Project } from '../../types/gallery';
+import { useRouter } from 'next/router';
+import { css } from '@emotion/react';
+
 import GalleryContent from '../../components/ProjectGallery/GalleryContent';
+import { Project } from '../../types/gallery';
 
 const TABS = ['전체', '25-26', '24-25', '이전 기수'] as const;
 type Tab = (typeof TABS)[number];

@@ -1,6 +1,7 @@
 import { css } from '@emotion/react';
-import StatusBadge from '../ProjectGallery/StatusBadge';
+
 import { ProjectStatus } from '../../types/gallery';
+import StatusBadge from '../ProjectGallery/StatusBadge';
 
 type Props = {
   title: string;

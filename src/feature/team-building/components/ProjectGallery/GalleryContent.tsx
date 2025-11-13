@@ -1,5 +1,6 @@
-import { css } from '@emotion/react';
 import { useMemo, useState } from 'react';
+import { css } from '@emotion/react';
+
 import type { GenerationTab, Project } from '../../types/gallery';
 import { MOCK_PROJECTS } from '../../types/gallery';
 import GalleryEmpty from './GalleryEmpty';

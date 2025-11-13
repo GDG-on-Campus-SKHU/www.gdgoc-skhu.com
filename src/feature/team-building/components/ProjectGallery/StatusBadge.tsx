@@ -1,4 +1,5 @@
 import { css } from '@emotion/react';
+
 import { ProjectStatus } from '../../types/gallery';
 
 type Props = { status: ProjectStatus };

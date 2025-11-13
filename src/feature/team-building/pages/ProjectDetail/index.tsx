@@ -1,10 +1,11 @@
-import { css } from '@emotion/react';
-import { useRouter } from 'next/router';
 import { useMemo } from 'react';
-import { getMockProjectDetailById } from '../../types/gallery';
+import { useRouter } from 'next/router';
+import { css } from '@emotion/react';
+
+import ProjectDetailDescription from '../../components/ProjectDetail/ProjectDetailDescription';
 import ProjectDetailHeader from '../../components/ProjectDetail/ProjectDetailHeader';
 import ProjectDetailMeta from '../../components/ProjectDetail/ProjectDetailMeta';
-import ProjectDetailDescription from '../../components/ProjectDetail/ProjectDetailDescription';
+import { getMockProjectDetailById } from '../../types/gallery';
 
 export default function ProjectDetailPage() {
   const router = useRouter();

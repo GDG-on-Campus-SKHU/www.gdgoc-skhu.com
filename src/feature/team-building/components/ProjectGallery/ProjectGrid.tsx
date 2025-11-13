@@ -1,6 +1,7 @@
 import { css } from '@emotion/react';
+
+import type { Project } from '../../types/gallery';
 import ProjectCard from './ProjectCard';
-import { Project } from '../../types/gallery';
 
 type Props = { items: Project[] };
 

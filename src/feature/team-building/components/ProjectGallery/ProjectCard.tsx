@@ -1,7 +1,8 @@
-import { css } from '@emotion/react';
-import StatusBadge from './StatusBadge';
-import { Project } from '../../types/gallery';
 import Link from 'next/link';
+import { css } from '@emotion/react';
+
+import type { Project } from '../../types/gallery';
+import StatusBadge from './StatusBadge';
 
 type Props = { item: Project };
 

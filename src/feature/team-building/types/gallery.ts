@@ -18,7 +18,7 @@ export type ProjectDetail = {
   longDescription: string;
   status?: ProjectStatus;
   leader: { name: string; role?: string };
-  members: { name: string; role?: string }[];
+  members: Array<{ name: string; role?: string }>;
 };
 
 /** 임시 데이터 */
