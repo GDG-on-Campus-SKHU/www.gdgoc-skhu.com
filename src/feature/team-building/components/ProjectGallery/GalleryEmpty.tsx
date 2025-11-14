@@ -5,7 +5,7 @@ export default function GalleryEmpty() {
 }
 
 const emptyBoxCss = css`
-  margin-top: 36px;
+  margin-top: 100px;
   width: 100%;
   border-radius: 8px;
   outline: 1px #c3c6cb solid;

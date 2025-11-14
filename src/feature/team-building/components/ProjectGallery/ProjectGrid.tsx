@@ -16,7 +16,7 @@ export default function ProjectGrid({ items }: Props) {
 }
 
 const gridCss = css`
-  margin-top: 24px;
+  margin-top: 100px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 30px;

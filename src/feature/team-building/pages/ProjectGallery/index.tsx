@@ -65,7 +65,7 @@ const mainCss = css`
 
 const innerCss = css`
   width: 100%;
-  max-width: 1000px;
+  max-width: 1080px;
 `;
 
 const headerCss = css`
@@ -122,7 +122,7 @@ const tabBtnCss = (active: boolean) => css`
   padding: 8px 0;
   cursor: pointer;
 
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   line-height: 160%;
   color: ${active ? '#111111' : '#9aa0a6'};
@@ -132,11 +132,11 @@ const tabBtnCss = (active: boolean) => css`
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    bottom: -8px;
-    width: ${active ? '50px' : '0'};
+    bottom: -5px;
+    width: ${active ? '60px' : '0'};
     height: 3px;
     background: #111111;
-    border-radius: 2px;
+    // border-radius: 3px;
     transition: width 0.2s ease;
   }
 `;

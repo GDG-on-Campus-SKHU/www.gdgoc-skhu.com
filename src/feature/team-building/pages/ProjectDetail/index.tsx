@@ -45,7 +45,7 @@ const mainCss = css`
 
 const innerCss = css`
   width: 100%;
-  max-width: 1000px;
+  max-width: 1080px;
 `;
 
 const pageTitleCss = css`
