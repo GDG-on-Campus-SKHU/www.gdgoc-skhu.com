@@ -114,6 +114,8 @@ export const selectBoxItemCss = css`
   justify-content: space-between;
   align-items: center;
   box-sizing: border-box;
+  margin: 0.4rem;
+  border-radius: 0.3rem;
 
   &:hover {
     background-color: #ededef;
@@ -123,10 +125,6 @@ export const selectBoxItemCss = css`
     background-color: #d9e7fd;
   }
 
-  &:last-child {
-    border-bottom-left-radius: 0.5rem;
-    border-bottom-right-radius: 0.5rem;
-  }
 `;
 
 export const checkIconCss = css`
