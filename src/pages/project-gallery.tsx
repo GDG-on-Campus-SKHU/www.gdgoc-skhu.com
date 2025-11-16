@@ -1,3 +1,3 @@
-import ProjectGalleryPage from '../feature/team-building/pages/ProjectGallery';
+import ProjectGalleryPage from '../features/team-building/pages/ProjectGallery';
 
 export default ProjectGalleryPage;
