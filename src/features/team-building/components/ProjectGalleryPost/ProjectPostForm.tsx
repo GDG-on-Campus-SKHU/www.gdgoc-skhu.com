@@ -1,154 +1,306 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { css } from '@emotion/react';
 
-import { GENERATIONS } from '../../constants/projectGalleryPost';
 import ProjectDescriptionEditor from './ProjectDescriptionEditor';
+import Field from '../Field';
+import SelectBoxBasic from '../SelectBoxBasic_Fix';
+import Button from '../Button';
+import MemberSelectModal, { Member } from './MemberSelectModal';
+import ProjectMemberRow, { ProjectMemberBase } from './ProjectMemberRow';
+import Modal from '../Modal_Fix';
+import Radio from '../Radio_Fix';
+
+// 기수 / 파트 옵션
+const GENERATION_OPTIONS = ['25-26', '24-25', '이전 기수'] as const;
+
+const PART_OPTIONS = [
+  '기획',
+  '디자인',
+  '프론트엔드 (웹)',
+  '프론트엔드 (모바일)',
+  '백엔드',
+  'AI/ML',
+] as const;
+
+// 폼에서 사용하는 팀원 타입 (파트 정보 포함)
+type TeamMember = ProjectMemberBase & {
+  part: string[];
+};
+
+const TITLE_MAX = 20;
+const ONE_LINER_MAX = 30;
 
 export default function ProjectPostForm() {
   const [title, setTitle] = useState('');
   const [oneLiner, setOneLiner] = useState('');
-  const [generation, setGeneration] = useState('');
+  const [generation, setGeneration] = useState<string[]>([]);
+  const [leaderPart, setLeaderPart] = useState<string[]>([]);
   const [serviceStatus, setServiceStatus] = useState<'RUNNING' | 'PAUSED'>('PAUSED');
 
+  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+
+  const [description, setDescription] = useState('');
+
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const isTitleMax = title.length === TITLE_MAX;
+  const isOneLinerMax = oneLiner.length === ONE_LINER_MAX;
+
+  // 모달에서 팀원 선택 시 호출
+  const handleSelectMember = (member: Member) => {
+    setTeamMembers(prev => {
+      if (prev.some(m => m.id === member.id)) return prev;
+      return [...prev, { ...member, part: [] }];
+    });
+  };
+
+  const handleRemoveMember = (id: string) => {
+    setTeamMembers(prev => prev.filter(m => m.id !== id));
+  };
+
+  const handleChangeMemberPart = (id: string, next: string[]) => {
+    setTeamMembers(prev => prev.map(m => (m.id === id ? { ...m, part: next } : m)));
+  };
+
+  // 폼 유효성 체크
+  const isFormValid = useMemo(() => {
+    const hasTitle = title.trim().length > 0;
+    const hasOneLiner = oneLiner.trim().length > 0;
+    const hasGeneration = generation.length > 0;
+    const hasLeaderPart = leaderPart.length > 0;
+
+    const hasAtLeastOneMember = teamMembers.length > 0;
+    const membersAllHavePart = teamMembers.every(m => m.part.some(p => p.trim().length > 0));
+    const hasDescription = description.trim().length > 0;
+
+    return (
+      hasTitle &&
+      hasOneLiner &&
+      hasGeneration &&
+      hasLeaderPart &&
+      hasAtLeastOneMember &&
+      membersAllHavePart &&
+      hasDescription
+    );
+  }, [title, oneLiner, generation, leaderPart, teamMembers, description]);
+
+  const handleSubmitClick = () => {
+    if (!isFormValid) return;
+    setShowConfirmModal(true);
+  };
+
   return (
-    <form css={formCss} onSubmit={e => e.preventDefault()}>
-      {/* 프로젝트 제목 */}
-      <section css={fieldBlockCss}>
-        <div css={labelRowCss}>
-          <span css={labelCss}>프로젝트 제목</span>
-          <span css={counterCss}>{title.length}/20</span>
-        </div>
-        <input
-          css={textInputCss}
-          placeholder="제목을 입력해주세요."
-          maxLength={20}
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-        />
-      </section>
-
-      {/* 한 줄 소개 */}
-      <section css={fieldBlockCss}>
-        <div css={labelRowCss}>
-          <span css={labelCss}>프로젝트 한 줄 소개</span>
-          <span css={counterCss}>{oneLiner.length}/30</span>
-        </div>
-        <input
-          css={textInputCss}
-          placeholder="프로젝트를 간단하게 소개해주세요."
-          maxLength={30}
-          value={oneLiner}
-          onChange={e => setOneLiner(e.target.value)}
-        />
-      </section>
-
-      {/* 기수 */}
-      <section css={fieldBlockCss}>
-        <span css={labelCss}>기수</span>
-        <select css={selectCss} value={generation} onChange={e => setGeneration(e.target.value)}>
-          <option value="">기수를 선택해주세요.</option>
-          {GENERATIONS.map(g => (
-            <option key={g.value} value={g.value}>
-              {g.label}
-            </option>
-          ))}
-        </select>
-      </section>
-
-      {/* 팀장 */}
-      <section css={fieldBlockCss}>
-        <span css={labelCss}>팀장</span>
-        <div css={teamLeaderCardCss}>
-          <div
-            css={css`
-              width: 32px;
-              height: 32px;
-              border-radius: 999px;
-              background: #e5e7eb;
-            `}
-          />
-          <div css={leaderInfoCss}>
-            <div css={leaderNameRowCss}>
-              <span>주현지</span>
-              <span css={leaderBadgeCss}>25-26 Core</span>
-            </div>
-            <span
-              css={css`
-                font-size: 13px;
-                color: #9aa0a6;
-              `}
-            >
-              성공회대학교
+    <>
+      <form css={formCss} onSubmit={e => e.preventDefault()}>
+        {/* 프로젝트 제목 */}
+        <section css={fieldBlockCss}>
+          <div css={labelRowCss}>
+            <span css={labelCss}>프로젝트 제목</span>
+            <span css={[counterCss, isTitleMax && counterErrorCss]}>
+              {title.length}/{TITLE_MAX}
             </span>
           </div>
+          <Field
+            placeholder="제목을 입력해주세요."
+            maxLength={TITLE_MAX}
+            value={title}
+            onChange={e => {
+              const next = e.target.value.slice(0, TITLE_MAX);
+              setTitle(next);
+            }}
+            error={isTitleMax}
+          />
+        </section>
 
+        {/* 한 줄 소개 */}
+        <section css={fieldBlockCss}>
+          <div css={labelRowCss}>
+            <span css={labelCss}>프로젝트 한 줄 소개</span>
+            <span css={[counterCss, isOneLinerMax && counterErrorCss]}>
+              {oneLiner.length}/{ONE_LINER_MAX}
+            </span>
+          </div>
+          <Field
+            placeholder="프로젝트를 간단하게 소개해주세요."
+            maxLength={ONE_LINER_MAX}
+            value={oneLiner}
+            onChange={e => {
+              const next = e.target.value.slice(0, ONE_LINER_MAX);
+              setOneLiner(next);
+            }}
+            error={isOneLinerMax}
+          />
+        </section>
+
+        {/* 기수 */}
+        <section css={fieldBlockCss}>
+          <span css={labelCss}>기수</span>
           <div
             css={css`
-              margin-left: auto;
-              width: 260px;
+              width: 496px;
             `}
           >
-            <select css={selectCss} defaultValue="">
-              <option value="">파트를 선택해주세요.</option>
-              <option value="FE">프론트엔드</option>
-              <option value="BE">백엔드</option>
-              <option value="PM">기획</option>
-              <option value="DESIGN">디자인</option>
-              <option value="AI">AI/ML</option>
-            </select>
+            <SelectBoxBasic
+              options={GENERATION_OPTIONS as unknown as string[]}
+              placeholder="기수를 선택해주세요."
+              multiple={false}
+              searchable={false}
+              value={generation}
+              onChange={setGeneration}
+            />
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* 팀원 */}
-      <section css={fieldBlockCss}>
-        <span css={labelCss}>팀원</span>
-        <button type="button" css={teamMemberBoxCss}>
-          + 팀원 추가
-        </button>
-      </section>
+        {/* 팀장 */}
+        <section css={fieldBlockCss}>
+          <span css={labelCss}>팀장</span>
+          <ProjectMemberRow
+            isLeader
+            member={{
+              id: 'leader-1',
+              name: '주현지',
+              badge: '25-26 Core',
+              school: '성공회대학교',
+            }}
+            partOptions={PART_OPTIONS as unknown as string[]}
+            partValue={leaderPart}
+            onPartChange={setLeaderPart}
+          />
+        </section>
 
-      {/* 서비스 운영 상태 */}
-      <section css={statusGroupCss}>
-        <span css={labelCss}>서비스 운영 상태</span>
-        <div css={radioRowCss}>
-          <label css={radioItemCss}>
-            <input
-              type="radio"
+        {/* 팀원리스트 + 추가 버튼 */}
+        <section css={fieldBlockCss}>
+          <span css={labelCss}>팀원</span>
+
+          {/* 선택된 팀원 카드들 */}
+          <div css={teamListCss}>
+            {teamMembers.map(member => (
+              <ProjectMemberRow
+                key={member.id}
+                member={member}
+                partOptions={PART_OPTIONS as unknown as string[]}
+                partValue={member.part}
+                onPartChange={next => handleChangeMemberPart(member.id, next)}
+                onRemove={() => handleRemoveMember(member.id)}
+              />
+            ))}
+          </div>
+
+          <Button
+            type="button"
+            variant="secondary"
+            title="+ 팀원 추가"
+            onClick={() => setIsTeamModalOpen(true)}
+            style={{
+              height: '50px',
+              fontSize: '18px',
+              fontWeight: '500',
+              lineHeight: '28.8px',
+              borderColor: '#4285F4',
+              color: '#4285F4',
+            }}
+          />
+        </section>
+
+        {/* 서비스 운영 상태 */}
+        <section css={statusGroupCss}>
+          <span css={labelCss}>서비스 운영 상태</span>
+          <div css={radioRowCss}>
+            <Radio
               name="serviceStatus"
+              value="RUNNING"
+              label="운영 중"
               checked={serviceStatus === 'RUNNING'}
               onChange={() => setServiceStatus('RUNNING')}
             />
-            <span>운영 중</span>
-          </label>
-          <label css={radioItemCss}>
-            <input
-              type="radio"
+
+            <Radio
               name="serviceStatus"
+              value="PAUSED"
+              label="미운영 중"
               checked={serviceStatus === 'PAUSED'}
               onChange={() => setServiceStatus('PAUSED')}
             />
-            <span>미운영 중</span>
-          </label>
+          </div>
+        </section>
+
+        {/* 프로젝트 설명 */}
+        <section css={fieldBlockCss}>
+          <span css={labelCss}>프로젝트 설명</span>
+          <ProjectDescriptionEditor value={description} onChange={setDescription} />
+        </section>
+
+        {/* 버튼 영역 */}
+        <div css={btnRowCss}>
+          <Button
+            type="button"
+            variant="secondary"
+            title="프로젝트 미리보기"
+            style={{
+              height: '50px',
+              fontSize: '18px',
+              fontWeight: '500',
+              lineHeight: '28.8px',
+              borderColor: '#4285F4',
+              color: '#4285F4',
+            }}
+          />
+          <Button
+            type="button"
+            title="프로젝트 전시하기"
+            disabled={!isFormValid}
+            onClick={handleSubmitClick}
+            style={{
+              height: '50px',
+              fontSize: '18px',
+              fontWeight: '500',
+              backgroundColor: isFormValid ? '#4285F4' : '#E0E2E5',
+              color: isFormValid ? '#FFFFFF' : '#C3C6CB',
+              cursor: isFormValid ? 'pointer' : 'not-allowed',
+            }}
+          />
         </div>
-      </section>
+      </form>
 
-      {/* 프로젝트 설명 (에디터 영역) */}
-      <section css={fieldBlockCss}>
-        <span css={labelCss}>프로젝트 설명</span>
-        <ProjectDescriptionEditor />
-      </section>
+      {/* 팀원 선택 모달 */}
+      <MemberSelectModal
+        open={isTeamModalOpen}
+        onClose={() => setIsTeamModalOpen(false)}
+        onSelectMember={handleSelectMember}
+        selectedMemberIds={teamMembers.map(m => m.id)}
+      />
 
-      {/* 버튼 영역 */}
-      <div css={btnRowCss}>
-        <button type="button" css={previewBtnCss}>
-          프로젝트 미리보기
-        </button>
-        <button type="button" css={submitBtnCss} disabled>
-          프로젝트 전시하기
-        </button>
-      </div>
-    </form>
+      {/* 전시 확인 모달 */}
+      {showConfirmModal && (
+        <Modal
+          type="textConfirm"
+          title="해당 프로젝트를 전시하시겠습니까?"
+          message=""
+          confirmText="예"
+          cancelText="아니오"
+          onClose={() => setShowConfirmModal(false)}
+          onConfirm={() => {
+            setShowConfirmModal(false);
+            setShowSuccessModal(true);
+          }}
+          customTitleAlign="center"
+        />
+      )}
+
+      {/* 전시 완료 모달 */}
+      {showSuccessModal && (
+        <Modal
+          type="textOnly"
+          title="전시가 완료되었습니다."
+          message=""
+          buttonText="확인"
+          onClose={() => setShowSuccessModal(false)}
+          customTitleAlign="center"
+        />
+      )}
+    </>
   );
 }
 
@@ -162,7 +314,8 @@ const formCss = css`
 const fieldBlockCss = css`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  margin-bottom: 8px;
 `;
 
 const labelRowCss = css`
@@ -180,161 +333,41 @@ const labelCss = css`
 const counterCss = css`
   color: #979ca5;
   font-size: 16px;
-  font-family: Pretendard;
   font-weight: 500;
   line-height: 25.6px;
   word-wrap: break-word;
 `;
 
-const textInputCss = css`
-  width: 100%;
-  height: 100%;
-  padding: 14px 16px;
-  background: white;
-  border-radius: 8px;
-  outline: 1px #c3c6cb solid;
-  outline-offset: -1px;
-  justify-content: flex-start;
-  align-items: center;
-  display: inline-flex;
-  border: none;
-
-  &::placeholder {
-    color: #979ca5;
-    font-size: 15px;
-    font-weight: 500;
-    line-height: 25.6px;
-  }
-
-  //   &:focus {
-  //     border-color: #4285f4;
-  //     box-shadow: 0 0 0 1px rgba(66, 133, 244, 0.2);
-  //   }
+const counterErrorCss = css`
+  color: #ea4335;
 `;
 
-const selectCss = css`
-  width: 100%;
-  height: 54px;
-  border-radius: 8px;
-  border: 1px solid #dadce0;
-  padding: 0 16px;
-  font-size: 16px;
-  outline: none;
-  background: #fff;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23979CA5' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 16px center;
-
-  &::placeholder {
-    color: #b0b5bd;
-  }
-
-  &:focus {
-    border-color: #4285f4;
-    box-shadow: 0 0 0 1px rgba(66, 133, 244, 0.2);
-  }
-`;
-
-const teamLeaderCardCss = css`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 1px solid #dadce0;
-  background: #fafbff;
-`;
-
-const leaderInfoCss = css`
+const teamListCss = css`
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 14px;
-`;
-
-const leaderNameRowCss = css`
-  display: flex;
-  align-items: center;
   gap: 8px;
-  font-size: 16px;
-  font-weight: 700;
-`;
-
-const leaderBadgeCss = css`
-  padding: 2px 8px;
-  border-radius: 20px;
-  border: 1px solid #4285f4;
-  color: #4285f4;
-  font-size: 12px;
-  font-weight: 600;
-  background: #f3f6ff;
-`;
-
-const teamMemberBoxCss = css`
-  width: 100%;
-  height: 56px;
-  border-radius: 8px;
-  border: 1px solid #c3d0ff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  color: #3569f5;
-  cursor: pointer;
-  background: #f8fbff;
 `;
 
 const statusGroupCss = css`
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-bottom: 6px;
 `;
 
 const radioRowCss = css`
   display: flex;
   flex-direction: column;
-  gap: 8px;
-`;
-
-const radioItemCss = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  gap: 15px;
+  font-size: 16px;
+  padding: 10px 0;
 `;
 
 const btnRowCss = css`
-  margin-top: 32px;
   display: flex;
   justify-content: center;
   gap: 16px;
-`;
-
-const previewBtnCss = css`
-  min-width: 260px;
-  height: 54px;
-  border-radius: 999px;
-  border: 1px solid #3569f5;
-  background: #fff;
-  color: #3569f5;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-
-  &:hover {
-    background: #f3f6ff;
-  }
-`;
-
-const submitBtnCss = css`
-  min-width: 260px;
-  height: 54px;
-  border-radius: 999px;
-  border: none;
-  background: #e5e7eb;
-  color: #9ca3af;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: not-allowed;
+  width: 100%;
+  max-width: 616px;
+  margin: 50px auto 0;
 `;

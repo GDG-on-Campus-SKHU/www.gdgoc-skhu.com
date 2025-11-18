@@ -1,52 +1,28 @@
-// 라이브러리 적용 전
-import { useState } from 'react';
 import { css } from '@emotion/react';
+import Image from 'next/image';
+import markdown from '../../assets/markdown.svg';
 
-export default function ProjectDescriptionEditor() {
-  const [value, setValue] = useState('');
+type ProjectDescriptionEditorProps = {
+  value: string;
+  onChange: (value: string) => void;
+};
 
+export default function ProjectDescriptionEditor({
+  value,
+  onChange,
+}: ProjectDescriptionEditorProps) {
   return (
     <div css={editorWrapCss}>
-      {/* 간단한 툴바 UI (기능 X, 나중에 에디터로 교체 예정) */}
+      {/* 간단한 UI (기능 X, 나중에 재현님 만드신 컴포로 교체 예정) */}
       <div css={toolbarCss}>
-        <button type="button" css={toolbarButtonCss}>
-          Normal
-        </button>
-        <span
-          css={css`
-            width: 1px;
-            height: 16px;
-            background: #e5e7eb;
-          `}
-        />
-        <button type="button" css={toolbarButtonCss}>
-          B
-        </button>
-        <button type="button" css={toolbarButtonCss}>
-          I
-        </button>
-        <button type="button" css={toolbarButtonCss}>
-          U
-        </button>
-        <button type="button" css={toolbarButtonCss}>
-          •
-        </button>
-        <button type="button" css={toolbarButtonCss}>
-          1.
-        </button>
-        <button type="button" css={toolbarButtonCss}>
-          A
-        </button>
-        <button type="button" css={toolbarButtonCss}>
-          🖼
-        </button>
+        <Image src={markdown} alt="마크다운" />
       </div>
 
       <textarea
         css={textareaCss}
         placeholder={`Github README 작성에 쓰이는 'markdown' 을 이용해 작성해보세요.`}
         value={value}
-        onChange={e => setValue(e.target.value)}
+        onChange={e => onChange(e.target.value)}
       />
     </div>
   );
@@ -54,42 +30,27 @@ export default function ProjectDescriptionEditor() {
 
 const editorWrapCss = css`
   border-radius: 8px;
-  border: 1px solid #dadce0;
-  background: #ffffff;
+  outline: 1px #c3c6cb solid;
+  outline-offset: -1px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  margin-top: 10px;
 `;
 
 const toolbarCss = css`
-  display: flex;
-  align-items: center;
   gap: 12px;
-  padding: 10px 12px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
-  font-size: 14px;
-`;
-
-const toolbarButtonCss = css`
-  padding: 4px 6px;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
-  font-size: 13px;
-  cursor: default;
-  color: #6b7280;
+  padding: 12px 14px;
 `;
 
 const textareaCss = css`
   min-height: 260px;
-  padding: 14px 16px;
+  padding: 18px 16px;
   border: none;
   outline: none;
-  resize: vertical;
-  font-size: 14px;
-  line-height: 1.6;
-  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 25.6px;
   resize: none;
 
   &::placeholder {

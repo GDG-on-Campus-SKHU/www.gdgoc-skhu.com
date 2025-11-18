@@ -81,7 +81,7 @@ const MOCK_DETAILS: Record<string, ProjectDetail> = {
       { name: '권지후', role: '기획' },
       { name: '최인석', role: 'AI/ML' },
       { name: '조정현', role: '디자인' },
-      { name: '이솔', role: '프론트엔드(웹)' },
+      { name: '이솔', role: '프론트엔드 (웹)' },
     ],
     // ui 확인을 위해 각각 스타일 조정
     longDescription: `
