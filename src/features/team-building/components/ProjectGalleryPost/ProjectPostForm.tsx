@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
 import { css } from '@emotion/react';
 
-import ProjectDescriptionEditor from './ProjectDescriptionEditor';
-import Field from '../Field';
-import SelectBoxBasic from '../SelectBoxBasic_Fix';
+import { colors } from '../../../../styles/constants';
 import Button from '../Button';
-import MemberSelectModal, { Member } from './MemberSelectModal';
-import ProjectMemberRow, { ProjectMemberBase } from './ProjectMemberRow';
+import Field from '../Field';
 import Modal from '../Modal_Fix';
 import Radio from '../Radio_Fix';
+import SelectBoxBasic from '../SelectBoxBasic_Fix';
+import MemberSelectModal, { Member } from './MemberSelectModal';
+import ProjectDescriptionEditor from './ProjectDescriptionEditor';
+import ProjectMemberRow, { ProjectMemberBase } from './ProjectMemberRow';
 
 // 기수 / 파트 옵션
 const GENERATION_OPTIONS = ['25-26', '24-25', '이전 기수'] as const;
@@ -70,19 +71,18 @@ export default function ProjectPostForm() {
     const hasOneLiner = oneLiner.trim().length > 0;
     const hasGeneration = generation.length > 0;
     const hasLeaderPart = leaderPart.length > 0;
-
-    const hasAtLeastOneMember = teamMembers.length > 0;
-    const membersAllHavePart = teamMembers.every(m => m.part.some(p => p.trim().length > 0));
     const hasDescription = description.trim().length > 0;
+
+    const membersAllHavePart =
+      teamMembers.length === 0 || teamMembers.every(m => m.part.some(p => p.trim().length > 0));
 
     return (
       hasTitle &&
       hasOneLiner &&
       hasGeneration &&
       hasLeaderPart &&
-      hasAtLeastOneMember &&
-      membersAllHavePart &&
-      hasDescription
+      hasDescription &&
+      membersAllHavePart
     );
   }, [title, oneLiner, generation, leaderPart, teamMembers, description]);
 
@@ -198,8 +198,8 @@ export default function ProjectPostForm() {
               fontSize: '18px',
               fontWeight: '500',
               lineHeight: '28.8px',
-              borderColor: '#4285F4',
-              color: '#4285F4',
+              borderColor: colors.primary[600],
+              color: colors.primary[600],
             }}
           />
         </section>
@@ -243,8 +243,8 @@ export default function ProjectPostForm() {
               fontSize: '18px',
               fontWeight: '500',
               lineHeight: '28.8px',
-              borderColor: '#4285F4',
-              color: '#4285F4',
+              borderColor: colors.primary[600],
+              color: colors.primary[600],
             }}
           />
           <Button
@@ -252,14 +252,7 @@ export default function ProjectPostForm() {
             title="프로젝트 전시하기"
             disabled={!isFormValid}
             onClick={handleSubmitClick}
-            style={{
-              height: '50px',
-              fontSize: '18px',
-              fontWeight: '500',
-              backgroundColor: isFormValid ? '#4285F4' : '#E0E2E5',
-              color: isFormValid ? '#FFFFFF' : '#C3C6CB',
-              cursor: isFormValid ? 'pointer' : 'not-allowed',
-            }}
+            css={submitBtnCss(isFormValid)}
           />
         </div>
       </form>
@@ -308,7 +301,7 @@ const formCss = css`
   display: flex;
   flex-direction: column;
   gap: 32px;
-  color: #040405;
+  color: ${colors.grayscale[1000]};
 `;
 
 const fieldBlockCss = css`
@@ -331,7 +324,7 @@ const labelCss = css`
 `;
 
 const counterCss = css`
-  color: #979ca5;
+  color: ${colors.grayscale[500]};
   font-size: 16px;
   font-weight: 500;
   line-height: 25.6px;
@@ -339,7 +332,7 @@ const counterCss = css`
 `;
 
 const counterErrorCss = css`
-  color: #ea4335;
+  color: ${colors.point.red};
 `;
 
 const teamListCss = css`
@@ -370,4 +363,25 @@ const btnRowCss = css`
   width: 100%;
   max-width: 616px;
   margin: 50px auto 0;
+`;
+
+const submitBtnCss = (isValid: boolean) => css`
+  height: 50px;
+  font-size: 18px;
+  font-weight: 500;
+  background-color: ${isValid ? colors.primary[600] : colors.grayscale[300]};
+  color: ${isValid ? colors.white : colors.grayscale[400]};
+  cursor: ${isValid ? 'pointer' : 'not-allowed'};
+  border: none;
+
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+
+  ${isValid &&
+  css`
+    &:hover {
+      background-color: ${colors.primary[700]};
+    }
+  `}
 `;

@@ -1,7 +1,8 @@
 import { css } from '@emotion/react';
+
+import { colors } from '../../../../styles/constants';
 import Button from '../Button';
 import Badge from './Badge';
-import { colors } from '../../../../styles/constants';
 
 type Member = {
   id: string;
@@ -51,7 +52,6 @@ const cardCss = css`
   padding: 12px 18px;
   border-radius: 8px;
   border: 1px solid ${colors.grayscale[300]};
-  background: #ffffff;
   gap: 16px;
 `;
 
@@ -74,7 +74,7 @@ const nameCss = css`
 
 const schoolCss = css`
   font-size: 14px;
-  color: #979ca5;
+  color: ${colors.grayscale[500]};
 `;
 
 const buttonWrapCss = css`

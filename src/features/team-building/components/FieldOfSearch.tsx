@@ -1,7 +1,8 @@
-import { css } from '@emotion/react';
 import { useRef, useState } from 'react';
-import { colors } from '../../../styles/constants/colors';
 import Image from 'next/image';
+import { css } from '@emotion/react';
+
+import { colors } from '../../../styles/constants/colors';
 import search from '../assets/search.svg';
 
 type FieldOfSearchProps = {

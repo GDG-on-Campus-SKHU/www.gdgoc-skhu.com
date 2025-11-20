@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 
+import arrowIcon from '../assets/selectArrow.svg';
 import {
   checkIconCss,
   selectBoxArrowCss,
@@ -12,9 +14,6 @@ import {
   selectBoxSelectedTextCss,
   selectBoxWrapperCss,
 } from '../styles/selectbox';
-
-import arrowIcon from '../assets/selectArrow.svg';
-import Image from 'next/image';
 
 interface SelectBoxBasicProps {
   /**

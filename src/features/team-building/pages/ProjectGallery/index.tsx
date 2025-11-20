@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
 
+import { colors } from '../../../../styles/constants';
 import GalleryContent from '../../components/ProjectGallery/GalleryContent';
 import { Project } from '../../types/gallery';
 
@@ -87,22 +88,19 @@ const actionBtnCss = css`
   justify-content: center;
   padding: 10px 40px;
   border-radius: 8px;
-  background: #4285f4;
-  color: #fff;
+  background: ${colors.primary[600]};
+  color: ${colors.white};
   font-size: 18px;
-  font-weight: 400;
+  font-weight: 500;
   border: none;
-  line-height: 160%;
+  line-height: 28.8px;
   cursor: pointer;
   transition:
-    transform 0.06s ease-out,
-    opacity 0.2s ease;
+    background-color 0.2s ease,
+    transform 0.1s ease;
 
   &:hover {
-    opacity: 0.95;
-  }
-  &:active {
-    transform: translateY(1px);
+    background-color: ${colors.primary[700]};
   }
 `;
 

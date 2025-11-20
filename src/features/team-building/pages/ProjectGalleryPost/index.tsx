@@ -1,5 +1,6 @@
 import { css } from '@emotion/react';
 
+import { colors } from '../../../../styles/constants';
 import ProjectPostForm from '../../components/ProjectGalleryPost/ProjectPostForm';
 
 export default function ProjectGalleryPostPage() {
@@ -19,8 +20,8 @@ const mainCss = css`
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: #fff;
-  color: #040405;
+  background-color: ${colors.white};
+  color: ${colors.grayscale[1000]};
   font-family: 'Pretendard', sans-serif;
   padding: 4rem 2.5rem 5rem;
 `;

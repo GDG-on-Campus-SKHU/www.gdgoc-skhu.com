@@ -1,5 +1,6 @@
-import { css } from '@emotion/react';
 import Image from 'next/image';
+import { css } from '@emotion/react';
+
 import markdown from '../../assets/markdown.svg';
 
 type ProjectDescriptionEditorProps = {

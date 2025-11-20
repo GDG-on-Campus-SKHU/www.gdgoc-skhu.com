@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { css } from '@emotion/react';
+import { createPortal } from 'react-dom';
 
 import {
   boxCss,
@@ -12,10 +13,9 @@ import {
   scrollBoxCss,
   subTextCss,
   titleCss,
-} from '../styles/modalStyles';
-import { ModalProps } from './Modal.types';
+} from '../styles/modalStyles_Fix';
 import Button from './Button';
-import { createPortal } from 'react-dom';
+import { ModalProps } from './Modal.types';
 
 export default function Modal({
   type = 'default',

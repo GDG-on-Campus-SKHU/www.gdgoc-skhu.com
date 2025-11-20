@@ -1,5 +1,7 @@
 import { css } from '@emotion/react';
 
+import { colors } from '../../../../styles/constants';
+
 type BadgeProps = {
   text: string;
   className?: string;
@@ -21,6 +23,6 @@ const badgeCss = css`
   font-weight: 600;
   line-height: 19.2px;
 
-  color: #4285f4;
-  background: #d9e7fd;
+  color: ${colors.primary[600]};
+  background: ${colors.primary[100]};
 `;
