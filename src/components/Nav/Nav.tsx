@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { css } from '@emotion/react';
 
 import { layoutCss } from '../../styles/constants/layout';
+
 const GDG_OC_LINK = 'https://sites.google.com/view/gdeveloperskorea/gdg-on-campus';
 
 export default function Nav() {
@@ -48,6 +49,10 @@ export default function Nav() {
         </Link>
         <Link href="/login" scroll={false}>
           Login
+        </Link>
+        {/* main 페이지에 임시로 넣었습니다!*/}
+        <Link href="/feature/team-building/WelcomeOpen" scroll={false}>
+          Team Building
         </Link>
       </div>
     </nav>
