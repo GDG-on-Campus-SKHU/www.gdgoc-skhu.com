@@ -4,15 +4,11 @@ import { colors } from '../../../../styles/constants';
 
 type BadgeProps = {
   text: string;
-  className?: string;
+  customCss?: any;
 };
 
-export default function Badge({ text, className }: BadgeProps) {
-  return (
-    <span css={badgeCss} className={className}>
-      {text}
-    </span>
-  );
+export default function Badge({ text, customCss }: BadgeProps) {
+  return <span css={[badgeCss, customCss]}>{text}</span>;
 }
 
 const badgeCss = css`

@@ -1,5 +1,6 @@
 import { css } from '@emotion/react';
 
+import { colors } from '../../../../styles/constants';
 import { ProjectStatus } from '../../types/gallery';
 
 type Props = { status: ProjectStatus };
@@ -8,14 +9,14 @@ const LABEL: Record<ProjectStatus, string> = {
   service: '서비스 중',
 };
 
-const DOT: Record<ProjectStatus, string> = {
-  service: '#4285F4',
+const STATE: Record<ProjectStatus, string> = {
+  service: colors.primary[600],
 };
 
 export default function StatusBadge({ status }: Props) {
   return (
     <span css={badgeCss}>
-      <i css={dotCss(DOT[status])} />
+      <i css={dotCss(STATE[status])} />
       {LABEL[status]}
     </span>
   );

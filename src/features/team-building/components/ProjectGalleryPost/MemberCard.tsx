@@ -35,9 +35,10 @@ export default function MemberCard({ member, onSelect, disabledSelect = false }:
           disabled={disabledSelect}
           onClick={() => !disabledSelect && onSelect(member)}
           style={{
-            height: '48px',
-            fontSize: '16px',
-            fontWeight: 600,
+            height: '50px',
+            fontSize: '18px',
+            fontWeight: '400',
+            lineHeight: '28.8px',
           }}
         />
       </div>
@@ -49,7 +50,7 @@ const cardCss = css`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 18px;
+  padding: 11px 16px;
   border-radius: 8px;
   border: 1px solid ${colors.grayscale[300]};
   gap: 16px;
@@ -58,7 +59,6 @@ const cardCss = css`
 const infoCss = css`
   display: flex;
   flex-direction: column;
-  gap: 8px;
 `;
 
 const nameRowCss = css`
@@ -70,13 +70,16 @@ const nameRowCss = css`
 const nameCss = css`
   font-size: 18px;
   font-weight: 700;
+  line-height: 28.8px;
 `;
 
 const schoolCss = css`
-  font-size: 14px;
   color: ${colors.grayscale[500]};
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 25.6px;
 `;
 
 const buttonWrapCss = css`
-  width: 180px;
+  width: 200px;
 `;

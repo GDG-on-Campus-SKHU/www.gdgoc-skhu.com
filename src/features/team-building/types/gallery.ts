@@ -17,6 +17,7 @@ export type ProjectDetail = {
   description: string;
   longDescription: string;
   status?: ProjectStatus;
+  generation: string;
   leader: { name: string; role?: string };
   members: Array<{ name: string; role?: string }>;
 };
@@ -76,6 +77,7 @@ const MOCK_DETAILS: Record<string, ProjectDetail> = {
     title: '프로젝트 명',
     description: '프로젝트 한줄소개',
     status: 'service',
+    generation: '24-25',
     leader: { name: '윤준석', role: '백엔드' },
     members: [
       { name: '권지후', role: '기획' },

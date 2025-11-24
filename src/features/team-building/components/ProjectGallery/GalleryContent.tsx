@@ -8,9 +8,6 @@ import ProjectGrid from './ProjectGrid';
 
 type Props = { activeTab: GenerationTab; projects: Project[] };
 
-// 개발 모드
-const isDev = process.env.NODE_ENV !== 'production';
-
 export default function GalleryContent({ activeTab, projects }: Props) {
   const [previewHas, setPreviewHas] = useState<boolean | null>(null);
 
@@ -20,7 +17,7 @@ export default function GalleryContent({ activeTab, projects }: Props) {
   }, [activeTab, projects]);
 
   const items = useMemo(() => {
-    if (!isDev || previewHas === null) return filteredReal;
+    if (previewHas === null) return filteredReal;
     if (previewHas === false) return [];
     if (activeTab === '전체') return MOCK_PROJECTS;
     return MOCK_PROJECTS.filter(p => p.generation === activeTab);
@@ -29,16 +26,14 @@ export default function GalleryContent({ activeTab, projects }: Props) {
   return (
     <section css={wrapCss}>
       {/* 프로젝트 있을 경우 & 없을 경우 버튼 (ui 확인용) */}
-      {isDev && (
-        <div css={toolbarCss}>
-          <button css={btnCss(previewHas === false)} onClick={() => setPreviewHas(false)}>
-            없음
-          </button>
-          <button css={btnCss(previewHas === true)} onClick={() => setPreviewHas(true)}>
-            있음
-          </button>
-        </div>
-      )}
+      <div css={toolbarCss}>
+        <button css={btnCss(previewHas === false)} onClick={() => setPreviewHas(false)}>
+          없음
+        </button>
+        <button css={btnCss(previewHas === true)} onClick={() => setPreviewHas(true)}>
+          있음
+        </button>
+      </div>
 
       {items.length === 0 ? <GalleryEmpty /> : <ProjectGrid items={items} />}
     </section>

@@ -86,7 +86,7 @@ const actionBtnCss = css`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 40px;
+  padding: 10px 42px;
   border-radius: 8px;
   background: ${colors.primary[600]};
   color: ${colors.white};
@@ -134,7 +134,6 @@ const tabBtnCss = (active: boolean) => css`
     width: ${active ? '60px' : '0'};
     height: 3px;
     background: #111111;
-    // border-radius: 3px;
     transition: width 0.2s ease;
   }
 `;

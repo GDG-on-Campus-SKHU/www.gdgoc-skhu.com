@@ -7,7 +7,7 @@ export default function ProjectDetailDescription({ title, content }: Props) {
     <section css={wrapCss}>
       <h3 css={sectionTitleCss}>{title}</h3>
       <div css={boxCss}>
-        {/* 임시 데이터 객체 내에 스타일 설정 */}
+        {/* 임시 데이터 객체 내에 스타일 설정 (ui용) */}
         <div css={contentCss} dangerouslySetInnerHTML={{ __html: content }} />
       </div>
     </section>

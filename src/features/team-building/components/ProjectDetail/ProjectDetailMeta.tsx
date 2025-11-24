@@ -1,37 +1,58 @@
 import { css } from '@emotion/react';
 
+import { colors } from '../../../../styles/constants';
+import Badge from '../ProjectGalleryPost/Badge';
+
 type Member = { name: string; role?: string };
 
 type Props = {
+  generation: string;
   leader: Member;
   members: Member[];
 };
 
-export default function ProjectDetailMeta({ leader, members }: Props) {
+export default function ProjectDetailMeta({ generation, leader, members }: Props) {
   return (
     <section css={wrapCss}>
       <dl css={dlCss}>
         <div css={rowCss}>
-          <dt css={dtCss}>팀장</dt>
+          <dt css={dtCss}>기수</dt>
           <dd css={ddCss}>
-            <span css={memberCss}>
-              {leader.name}
-              {leader.role && <span css={chipCss}>{leader.role}</span>}
-            </span>
+            <Badge
+              text={generation}
+              customCss={css`
+                font-size: 18px;
+                font-weight: 700;
+                padding: 2px 8px;
+                line-height: 28.8px;
+              `}
+            />
           </dd>
         </div>
 
-        <div css={rowCss}>
-          <dt css={dtCss}>팀원</dt>
-          <dd css={ddCss}>
-            {members.map((m, i) => (
-              <span key={i} css={memberCss}>
-                {m.name}
-                {m.role && <span css={chipCss}>{m.role}</span>}
+        <dl css={dlCss1}>
+          <div css={rowCss}>
+            <dt css={dtCss}>팀장</dt>
+            <dd css={ddCss}>
+              <span css={memberCss}>
+                {leader.name}
+                {leader.role && <span css={chipCss}>{leader.role}</span>}
               </span>
-            ))}
-          </dd>
-        </div>
+            </dd>
+          </div>
+
+          <div css={rowCss}>
+            <dt css={dtCss}>팀원</dt>
+            <dd css={ddCss}>
+              {members.map((m, i) => (
+                <span key={i} css={memberCss}>
+                  {m.name}
+                  {m.role && <span css={chipCss}>{m.role}</span>}
+                </span>
+              ))}
+            </dd>
+          </div>
+        </dl>
       </dl>
     </section>
   );
@@ -42,12 +63,17 @@ const wrapCss = css`
 `;
 const dlCss = css`
   display: grid;
-  gap: 22px;
+  gap: 17px;
+`;
+const dlCss1 = css`
+  display: grid;
+  gap: 23px;
 `;
 const rowCss = css`
   display: grid;
   grid-template-columns: 60px 1fr;
   gap: 35px;
+  align-items: center;
 `;
 const dtCss = css`
   font-size: 20px;
@@ -69,8 +95,8 @@ const chipCss = css`
   align-items: center;
   font-size: 12px;
   font-weight: 600;
-  color: #4285f4;
-  border: 1px solid #4285f4;
+  color: ${colors.primary[600]};
+  border: 1px solid ${colors.primary[600]};
   border-radius: 20px;
   padding: 0 8px;
 `;

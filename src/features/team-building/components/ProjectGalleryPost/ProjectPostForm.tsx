@@ -1,4 +1,7 @@
+// 줄이 상당히 길어 추후 분리할 예정
+
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
@@ -24,24 +27,59 @@ const PART_OPTIONS = [
 ] as const;
 
 // 폼에서 사용하는 팀원 타입 (파트 정보 포함)
-type TeamMember = ProjectMemberBase & {
+export type TeamMember = ProjectMemberBase & {
   part: string[];
 };
 
 const TITLE_MAX = 20;
 const ONE_LINER_MAX = 30;
 
-export default function ProjectPostForm() {
-  const [title, setTitle] = useState('');
-  const [oneLiner, setOneLiner] = useState('');
-  const [generation, setGeneration] = useState<string[]>([]);
-  const [leaderPart, setLeaderPart] = useState<string[]>([]);
-  const [serviceStatus, setServiceStatus] = useState<'RUNNING' | 'PAUSED'>('PAUSED');
+// 임시 팀장 정보 (ui용)
+const DEFAULT_LEADER: ProjectMemberBase = {
+  id: 'leader-1',
+  name: '주현지',
+  badge: '25-26 Core',
+  school: '성공회대학교',
+};
 
+// ProjectPostForm 에서 쓸 초기값 타입
+export type ProjectPostFormInitialValues = {
+  title?: string;
+  oneLiner?: string;
+  generation?: '25-26' | '24-25' | '이전 기수';
+  leaderPart?: string;
+  serviceStatus?: 'RUNNING' | 'PAUSED';
+  description?: string;
+  teamMembers?: TeamMember[];
+  leader?: ProjectMemberBase; // 초기 팀장 정보 (수정페이지)
+};
+
+type ProjectPostFormProps = {
+  initialValues?: ProjectPostFormInitialValues;
+  isEditMode?: boolean;
+};
+
+export default function ProjectPostForm({
+  initialValues,
+  isEditMode = false,
+}: ProjectPostFormProps) {
+  const router = useRouter();
+
+  const [title, setTitle] = useState(initialValues?.title ?? '');
+  const [oneLiner, setOneLiner] = useState(initialValues?.oneLiner ?? '');
+  const [generation, setGeneration] = useState<string[]>(
+    initialValues?.generation ? [initialValues.generation] : []
+  );
+  const [leader, setLeader] = useState<ProjectMemberBase>(initialValues?.leader ?? DEFAULT_LEADER);
+  const [leaderPart, setLeaderPart] = useState<string[]>(
+    initialValues?.leaderPart ? [initialValues.leaderPart] : []
+  );
+  const [serviceStatus, setServiceStatus] = useState<'RUNNING' | 'PAUSED'>(
+    initialValues?.serviceStatus ?? 'PAUSED'
+  );
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-
-  const [description, setDescription] = useState('');
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialValues?.teamMembers ?? []);
+  const [description, setDescription] = useState(initialValues?.description ?? '');
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -63,6 +101,40 @@ export default function ProjectPostForm() {
 
   const handleChangeMemberPart = (id: string, next: string[]) => {
     setTeamMembers(prev => prev.map(m => (m.id === id ? { ...m, part: next } : m)));
+  };
+
+  // 팀장 위임
+  const handleDelegateLeader = (memberId: string) => {
+    setTeamMembers(prevMembers => {
+      const target = prevMembers.find(m => m.id === memberId);
+      if (!target) return prevMembers;
+
+      // 새 팀장으로 올릴 멤버
+      const newLeader: ProjectMemberBase = {
+        id: target.id,
+        name: target.name,
+        badge: target.badge,
+        school: target.school,
+      };
+
+      // 기존 팀장을 팀원으로 내려보내기
+      const prevLeaderAsMember: TeamMember = {
+        ...leader,
+        part: leaderPart,
+      };
+
+      // 기존 멤버 리스트에서
+      // - 위임받은 사람 제거
+      // - 혹시 기존 팀장이 이미 팀원에 있다면 제거
+      const rest = prevMembers.filter(m => m.id !== memberId && m.id !== leader.id);
+
+      // state 업데이트
+      setLeader(newLeader);
+      setLeaderPart(target.part);
+
+      // 기존 팀장을 제일 위에 추가
+      return [prevLeaderAsMember, ...rest];
+    });
   };
 
   // 폼 유효성 체크
@@ -89,6 +161,24 @@ export default function ProjectPostForm() {
   const handleSubmitClick = () => {
     if (!isFormValid) return;
     setShowConfirmModal(true);
+  };
+
+  const handlePreviewClick = () => {
+    const generationValue = generation[0] ?? '';
+    const leaderPartValue = leaderPart[0] ?? '';
+
+    router.push({
+      pathname: '/project-gallery/preview',
+      query: {
+        title,
+        oneLiner,
+        generation: generationValue,
+        leaderPart: leaderPartValue,
+        description,
+        teamMembers: JSON.stringify(teamMembers),
+        serviceStatus,
+      },
+    });
   };
 
   return (
@@ -139,7 +229,8 @@ export default function ProjectPostForm() {
           <span css={labelCss}>기수</span>
           <div
             css={css`
-              width: 496px;
+              width: 100%;
+              max-width: 496px;
             `}
           >
             <SelectBoxBasic
@@ -158,12 +249,7 @@ export default function ProjectPostForm() {
           <span css={labelCss}>팀장</span>
           <ProjectMemberRow
             isLeader
-            member={{
-              id: 'leader-1',
-              name: '주현지',
-              badge: '25-26 Core',
-              school: '성공회대학교',
-            }}
+            member={leader}
             partOptions={PART_OPTIONS as unknown as string[]}
             partValue={leaderPart}
             onPartChange={setLeaderPart}
@@ -184,6 +270,8 @@ export default function ProjectPostForm() {
                 partValue={member.part}
                 onPartChange={next => handleChangeMemberPart(member.id, next)}
                 onRemove={() => handleRemoveMember(member.id)}
+                isEditMode={isEditMode}
+                onDelegateLeader={() => handleDelegateLeader(member.id)}
               />
             ))}
           </div>
@@ -238,6 +326,7 @@ export default function ProjectPostForm() {
             type="button"
             variant="secondary"
             title="프로젝트 미리보기"
+            onClick={handlePreviewClick}
             style={{
               height: '50px',
               fontSize: '18px',
@@ -302,6 +391,7 @@ const formCss = css`
   flex-direction: column;
   gap: 32px;
   color: ${colors.grayscale[1000]};
+  margin-top: 30px;
 `;
 
 const fieldBlockCss = css`
@@ -362,7 +452,7 @@ const btnRowCss = css`
   gap: 16px;
   width: 100%;
   max-width: 616px;
-  margin: 50px auto 0;
+  margin: 80px auto 0;
 `;
 
 const submitBtnCss = (isValid: boolean) => css`

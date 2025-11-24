@@ -21,7 +21,7 @@ const gridCss = css`
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 30px;
 
-  // 카드 그리드 반응형 설정
+  // 반응형에 따른 카드 정렬
   @media (max-width: 1024px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

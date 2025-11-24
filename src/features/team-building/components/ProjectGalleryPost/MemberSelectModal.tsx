@@ -25,6 +25,9 @@ const MOCK_MEMBERS: Member[] = [
   { id: '5', name: '박지민', badge: '25-26 Member', school: '성공회대학교' },
   { id: '6', name: '이도현', badge: '24-25 Member', school: '성공회대학교' },
   { id: '7', name: '김다은', badge: '25-26 Member', school: '성공회대학교' },
+  { id: '8', name: '윤준석', badge: '25-26 Organizer', school: '성공회대학교' },
+  { id: '9', name: '이슬', badge: '25-26 Core', school: '성공회대학교' },
+  { id: '10', name: '이서영', badge: '25-26 Core', school: '성공회대학교' },
 ];
 
 type TeamMemberSelectModalProps = {
@@ -44,7 +47,6 @@ export default function MemberSelectModal({
   const [hasSearched, setHasSearched] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // 모달 전체 박스 / 리스트 영역 ref
   const modalRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
 
@@ -80,10 +82,10 @@ export default function MemberSelectModal({
   const handleSearch = (value: string) => {
     setKeyword(value);
     setHasSearched(value.trim().length > 0);
-    // 여기서 나중에 API 호출 가능
+    // 나중에 API 호출
   };
 
-  // ✅ wheel 이벤트를 전역에서 잡고, 타겟에 따라 배경 스크롤을 막을지 결정
+  // wheel 이벤트를 전역에서 잡고, 조건에 따라 배경 스크롤을 막을지 결정
   useEffect(() => {
     if (!open || !mounted) return;
 
@@ -99,7 +101,7 @@ export default function MemberSelectModal({
       // 모달 밖이면 배경 스크롤 허용
       if (!isInModal) return;
 
-      // ✅ 리스트 영역 안에서의 처리
+      // 리스트 영역 안에서의 처리
       if (isInList && listEl) {
         const deltaY = e.deltaY;
         const atTop = listEl.scrollTop === 0;
@@ -112,13 +114,12 @@ export default function MemberSelectModal({
           return;
         }
 
-        // 리스트 맨 위에서 위로 더 올리거나, 맨 아래에서 더 내리려고 하면
-        // → 배경 스크롤 막기
+        // 그 이외 배경 스크롤 막기
         e.preventDefault();
         return;
       }
 
-      // ✅ 모달 안(헤더/빈 공간 등)에서의 스크롤 → 배경 무조건 막기
+      // 모달 안(헤더/빈 공간 등)에서의 스크롤 → 배경 스크롤 막기
       e.preventDefault();
     };
 
@@ -222,12 +223,12 @@ const bodyCss = css`
 const searchWrapCss = css``;
 
 const listWrapCss = css`
-  margin-top: 30px;
+  margin-top: 35px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 18px;
 
-  max-height: 330px;
+  max-height: 370px;
   overflow-y: auto;
   overscroll-behavior: contain;
 
@@ -242,7 +243,7 @@ const listWrapCss = css`
 `;
 
 const emptyCss = css`
-  padding: 22px 0 32px;
+  padding: 22px 0 42px;
   text-align: center;
   color: ${colors.grayscale[600]};
   font-size: 18px;

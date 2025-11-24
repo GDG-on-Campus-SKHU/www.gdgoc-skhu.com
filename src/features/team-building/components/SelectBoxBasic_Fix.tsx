@@ -13,7 +13,7 @@ import {
   selectBoxSearchCss,
   selectBoxSelectedTextCss,
   selectBoxWrapperCss,
-} from '../styles/selectbox';
+} from '../styles/selectbox_Fix';
 
 interface SelectBoxBasicProps {
   /**
