@@ -52,6 +52,7 @@ import {
   AUTO_SAVE_PLACEHOLDER,
   formatSavedAt,
 } from './constants';
+import ReQuill from '../ReQuill';
 
 type ModalState = 'idle' | 'confirm' | 'success';
 
@@ -308,15 +309,15 @@ export default function IdeaFormView({
                 style={{ display: 'none' }}
                 onChange={onImageFileChange}
               />
-              <ReactQuill
-                ref={quillRef}
-                value={form.description}
-                onChange={onDescriptionChange}
-                modules={quillModules}
-                formats={quillFormats}
-                style={{ height: '100%' }}
-                placeholder="Github README 작성에 쓰이는 ‘markdown’을 이용해 작성해보세요."
-              />
+              <ReQuill
+  ref={quillRef}
+  value={form.description}
+  onChange={onDescriptionChange}
+  modules={quillModules}
+  formats={quillFormats}
+  placeholder="Github README 작성에 쓰이는 ‘markdown’을 이용해 작성해보세요."
+  height="100%"
+/>
             </QuillWrapper>
           </TextAreaWrapper>
         </FieldSet>
