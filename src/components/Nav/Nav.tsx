@@ -50,6 +50,10 @@ export default function Nav() {
         <Link href="/login" scroll={false}>
           Login
         </Link>
+        {/* main 페이지에 임시로 넣었습니다!*/}
+        <Link href="/WelcomeOpen" scroll={false}>
+          Team Building
+        </Link>
       </div>
     </nav>
   );
