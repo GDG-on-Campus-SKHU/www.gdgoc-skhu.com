@@ -13,6 +13,7 @@ export const img = css`
   height: 15rem;
   border-radius: 12px;
   overflow: hidden;
+  position: relative;
 
   img {
     width: 100%;

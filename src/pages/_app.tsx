@@ -4,9 +4,10 @@ import { css } from '@emotion/react';
 import { AnimatePresence } from 'framer-motion';
 
 import Footer from '../components/Footer';
-import Nav from '../components/Nav';
 import Scene from '../components/Scene';
+// import Nav from '../components/Nav';
 import { BASE_URL } from '../constants/common';
+import { AppNavBar } from '../features/team-building/components/FeatureNavBar/FeatureNavBar';
 import GlobalStyle from '../styles/GlobalStyle';
 
 export default function App({ Component, pageProps, router }: AppProps) {
@@ -18,7 +19,8 @@ export default function App({ Component, pageProps, router }: AppProps) {
         <meta property="og:url" content={CURRENT_URL} />
       </Head>
       <GlobalStyle />
-      <Nav />
+      {/* <Nav /> */}
+      <AppNavBar />
       <Scene />
       <AnimatePresence
         mode="wait"

@@ -17,7 +17,7 @@ interface SelectBoxBasicProps {
   /**
    * 선택 가능한 옵션 목록
    */
-  options: string[];
+  options: readonly string[];
   /**
    * placeholder 텍스트
    */

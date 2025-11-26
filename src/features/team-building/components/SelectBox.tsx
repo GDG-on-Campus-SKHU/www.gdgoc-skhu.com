@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import {
   checkIconCss,
@@ -72,6 +72,7 @@ export default function SelectBox({
   const [internalSelected, setInternalSelected] = useState<string[]>(defaultValue);
   const [searchTerm, setSearchTerm] = useState('');
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
 
   const isControlled = value !== undefined;
   const selected = isControlled ? value : internalSelected;
@@ -161,6 +162,7 @@ export default function SelectBox({
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-disabled={disabled}
+        aria-controls={listboxId}
         tabIndex={disabled ? -1 : 0}
       >
         {selected.length === 0 ? (
@@ -188,7 +190,7 @@ export default function SelectBox({
       </div>
 
       {isOpen && !disabled && (
-        <div css={selectBoxDropdownCss} role="listbox">
+        <div css={selectBoxDropdownCss} role="listbox" id={listboxId}>
           {searchable && (
             <input
               css={selectBoxSearchCss}
