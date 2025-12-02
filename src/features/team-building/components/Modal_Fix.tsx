@@ -10,7 +10,11 @@ import {
   closingOverlayCss,
   messageCss,
   overlayCss,
+  resultMessageCss,
+  resultTitleCss,
   scrollBoxCss,
+  smallMessageCss,
+  smallTitleCss,
   subTextCss,
   titleCss,
 } from '../styles/modalStyles_Fix';
@@ -20,6 +24,7 @@ import { ModalProps } from './Modal.types';
 export default function Modal({
   type = 'default',
   title,
+  titleNode,
   message,
   subText,
   buttonText = '확인',
@@ -58,26 +63,37 @@ export default function Modal({
     handleClose();
   };
 
+  const renderedTitle = titleNode ?? title;
+
   // 처음은 렌더 x
   if (!mounted) return null;
 
   const modalNode = (
     <div css={[overlayCss, closing && closingOverlayCss]} onClick={handleClose}>
       <div css={[boxCss, closing && closingBoxCss]} onClick={e => e.stopPropagation()}>
-        {title && (
+        {renderedTitle && (
           <h2
             css={[
-              titleCss,
+              type === 'titleConfirm'
+                ? resultTitleCss
+                : type === 'smallConfirm'
+                  ? smallTitleCss
+                  : titleCss,
               css`
                 text-align: ${customTitleAlign};
               `,
             ]}
           >
-            {title}
+            {renderedTitle}
           </h2>
         )}
 
-        {(type === 'default' || type === 'textOnly') && <p css={messageCss}>{message}</p>}
+        {(type === 'default' || type === 'textOnly') && message && (
+          <p css={messageCss}>{message}</p>
+        )}
+
+        {type === 'titleConfirm' && message && <p css={resultMessageCss}>{message}</p>}
+        {type === 'smallConfirm' && message && <p css={smallMessageCss}>{message}</p>}
 
         {type === 'scroll' && (
           <div
@@ -111,7 +127,10 @@ export default function Modal({
           </div>
         )}
 
-        {(type === 'confirm' || type === 'textConfirm') && (
+        {(type === 'confirm' ||
+          type === 'textConfirm' ||
+          type === 'titleConfirm' ||
+          type === 'smallConfirm') && (
           <div css={buttonRowCss}>
             <Button
               onClick={handleConfirm}

@@ -42,9 +42,10 @@ export const buttonWrap = css`
       background-color: #9dc0f9;
     }
 
+    // 비활성화 색상 디자인대로 수정
     &:disabled {
-      background-color: #ededef;
-      color: #c3c6cb;
+      background-color: ${colors.grayscale[300]};
+      color: ${colors.grayscale[400]};
       border: none;
     }
   }

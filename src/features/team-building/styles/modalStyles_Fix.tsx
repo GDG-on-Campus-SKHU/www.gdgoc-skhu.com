@@ -76,11 +76,51 @@ export const titleCss = css`
   white-space: nowrap;
 `;
 
+export const titleNormalCss = css`
+  font-weight: 500;
+`;
+
+export const titleStrongCss = css`
+  font-weight: 700;
+`;
+
 export const messageCss = css`
   ${typography.b4};
   color: ${colors.grayscale[600]};
   line-height: 1.6;
   margin-bottom: 20px;
+  white-space: pre-line;
+`;
+
+export const resultTitleCss = css`
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 57.6px;
+  color: ${colors.grayscale[1000]};
+`;
+
+export const resultMessageCss = css`
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 32px;
+  color: ${colors.grayscale[600]};
+  margin-bottom: 40px;
+  white-space: pre-line;
+`;
+
+export const smallTitleCss = css`
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 38.4px;
+  color: ${colors.grayscale[1000]};
+`;
+
+export const smallMessageCss = css`
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 28.8px;
+  color: ${colors.grayscale[600]};
+  margin-bottom: 40px;
   white-space: pre-line;
 `;
 
