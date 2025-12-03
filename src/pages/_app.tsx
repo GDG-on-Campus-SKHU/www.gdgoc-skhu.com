@@ -7,6 +7,9 @@ import Footer from '../components/Footer';
 import Nav from '../components/Nav';
 import Scene from '../components/Scene';
 import { BASE_URL } from '../constants/common';
+
+import "@uiw/react-md-editor/markdown-editor.css";
+import "@uiw/react-markdown-preview/markdown.css";
 import GlobalStyle from '../styles/GlobalStyle';
 
 export default function App({ Component, pageProps, router }: AppProps) {

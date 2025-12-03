@@ -4,7 +4,7 @@ import { colors } from '../../../styles/constants/colors';
 
 export const buttonWrap = css`
   width: 100%;
-  height: 2.5rem;
+  height: 2.8rem;
   box-sizing: border-box;
   cursor: pointer;
   display: flex;
@@ -14,7 +14,8 @@ export const buttonWrap = css`
   background-color: ${colors.gdscBlue};
   color: white;
   border: none;
-  font-weight: 500;
+  font-weight: 400;
+  font-size: 16px;
   &:hover:not(:disabled) {
     background-color: #3770cd;
   }
@@ -24,8 +25,8 @@ export const buttonWrap = css`
   }
 
   &:disabled {
-    background-color: #ededef;
-    color: #c3c6cb;
+    background-color: ${colors.grayscale[300]};
+    color: ${colors.grayscale[400]};
     cursor: not-allowed;
   }
 

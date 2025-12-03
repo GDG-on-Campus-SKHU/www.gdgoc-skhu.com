@@ -53,8 +53,7 @@ export const selectBoxSelectedCss = css`
 `;
 
 export const selectBoxArrowCss = css`
-  width: 1rem;
-  height: 1rem;
+  width: 2rem;
   transition: transform 0.2s ease;
   margin-left: 0.5rem;
   flex-shrink: 0;
@@ -128,7 +127,7 @@ export const selectBoxItemCss = css`
 `;
 
 export const checkIconCss = css`
-  width: 1rem;
+  width: 1.5rem;
   color: ${colors.gdscBlue};
 `;
 
