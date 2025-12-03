@@ -1,10 +1,11 @@
 import { css } from '@emotion/react';
-import Tag from './Tag';
+
+import { colors } from '../../../../styles/constants';
+import { Link } from '../../hooks/useProfileEditor';
+import { TECH_STACK_OPTIONS } from '../../types/profile';
 import SelectBox from '../SelectBox';
 import SelectBoxLink from '../SelectBoxLink';
-import { colors } from '../../../../styles/constants';
-import { TECH_STACK_OPTIONS } from '../../types/profile';
-import { Link } from '../../hooks/useProfileEditor';
+import Tag from './Tag';
 
 const BASE_PROFILE_ITEMS = [
   { label: '학교', value: '성공회대학교' },
@@ -21,20 +22,20 @@ interface ProfileListProps {
   onLinksChange: (links: Link[]) => void;
 }
 
-export default function ProfileList({ 
-  isEditing, 
+export default function ProfileList({
+  isEditing,
   isPreviewMode,
   selectedTechStack,
   links,
   onTechStackChange,
-  onLinksChange
+  onLinksChange,
 }: ProfileListProps) {
   // 편집 필드를 보여줄 조건: 편집 중이면서 미리보기 모드가 아닐 때
   const showEditFields = isEditing && !isPreviewMode;
-  
+
   // 프리뷰를 보여줄 조건: 편집 중이 아니거나, 편집 중이면서 미리보기 모드일 때
   const showPreview = !isEditing || (isEditing && isPreviewMode);
-  
+
   const hasValidLinks = links.some(link => link.platform && link.url);
   const hasTechStack = selectedTechStack.length > 0;
 
@@ -42,7 +43,7 @@ export default function ProfileList({
     e.currentTarget.src = '/icon/link.svg';
   };
 
-  const renderBaseProfileItem = (item: typeof BASE_PROFILE_ITEMS[0]) => (
+  const renderBaseProfileItem = (item: (typeof BASE_PROFILE_ITEMS)[0]) => (
     <li key={item.label} css={profileItemCss}>
       <p css={labelCss}>{item.label}</p>
       {item.label === '역할' ? (
@@ -60,7 +61,7 @@ export default function ProfileList({
     if (showEditFields) {
       return (
         <div css={componentWrapperCss}>
-          <SelectBox 
+          <SelectBox
             options={TECH_STACK_OPTIONS}
             value={selectedTechStack}
             onChange={onTechStackChange}
@@ -68,11 +69,11 @@ export default function ProfileList({
         </div>
       );
     }
-    
+
     if (showPreview && hasTechStack) {
       return (
         <div css={techStackPreviewCss}>
-          {selectedTechStack.map((tech) => (
+          {selectedTechStack.map(tech => (
             <div key={tech} css={techIconWrapperCss}>
               <div css={techIconCss}>
                 <img src={`/icon/${tech}.svg`} alt={tech} />
@@ -83,7 +84,7 @@ export default function ProfileList({
         </div>
       );
     }
-    
+
     return <p css={placeholderValueCss}>아직 추가된 기술 스택이 없어요.</p>;
   };
 
@@ -91,30 +92,27 @@ export default function ProfileList({
     if (showEditFields) {
       return (
         <div css={componentWrapperCss}>
-          <SelectBoxLink 
-            value={links}
-            onChange={onLinksChange}
-          />
+          <SelectBoxLink value={links} onChange={onLinksChange} />
         </div>
       );
     }
-    
+
     if (showPreview && hasValidLinks) {
       return (
         <div css={linksPreviewCss}>
           {links
             .filter(link => link.platform && link.url)
-            .map((link) => (
-              <a 
-                key={link.id} 
-                href={link.url} 
-                target="_blank" 
+            .map(link => (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
                 rel="noopener noreferrer"
                 css={linkIconCss}
                 title={link.platform}
               >
-                <img 
-                  src={`/icon/${link.platform}.svg`} 
+                <img
+                  src={`/icon/${link.platform}.svg`}
                   alt={link.platform}
                   onError={handleImageError}
                 />
@@ -123,7 +121,7 @@ export default function ProfileList({
         </div>
       );
     }
-    
+
     return <p css={placeholderValueCss}>아직 추가된 링크가 없어요.</p>;
   };
 
@@ -132,13 +130,17 @@ export default function ProfileList({
       {BASE_PROFILE_ITEMS.map(renderBaseProfileItem)}
 
       {/* 기술스택 */}
-      <li css={[profileItemCss, (showEditFields || (showPreview && hasTechStack)) && editingItemCss]}>
+      <li
+        css={[profileItemCss, (showEditFields || (showPreview && hasTechStack)) && editingItemCss]}
+      >
         <p css={labelCss}>기술스택</p>
         {renderTechStackContent()}
       </li>
 
       {/* 링크 */}
-      <li css={[profileItemCss, (showEditFields || (showPreview && hasValidLinks)) && editingItemCss]}>
+      <li
+        css={[profileItemCss, (showEditFields || (showPreview && hasValidLinks)) && editingItemCss]}
+      >
         <p css={labelCss}>링크</p>
         {renderLinksContent()}
       </li>
@@ -201,7 +203,7 @@ const componentWrapperCss = css`
 const techIconWrapperCss = css`
   position: relative;
   display: inline-block;
-  
+
   &:hover > div:last-child {
     opacity: 1;
     visibility: visible;
@@ -221,7 +223,7 @@ const techIconCss = css`
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   img {
     width: 100%;
     height: 100%;
@@ -243,10 +245,12 @@ const tooltipCss = css`
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
   pointer-events: none;
   z-index: 10;
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -279,7 +283,7 @@ const linkIconCss = css`
   border: 1px solid ${colors.grayscale[400]};
   background-color: white;
   padding: 8px;
-  
+
   img {
     width: 100%;
     height: 100%;

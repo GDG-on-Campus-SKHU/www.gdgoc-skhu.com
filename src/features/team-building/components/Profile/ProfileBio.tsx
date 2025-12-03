@@ -1,16 +1,15 @@
-import { css } from '@emotion/react';
 import dynamic from 'next/dynamic';
+import { css } from '@emotion/react';
+
 import { colors } from '../../../../styles/constants';
 
-const MDEditor = dynamic(
-  () => import('@uiw/react-md-editor').then((mod) => mod.default),
-  { ssr: false }
-);
+const MDEditor = dynamic(() => import('@uiw/react-md-editor').then(mod => mod.default), {
+  ssr: false,
+});
 
-const MDPreview = dynamic(
-  () => import('@uiw/react-markdown-preview').then((mod) => mod.default),
-  { ssr: false }
-);
+const MDPreview = dynamic(() => import('@uiw/react-markdown-preview').then(mod => mod.default), {
+  ssr: false,
+});
 
 interface ProfileBioProps {
   isEditing: boolean;
@@ -32,7 +31,7 @@ export default function ProfileBio({
         <div css={editorContainerCss} data-color-mode="light">
           <MDEditor
             value={tempMarkdown}
-            onChange={(val) => setTempMarkdown(val || '')}
+            onChange={val => setTempMarkdown(val || '')}
             height={400}
             preview="live"
             hideToolbar={false}
@@ -72,7 +71,12 @@ const boxCss = css`
   background: #fff;
   min-height: 400px;
 
-  & h1, & h2, & h3, & h4, & h5, & h6 {
+  & h1,
+  & h2,
+  & h3,
+  & h4,
+  & h5,
+  & h6 {
     font-family: 'Pretendard', sans-serif;
   }
 

@@ -1,6 +1,7 @@
 import { css } from '@emotion/react';
-import Button from '../Button';
+
 import { colors } from '../../../../styles/constants';
+import Button from '../Button';
 
 interface ProfileHeaderProps {
   isEditing: boolean;
@@ -26,11 +27,7 @@ export default function ProfileHeader({
         <p css={userNameCss}>{userName}</p>
         {!isEditing && (
           <div css={buttonWrapperCss}>
-            <Button
-              title={'수정하기'}
-              variant="secondary"
-              onClick={onEditClick}
-            />
+            <Button title={'수정하기'} variant="secondary" onClick={onEditClick} />
           </div>
         )}
         {isPreviewMode && (

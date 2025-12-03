@@ -1,4 +1,5 @@
 import { css } from '@emotion/react';
+
 import Button from '../Button';
 
 interface ProfileEditButtonsProps {
@@ -16,15 +17,12 @@ export default function ProfileEditButtons({
 }: ProfileEditButtonsProps) {
   return (
     <div css={editorButtonsCss}>
-      <Button 
-        title={isPreviewMode ? "작성화면으로 돌아가기" : "내 프로필 미리보기"}
-        variant="secondary" 
-        onClick={isPreviewMode ? onBackToEdit : onPreview}  
+      <Button
+        title={isPreviewMode ? '작성화면으로 돌아가기' : '내 프로필 미리보기'}
+        variant="secondary"
+        onClick={isPreviewMode ? onBackToEdit : onPreview}
       />
-      <Button 
-        title="내 프로필 저장하기" 
-        onClick={onSave} 
-      />
+      <Button title="내 프로필 저장하기" onClick={onSave} />
     </div>
   );
 }

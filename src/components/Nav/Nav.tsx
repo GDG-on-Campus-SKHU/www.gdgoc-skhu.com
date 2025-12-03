@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import Link from 'next/link';
 import { css } from '@emotion/react';
 
-import { layoutCss } from '../../styles/constants/layout';
-import { useState } from 'react';
 import DropdownMenu from '../../features/team-building/components/MyPage/DropdownMenu';
+import { layoutCss } from '../../styles/constants/layout';
+
 const GDG_OC_LINK = 'https://sites.google.com/view/gdeveloperskorea/gdg-on-campus';
 
 export default function Nav() {
@@ -60,7 +61,6 @@ export default function Nav() {
           onMouseOver={() => setIsMyPageHovered(true)}
           onMouseLeave={() => setIsMyPageHovered(false)}
         >
-            
           MyPage
           {isMyPageHovered && <DropdownMenu />}
         </div>

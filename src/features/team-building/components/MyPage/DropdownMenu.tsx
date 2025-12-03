@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { css } from '@emotion/react';
+
 import { colors } from '../../../../styles/constants';
 
 export default function DropdownMenu() {
@@ -20,17 +21,17 @@ export default function DropdownMenu() {
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
-        
+
         &::before {
           content: '';
           position: absolute;
-          top: -1rem; 
+          top: -1rem;
           left: 0;
           right: 0;
-          height: 1rem; 
+          height: 1rem;
           background: transparent;
         }
-        
+
         a {
           flex: 1;
           padding-left: 8px;
@@ -48,7 +49,7 @@ export default function DropdownMenu() {
     >
       <Link href="/mypage/profile" scroll={false}>
         Profile
-      </Link> 
+      </Link>
       <Link href="/mypage/myproject" scroll={false}>
         MyProject
       </Link>

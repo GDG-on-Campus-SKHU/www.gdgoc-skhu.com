@@ -123,7 +123,6 @@ export const selectBoxItemCss = css`
   &.selected {
     background-color: #d9e7fd;
   }
-
 `;
 
 export const checkIconCss = css`

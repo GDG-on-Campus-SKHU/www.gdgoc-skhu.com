@@ -1,3 +1,3 @@
-import MyPage from "../features/team-building/pages/MyPage";
+import MyPage from '../features/team-building/pages/MyPage';
 
 export default MyPage;

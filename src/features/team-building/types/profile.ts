@@ -6,11 +6,11 @@ export interface ProfileItem {
 }
 
 export const TECH_STACK_OPTIONS: string[] = [
-  "Adobe After Effect",
-  "javascript",
-  "typescript",
-  "java",
-  "python",
+  'Adobe After Effect',
+  'javascript',
+  'typescript',
+  'java',
+  'python',
 ];
 
-export type TechStack = typeof TECH_STACK_OPTIONS[number];
+export type TechStack = (typeof TECH_STACK_OPTIONS)[number];

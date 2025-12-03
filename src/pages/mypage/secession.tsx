@@ -1,3 +1,3 @@
-import SecessionPage from "../../features/team-building/pages/Secession.tsx";
+import SecessionPage from '../../features/team-building/pages/Secession.tsx';
 
-export default SecessionPage
+export default SecessionPage;

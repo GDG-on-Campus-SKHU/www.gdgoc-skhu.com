@@ -1,11 +1,12 @@
-import { css } from '@emotion/react';
 import Link from 'next/link';
-import ProfileHeader from '../../components/Profile/ProfileHeader';
-import ProfileList from '../../components/Profile/ProfileList';
+import { css } from '@emotion/react';
+
+import { colors, layoutCss } from '../../../../styles/constants';
 import ProfileBio from '../../components/Profile/ProfileBio';
 import ProfileEditButtons from '../../components/Profile/ProfileEditButtons';
+import ProfileHeader from '../../components/Profile/ProfileHeader';
+import ProfileList from '../../components/Profile/ProfileList';
 import { useProfileEditor } from '../../hooks/useProfileEditor';
-import { layoutCss, colors } from '../../../../styles/constants';
 
 export default function ProfilePage() {
   const {
@@ -35,7 +36,7 @@ export default function ProfilePage() {
             onEditClick={handleEditClick}
           />
 
-          <ProfileList 
+          <ProfileList
             isEditing={isEditing}
             isPreviewMode={isPreviewMode}
             selectedTechStack={isEditing ? selectedTechStack : savedTechStack}

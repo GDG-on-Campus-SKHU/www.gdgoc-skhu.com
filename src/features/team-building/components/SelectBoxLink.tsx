@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   addButton,
@@ -51,7 +51,7 @@ export default function SelectBoxLink({
   // Controlled vs Uncontrolled
   const isControlled = value !== undefined;
   const [internalLinks, setInternalLinks] = useState<Link[]>(defaultValue);
-  
+
   // Controlled 모드일 때 외부 value 사용
   const links = isControlled ? value : internalLinks;
 

@@ -1,4 +1,5 @@
 import { css } from '@emotion/react';
+
 import { colors } from '../../../styles/constants';
 
 export type TabItem = {
@@ -7,7 +8,7 @@ export type TabItem = {
 };
 
 type TabsProps = {
-  items: ReadonlyArray<TabItem>;
+  items: readonly TabItem[];
   activeKey: string;
   onChange: (key: string) => void;
 };
