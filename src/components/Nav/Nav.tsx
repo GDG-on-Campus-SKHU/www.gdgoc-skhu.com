@@ -1,11 +1,15 @@
+import { useState } from 'react';
 import Link from 'next/link';
 import { css } from '@emotion/react';
 
+import DropdownMenu from '../../features/team-building/components/MyPage/DropdownMenu';
 import { layoutCss } from '../../styles/constants/layout';
 
 const GDG_OC_LINK = 'https://sites.google.com/view/gdeveloperskorea/gdg-on-campus';
 
 export default function Nav() {
+  const [isMyPageHovered, setIsMyPageHovered] = useState(false);
+
   return (
     <nav
       css={css`
@@ -49,6 +53,19 @@ export default function Nav() {
         </Link>
         <Link href="/login" scroll={false}>
           Login
+        </Link>
+        <div
+          css={css`
+            position: relative;
+          `}
+          onMouseOver={() => setIsMyPageHovered(true)}
+          onMouseLeave={() => setIsMyPageHovered(false)}
+        >
+          MyPage
+          {isMyPageHovered && <DropdownMenu />}
+        </div>
+        <Link href="/login" scroll={false}>
+          Logout
         </Link>
       </div>
     </nav>

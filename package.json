@@ -9,11 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@babel/runtime": "^7.28.4",
     "@emotion/react": "^11.11.4",
-    "@react-three/drei": "9.88.1",
+    "@iconify/json": "^2.2.411",
+    "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "8.15.18",
+    "@uiw/react-markdown-preview": "^5.1.5",
+    "@uiw/react-md-editor": "^4.0.8",
     "framer-motion": "^11.3.22",
     "next": "15.5.6",
+    "next-remove-imports": "^1.0.12",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "three": "0.160.0"
