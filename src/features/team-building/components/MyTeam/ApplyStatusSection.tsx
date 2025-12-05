@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
@@ -20,6 +20,8 @@ type ApplyStatusSectionProps = {
   secondPhaseApplicants?: ApplyApplicant[];
   /** 2차 지원기간이 열렸는지 여부 */
   secondEnabled?: boolean;
+  /** 각 지원기간별 결과 발표 여부 (first/second) */
+  resultAnnouncedByPhase?: Record<SupportPhase, boolean>;
 };
 
 type PendingAction = 'ACCEPT' | 'REJECT';
@@ -31,21 +33,34 @@ type ConfirmModalState = {
 } | null;
 
 export default function ApplyStatusSection({
-  firstPhaseApplicants = mockFirstPhaseApplicants,
-  secondPhaseApplicants = mockSecondPhaseApplicants,
+  firstPhaseApplicants,
+  secondPhaseApplicants,
   secondEnabled = false,
+  resultAnnouncedByPhase,
 }: ApplyStatusSectionProps) {
   const [activePhase, setActivePhase] = useState<SupportPhase>('first');
-  const [firstRows, setFirstRows] = useState<ApplyApplicant[]>(firstPhaseApplicants);
-  const [secondRows, setSecondRows] = useState<ApplyApplicant[]>(secondPhaseApplicants);
+
+  // api 연결 전 초기값 (없으면 임시 데이터)
+  const initialFirst = firstPhaseApplicants ?? mockFirstPhaseApplicants;
+  const initialSecond = secondPhaseApplicants ?? mockSecondPhaseApplicants;
+  const [firstRows, setFirstRows] = useState<ApplyApplicant[]>(initialFirst);
+  const [secondRows, setSecondRows] = useState<ApplyApplicant[]>(initialSecond);
+
+  // index 에서 api 주입 시 동기화
+  useEffect(() => {
+    setFirstRows(firstPhaseApplicants ?? mockFirstPhaseApplicants);
+  }, [firstPhaseApplicants]);
+
+  useEffect(() => {
+    setSecondRows(secondPhaseApplicants ?? mockSecondPhaseApplicants);
+  }, [secondPhaseApplicants]);
 
   const [confirmModal, setConfirmModal] = useState<ConfirmModalState>(null);
 
   const currentRows = activePhase === 'first' ? firstRows : secondRows;
   const totalCount = currentRows.length;
 
-  // // 2차 열렸을 때 1차 접근한 경우 (ui 확인용)
-  // const controlsDisabled = secondEnabled && activePhase === 'first';
+  const controlsDisabled = resultAnnouncedByPhase?.[activePhase] ?? false;
 
   const updateRowStatus = (phase: SupportPhase, id: string, nextStatus: ApplyStatus) => {
     const setter = phase === 'first' ? setFirstRows : setSecondRows;
@@ -54,6 +69,7 @@ export default function ApplyStatusSection({
 
   /** 수락버튼 */
   const handleClickAccept = (id: string) => {
+    if (controlsDisabled) return; // 발표 후에는 수락 불가
     const source = activePhase === 'first' ? firstRows : secondRows;
     const applicant = source.find(row => row.id === id);
     if (!applicant) return;
@@ -67,6 +83,7 @@ export default function ApplyStatusSection({
 
   /** 거절버튼 */
   const handleClickReject = (id: string) => {
+    if (controlsDisabled) return; // 발표 후에는 거절 불가
     const source = activePhase === 'first' ? firstRows : secondRows;
     const applicant = source.find(row => row.id === id);
     if (!applicant) return;
@@ -111,7 +128,7 @@ export default function ApplyStatusSection({
         rows={currentRows}
         onAccept={handleClickAccept}
         onReject={handleClickReject}
-        // controlsDisabled={controlsDisabled}
+        controlsDisabled={controlsDisabled}
       />
 
       {/* 수락 / 거절 확인 모달 */}

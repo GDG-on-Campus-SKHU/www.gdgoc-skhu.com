@@ -1,42 +1,80 @@
 import { useState } from 'react';
 import { css } from '@emotion/react';
 
-import { MOCK_PARTS, MyTeamMember, MyTeamPart } from '../../types/currentTeamData';
+import { JoinPhase, MOCK_PARTS, MyTeamMember, MyTeamPart } from '../../types/currentTeamData';
 import Modal from '../Modal_Fix';
 import MyTeamCount from './MyTeamCount';
 import MyTeamMemberCard, { MyTeamMemberVariant } from './MyTeamMember';
 import MyTeamStatusCard from './MyTeamStatus';
-
-/** 팀원 삭제 버튼 확인용 */
-const isLeader = true;
+import { SupportPhase } from './ApplyPeriodToggle';
 
 type PartColumnProps = {
   part: MyTeamPart;
   isLeaderView: boolean;
+  resultAnnouncedByPhase: Record<SupportPhase, boolean>;
+  visibleJoinPhases: JoinPhase[];
   onRemoveMember: (partId: string, member: MyTeamMember) => void;
 };
 
+/** 한 멤버가 삭제 가능한지 여부 계산 */
+function canRemoveMember(
+  member: MyTeamMember,
+  isLeaderView: boolean,
+  resultAnnouncedByPhase: Record<SupportPhase, boolean>
+): boolean {
+  // 1) 팀원이 아니면 삭제 X
+  if (!isLeaderView) return false;
+
+  // 2) 리더는 삭제 불가
+  if (member.isLeader) return false;
+
+  // 3) 어느 기간에서 합류했는지 정보가 없다면 보수적으로 삭제 불가 처리
+  const phase = member.joinPhase;
+  if (!phase) return false;
+
+  // 4) 해당 기간의 결과 발표 전까지만 삭제 가능
+  return !resultAnnouncedByPhase[phase];
+}
+
 /** 각 파트 컬럼 */
-function PartColumn({ part, isLeaderView, onRemoveMember }: PartColumnProps) {
+function PartColumn({
+  part,
+  isLeaderView,
+  resultAnnouncedByPhase,
+  visibleJoinPhases,
+  onRemoveMember,
+}: PartColumnProps) {
   const { id: partId, name, capacity, isRecruiting, members } = part;
+
+  // 현재 시점에서 화면에 노출할 멤버 필터링
+  const visibleMembers = members.filter(member => {
+    // joinPhase가 없으면 항상 보이게 할지, first로 간주할지는 선택인데
+    // 여기선 "정보 없으면 보이게"로 처리
+    if (!member.joinPhase) return true;
+    return visibleJoinPhases.includes(member.joinPhase);
+  });
 
   return (
     <div css={partColumnCss}>
       {/* 제목 + 인원 뱃지 */}
       <div css={partHeaderCss}>
         <span css={partNameCss}>{name}</span>
-        <MyTeamCount current={members.length} capacity={capacity} isRecruiting={isRecruiting} />
+        <MyTeamCount
+          current={visibleMembers.length}
+          capacity={capacity}
+          isRecruiting={isRecruiting}
+        />
       </div>
 
       {/* 멤버 카드/빈 카드 */}
       <div css={partBodyCss}>
-        {members.length > 0 ? (
-          members.map(member => {
+        {visibleMembers.length > 0 ? (
+          visibleMembers.map(member => {
             let variant: MyTeamMemberVariant = 'member';
             if (member.isLeader) variant = 'leader';
             else if (isLeaderView) variant = 'managedMember';
 
-            const canRemove = isLeaderView && !member.isLeader;
+            const canRemove = canRemoveMember(member, isLeaderView, resultAnnouncedByPhase);
 
             return (
               <MyTeamMemberCard
@@ -62,8 +100,18 @@ type RemoveMember = {
   memberName: string;
 };
 
+type MyTeamCurrentTeamSectionProps = {
+  isLeaderView: boolean;
+  resultAnnouncedByPhase: Record<SupportPhase, boolean>;
+  visibleJoinPhases?: JoinPhase[];
+};
+
 /** 현재 팀원 구성 */
-export default function MyTeamCurrentTeamSection() {
+export default function MyTeamCurrentTeamSection({
+  isLeaderView,
+  resultAnnouncedByPhase,
+  visibleJoinPhases = ['first'],
+}: MyTeamCurrentTeamSectionProps) {
   const [parts, setParts] = useState<MyTeamPart[]>(MOCK_PARTS);
   const [removeMember, setRemoveMember] = useState<RemoveMember | null>(null);
 
@@ -107,7 +155,9 @@ export default function MyTeamCurrentTeamSection() {
           <PartColumn
             key={part.id}
             part={part}
-            isLeaderView={isLeader}
+            isLeaderView={isLeaderView}
+            resultAnnouncedByPhase={resultAnnouncedByPhase}
+            visibleJoinPhases={visibleJoinPhases}
             onRemoveMember={handleRemoveModal}
           />
         ))}

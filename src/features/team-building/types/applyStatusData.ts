@@ -2,7 +2,7 @@
 export type ApplyStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
 
 // 1차 / 2차 구분
-export type ApplyPhase = 'FIRST' | 'SECOND';
+export type ApplyPhase = 'first' | 'second';
 
 // 한 명의 지원자 정보
 export type ApplyApplicant = {
@@ -19,7 +19,7 @@ export type ApplyApplicant = {
 export const mockFirstPhaseApplicants: ApplyApplicant[] = [
   {
     id: 'f1',
-    phase: 'FIRST',
+    phase: 'first',
     priorityLabel: '2지망',
     name: '주현지',
     part: '디자인',
@@ -28,7 +28,7 @@ export const mockFirstPhaseApplicants: ApplyApplicant[] = [
   },
   {
     id: 'f2',
-    phase: 'FIRST',
+    phase: 'first',
     priorityLabel: '3지망',
     name: '김태우',
     part: '백엔드',
@@ -37,7 +37,7 @@ export const mockFirstPhaseApplicants: ApplyApplicant[] = [
   },
   {
     id: 'f3',
-    phase: 'FIRST',
+    phase: 'first',
     priorityLabel: '1지망',
     name: '황재현',
     part: '프론트엔드 (웹)',
@@ -46,7 +46,7 @@ export const mockFirstPhaseApplicants: ApplyApplicant[] = [
   },
   {
     id: 'f4',
-    phase: 'FIRST',
+    phase: 'first',
     priorityLabel: '2지망',
     name: '강민정',
     part: '디자인',
@@ -55,7 +55,7 @@ export const mockFirstPhaseApplicants: ApplyApplicant[] = [
   },
   {
     id: 'f5',
-    phase: 'FIRST',
+    phase: 'first',
     priorityLabel: '3지망',
     name: '이서영',
     part: '기획',
@@ -64,7 +64,7 @@ export const mockFirstPhaseApplicants: ApplyApplicant[] = [
   },
   {
     id: 'f6',
-    phase: 'FIRST',
+    phase: 'first',
     priorityLabel: '3지망',
     name: '윤준석',
     part: '백엔드',
@@ -77,7 +77,7 @@ export const mockFirstPhaseApplicants: ApplyApplicant[] = [
 export const mockSecondPhaseApplicants: ApplyApplicant[] = [
   {
     id: 's1',
-    phase: 'SECOND',
+    phase: 'second',
     priorityLabel: '1지망',
     name: '김태우',
     part: '백엔드',
@@ -86,7 +86,7 @@ export const mockSecondPhaseApplicants: ApplyApplicant[] = [
   },
   {
     id: 's2',
-    phase: 'SECOND',
+    phase: 'second',
     priorityLabel: '1지망',
     name: '김준',
     part: '프론트엔드 (웹)',
@@ -95,7 +95,7 @@ export const mockSecondPhaseApplicants: ApplyApplicant[] = [
   },
   {
     id: 's3',
-    phase: 'SECOND',
+    phase: 'second',
     priorityLabel: '1지망',
     name: '이재민',
     part: '프론트엔드 (모바일)',
@@ -104,7 +104,7 @@ export const mockSecondPhaseApplicants: ApplyApplicant[] = [
   },
   {
     id: 's4',
-    phase: 'SECOND',
+    phase: 'second',
     priorityLabel: '2지망',
     name: '홍길동',
     part: '프론트엔드 (모바일)',
@@ -113,7 +113,7 @@ export const mockSecondPhaseApplicants: ApplyApplicant[] = [
   },
   {
     id: 's5',
-    phase: 'SECOND',
+    phase: 'second',
     priorityLabel: '3지망',
     name: '홍길동',
     part: '프론트엔드 (모바일)',
@@ -121,3 +121,8 @@ export const mockSecondPhaseApplicants: ApplyApplicant[] = [
     status: 'PENDING',
   },
 ];
+
+export const mockApplicantsByPhase: Record<ApplyPhase, ApplyApplicant[]> = {
+  first: mockFirstPhaseApplicants,
+  second: mockSecondPhaseApplicants,
+};

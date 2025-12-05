@@ -1,9 +1,13 @@
+/**1/2차 지원 기간 */
+export type JoinPhase = 'first' | 'second';
+
 /** 팀원 정보 */
 export type MyTeamMember = {
   id: string;
   name: string;
   /** 이 파트의 리더인지 여부 */
   isLeader?: boolean;
+  joinPhase?: JoinPhase;
 };
 
 /** 각 파트 */
@@ -30,8 +34,8 @@ export const MOCK_PARTS: MyTeamPart[] = [
     capacity: 2,
     isRecruiting: true,
     members: [
-      { id: 'u2', name: '홍길동' },
-      { id: 'u3', name: '홍길동' },
+      { id: 'u2', name: '홍길동', joinPhase: 'first' },
+      { id: 'u3', name: '홍길동', joinPhase: 'second' },
     ],
   },
   {
@@ -61,10 +65,10 @@ export const MOCK_PARTS: MyTeamPart[] = [
     capacity: 4,
     isRecruiting: true,
     members: [
-      { id: 'u4', name: '홍길동' },
-      { id: 'u5', name: '홍길동' },
-      { id: 'u6', name: '홍길동' },
-      { id: 'u7', name: '홍길동' },
+      { id: 'u4', name: '홍길동', joinPhase: 'first' },
+      { id: 'u5', name: '홍길동', joinPhase: 'first' },
+      { id: 'u6', name: '홍길동', joinPhase: 'second' },
+      { id: 'u7', name: '홍길동', joinPhase: 'second' },
     ],
   },
 ];

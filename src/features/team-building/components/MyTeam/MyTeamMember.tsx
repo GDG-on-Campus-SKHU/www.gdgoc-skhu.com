@@ -47,7 +47,7 @@ export default function MyTeamMemberCard({
       </div>
 
       {/* 팀장의 입장에서 팀원 카드일 때만 삭제 버튼 노출 */}
-      {isManagedMember && (
+      {isManagedMember && onClickRemove && (
         <button
           type="button"
           css={removeBtnCss}

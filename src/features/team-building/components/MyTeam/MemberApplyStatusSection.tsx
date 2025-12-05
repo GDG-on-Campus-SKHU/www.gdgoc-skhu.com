@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { css } from '@emotion/react';
 
 import {
@@ -17,23 +17,35 @@ type MemberApplyStatusSectionProps = {
   secondPhaseCards?: MemberApplyData[];
   /** 2차 지원기간이 열렸는지 여부 */
   secondEnabled?: boolean;
-  /** 결과 발표가 끝난 상태인지 여부 */
-  resultAnnounced?: boolean;
+  /** 각 지원기간별 결과 발표 여부 */
+  resultAnnouncedByPhase?: Record<SupportPhase, boolean>;
 };
 
 const PRIORITIES: MemberApplyPriority[] = [1, 2, 3];
 
 export default function MemberApplyStatusSection({
-  firstPhaseCards = mockMemberApplyCards,
+  firstPhaseCards,
   secondPhaseCards = [],
   secondEnabled = false,
-  resultAnnounced = false,
+  resultAnnouncedByPhase,
 }: MemberApplyStatusSectionProps) {
   const [activePhase, setActivePhase] = useState<SupportPhase>('first');
 
+  const initialFirst = firstPhaseCards ?? mockMemberApplyCards;
+  const initialSecond = secondPhaseCards ?? [];
+
   // 각 지원기간별 카드 (취소 시 UI 반영용)
-  const [firstCards, setFirstCards] = useState<MemberApplyData[]>(firstPhaseCards);
-  const [secondCards, setSecondCards] = useState<MemberApplyData[]>(secondPhaseCards);
+  const [firstCards, setFirstCards] = useState<MemberApplyData[]>(initialFirst);
+  const [secondCards, setSecondCards] = useState<MemberApplyData[]>(initialSecond);
+
+  // 부모에서 firstPhaseCards/secondPhaseCards가 바뀌면 로컬 상태도 리셋
+  useEffect(() => {
+    setFirstCards(firstPhaseCards ?? mockMemberApplyCards);
+  }, [firstPhaseCards]);
+
+  useEffect(() => {
+    setSecondCards(secondPhaseCards ?? []);
+  }, [secondPhaseCards]);
 
   // "지원 취소" 확인 모달용 대상 카드
   const [cancelTarget, setCancelTarget] = useState<MemberApplyData | null>(null);
@@ -45,9 +57,13 @@ export default function MemberApplyStatusSection({
   // 추후 phase 필드를 섞어서 넣을 수도 있으니 한 번 더 필터링
   const currentCards = cardsOfActivePhase.filter(card => card.phase === activePhase);
 
+  // 현재 활성된 지원기간의 결과 발표 여부
+  const isResultAnnounced = resultAnnouncedByPhase?.[activePhase] ?? false;
+
   /** 지원 취소 버튼 클릭 → 확인 모달 열기 */
   const handleCancel = (card: MemberApplyData) => {
     if (card.status !== 'PENDING') return;
+    if (isResultAnnounced) return;
     setCancelTarget(card);
     setShowConfirmCancel(true);
   };
@@ -72,6 +88,7 @@ export default function MemberApplyStatusSection({
   };
 
   const handleClickEmptyPriority = (priority: MemberApplyPriority) => {
+    if (isResultAnnounced) return; // 결과 발표 후에는 클릭 무시
     console.log(`${priority}지망 아이디어 지원하기 클릭`);
   };
 
@@ -85,8 +102,8 @@ export default function MemberApplyStatusSection({
         <MyApplyCard
           variant="empty"
           priority={priority}
-          emptyType={resultAnnounced ? 'result' : 'apply'}
-          onClickApply={resultAnnounced ? undefined : () => handleClickEmptyPriority(priority)}
+          emptyType={isResultAnnounced ? 'result' : 'apply'}
+          onClickApply={isResultAnnounced ? undefined : () => handleClickEmptyPriority(priority)}
         />
       );
     }
