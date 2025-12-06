@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import {
   addButton,
@@ -23,11 +23,7 @@ interface SelectBoxLinkProps {
    */
   onChange?: (links: Link[]) => void;
   /**
-   * 현재 링크 목록 (controlled component)
-   */
-  value?: Link[];
-  /**
-   * 초기 링크 목록 (uncontrolled component)
+   * 초기 링크 목록
    */
   defaultValue?: Link[];
   /**
@@ -43,54 +39,38 @@ interface SelectBoxLinkProps {
 
 export default function SelectBoxLink({
   onChange,
-  value,
   defaultValue = [{ id: 0, platform: '', url: '' }],
   maxLinks = 10,
   platforms = ['GitHub', 'LinkedIn', 'Twitter', 'Website'],
 }: SelectBoxLinkProps) {
-  // Controlled vs Uncontrolled
-  const isControlled = value !== undefined;
-  const [internalLinks, setInternalLinks] = useState<Link[]>(defaultValue);
-
-  // Controlled 모드일 때 외부 value 사용
-  const links = isControlled ? value : internalLinks;
-
-  // value prop이 변경되면 내부 상태 업데이트 (초기화 시)
-  useEffect(() => {
-    if (!isControlled && value) {
-      setInternalLinks(value);
-    }
-  }, [value, isControlled]);
-
-  const updateLinks = (newLinks: Link[]) => {
-    if (!isControlled) {
-      setInternalLinks(newLinks);
-    }
-    onChange?.(newLinks);
-  };
+  const [links, setLinks] = useState<Link[]>(defaultValue);
 
   const handleAddLink = () => {
     if (links.length >= maxLinks) return;
 
     const newLinks = [...links, { id: Date.now(), platform: '', url: '' }];
-    updateLinks(newLinks);
+    setLinks(newLinks);
+    onChange?.(newLinks);
   };
 
   const handleRemoveLink = (id: number) => {
     if (links.length <= 1) return;
 
     const newLinks = links.filter(link => link.id !== id);
-    updateLinks(newLinks);
+    setLinks(newLinks);
+    onChange?.(newLinks);
   };
 
   const handlePlatformChange = (id: number, platform: string) => {
-    const newLinks = links.map(link => (link.id === id ? { ...link, platform } : link));
-    updateLinks(newLinks);
+    const newLinks = links.map(link => (link.id === id ? { ...link, platform: platform } : link));
+    setLinks(newLinks);
+    onChange?.(newLinks);
   };
 
   const handleUrlChange = (id: number, url: string) => {
     const newLinks = links.map(link => (link.id === id ? { ...link, url } : link));
-    updateLinks(newLinks);
+    setLinks(newLinks);
+    onChange?.(newLinks);
   };
 
   return (
@@ -128,9 +108,7 @@ export default function SelectBoxLink({
                   color: '#ff4444',
                 },
               }}
-            >
-              ×
-            </button>
+            ></button>
           )}
         </div>
       ))}

@@ -33,13 +33,15 @@ export const radioButtonCss = css`
     border: 6px solid ${colors.gdscBlue};
   }
 
-  &.disabled {
-    background-color: #b0b0b0;
-    border-color: #b0b0b0;
+  &:disabled {
+    cursor: not-allowed;
+    border: 6px solid var(--grayscale-400, #c3c6cb);
+    background-color: #ffffff;
+  }
 
-    &::after {
-      background-color: white;
-    }
+  &:disabled:checked {
+    border: 6px solid var(--grayscale-400, #c3c6cb);
+    background-color: #ffffff;
   }
 `;
 
