@@ -1,42 +1,40 @@
-import Link from 'next/link';
-import Image from 'next/image';
-import IdeaItem from '../IdeaItem/IdeaItem';
-import Button from '../Button';
-import SelectBoxBasic from '../SelectBoxBasic';
-import Toggle from '../Toggle';
 import {
+  ApplyCTNR,
+  ArrowIcon,
   Container,
-  Wrapper,
-  TitleSection,
-  Title,
-  ProjectTitleRow,
-  Subtitle,
-  StatusBar,
-  StatusText,
-  StatusLabel,
-  StatusCount,
-  StatusActions,
-  RegisterButtonLink,
-  FilterContainer,
-  TopicSelectBox,
-  StateRow,
-  StateLabel,
-  StateToggle,
   EmptyCard,
   EmptyMessage,
-  IdeaHeaderRow,
-  NumberCTNR,
+  FilterContainer,
+  GrowthonLogo,
   IdeaContentCTNR,
-  ApplyCTNR,
-  RecruitStatusCTNR,
+  IdeaHeaderRow,
   IdeaItemCTNR,
-  Pagination,
+  NumberCTNR,
   PageButton,
   PageInsertNum,
-  ArrowIcon,
-  GrowthonLogo,
+  Pagination,
+  ProjectTitleRow,
+  RecruitStatusCTNR,
+  RegisterButtonLink,
+  StateLabel,
+  StateRow,
+  StateToggle,
+  StatusActions,
+  StatusBar,
+  StatusCount,
+  StatusLabel,
+  StatusText,
+  Subtitle,
+  Title,
+  TitleSection,
+  TopicSelectBox,
+  Wrapper,
 } from '../../styles/WelcomeOpen';
+import Button from '../Button';
+import IdeaItem from '../IdeaItem/IdeaItem';
 import { Idea } from '../store/IdeaStore';
+import Toggle from '../Toggle';
+
 const TOPIC_FILTER_OPTIONS = ['전체', '디자인', '프론트엔드', '백엔드'];
 
 export default function WelcomeView({

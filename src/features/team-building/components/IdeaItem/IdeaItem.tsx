@@ -77,7 +77,8 @@ const IdeaCountContainer = styled.div`
   width: 100%;
 `;
 const IdeaCount = styled.span<{ $closed?: boolean }>`
-  color: ${({ $closed }) => ($closed ? 'var(--grayscale-500, #979ca5)' : 'var(--primary-600-main, #4285f4)')};
+  color: ${({ $closed }) =>
+    $closed ? 'var(--grayscale-500, #979ca5)' : 'var(--primary-600-main, #4285f4)'};
   text-align: center;
 
   /* body/b1/b1-bold */
@@ -89,7 +90,8 @@ const IdeaCount = styled.span<{ $closed?: boolean }>`
 `;
 
 const IdeaTotal = styled.span<{ $closed?: boolean }>`
-  color: ${({ $closed }) => ($closed ? 'var(--grayscale-500, #979ca5)' : 'var(--primary-600-main, #4285f4)')};
+  color: ${({ $closed }) =>
+    $closed ? 'var(--grayscale-500, #979ca5)' : 'var(--primary-600-main, #4285f4)'};
   text-align: center;
 
   /* body/b1/b1-bold */
@@ -101,7 +103,8 @@ const IdeaTotal = styled.span<{ $closed?: boolean }>`
 `;
 
 const IdeaUnit = styled.span<{ $closed?: boolean }>`
-  color: ${({ $closed }) => ($closed ? 'var(--grayscale-500, #979ca5)' : 'var(--primary-600-main, #4285f4)')};
+  color: ${({ $closed }) =>
+    $closed ? 'var(--grayscale-500, #979ca5)' : 'var(--primary-600-main, #4285f4)'};
   text-align: center;
 
   /* body/b3/b3 */

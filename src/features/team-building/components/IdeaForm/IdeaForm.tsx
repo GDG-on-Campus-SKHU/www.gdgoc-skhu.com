@@ -1,16 +1,12 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 
-import { useIdeaStore } from '../store/IdeaStore';
-import { TeamRole } from './IdeaFormUtils';
-import {
-  DEFAULT_TEAM_COUNTS,
-  TITLE_MAX_LENGTH,
-  INTRO_MAX_LENGTH,
-} from './constants';
 import useAutosaveDraft from '../../hooks/useAutosaveDraft';
 import usePreferredSync from '../../hooks/usePreferredSync';
 import useQuillImages from '../../hooks/useQuillImages';
+import { useIdeaStore } from '../store/IdeaStore';
+import { DEFAULT_TEAM_COUNTS, INTRO_MAX_LENGTH, TITLE_MAX_LENGTH } from './constants';
+import { TeamRole } from './IdeaFormUtils';
 import IdeaFormView from './IdeaFormView';
 
 export interface Props {
@@ -25,7 +21,9 @@ export interface Props {
     status: '모집 중' | '모집 마감';
     team: Partial<Record<TeamRole, number>>;
   };
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => void;
   onSave: () => void;
   onRegister?: () => Promise<number | void> | number | void;
   onPreview: () => void;
@@ -51,10 +49,7 @@ export default function IdeaForm(props: Props) {
   const router = useRouter();
   const addIdea = useIdeaStore(s => s.addIdea);
 
-  const team = React.useMemo(
-    () => ({ ...DEFAULT_TEAM_COUNTS, ...(form.team ?? {}) }),
-    [form.team]
-  );
+  const team = React.useMemo(() => ({ ...DEFAULT_TEAM_COUNTS, ...(form.team ?? {}) }), [form.team]);
 
   const applyLengthLimit = React.useCallback((name: string, value: string) => {
     if (name === 'title') return value.slice(0, TITLE_MAX_LENGTH);
@@ -89,12 +84,11 @@ export default function IdeaForm(props: Props) {
   );
 
   // 1) preferredPart ↔ team 자동 동기화
-  const { preferredRoleKey, radioRenderVersion, handlePreferredPartSelect } =
-    usePreferredSync({
-      preferredPart: form.preferredPart ?? '',
-      team,
-      emitFieldChange,
-    });
+  const { preferredRoleKey, radioRenderVersion, handlePreferredPartSelect } = usePreferredSync({
+    preferredPart: form.preferredPart ?? '',
+    team,
+    emitFieldChange,
+  });
 
   // 2) Draft + Autosave + Draft-modal
   const {
@@ -140,8 +134,7 @@ export default function IdeaForm(props: Props) {
     title.length > TITLE_MAX_LENGTH ||
     intro.length > INTRO_MAX_LENGTH;
 
-  const [modalState, setModalState] =
-    React.useState<'idle' | 'confirm' | 'success'>('idle');
+  const [modalState, setModalState] = React.useState<'idle' | 'confirm' | 'success'>('idle');
   const isAnyModalOpen = modalState !== 'idle' || isDraftModalOpen;
 
   React.useEffect(() => {
@@ -197,16 +190,7 @@ export default function IdeaForm(props: Props) {
     }
 
     router.push('/WelcomeOpen');
-  }, [
-    addIdea,
-    form,
-    intro,
-    onRegister,
-    preferredPart,
-    router,
-    title,
-    topic,
-  ]);
+  }, [addIdea, form, intro, onRegister, preferredPart, router, title, topic]);
 
   const handlePreviewClick = React.useCallback(() => {
     onPreview?.();

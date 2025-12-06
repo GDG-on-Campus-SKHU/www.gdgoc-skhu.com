@@ -1,6 +1,7 @@
 import React from 'react';
-import ReactQuill from 'react-quill';
 import type { RangeStatic } from 'quill';
+import ReactQuill from 'react-quill';
+
 import { MAX_IMAGE_SIZE } from '../components/IdeaForm/constants';
 
 const quillToolbarOptions = [
@@ -126,10 +127,7 @@ export default function useQuillImages({
       if (!pageEl) return false;
       const target = evt.target as Node | null;
       const path = (evt as any).composedPath?.() ?? [];
-      return (
-        (target && pageEl.contains(target)) ||
-        path.includes(pageEl)
-      );
+      return (target && pageEl.contains(target)) || path.includes(pageEl);
     };
 
     const onDragOver = (evt: DragEvent) => {
@@ -248,7 +246,7 @@ export default function useQuillImages({
       }
     };
 
-    const binding = editor.keyboard.addBinding({ key: enterKey }, handler);
+    const binding = editor.keyboard.addBinding({ key: enterKey as any }, handler);
 
     return () => {
       const arr = (editor.keyboard as any).bindings?.[enterKey];
@@ -284,7 +282,10 @@ export default function useQuillImages({
 
   const plainDescription = React.useMemo(() => {
     if (!description) return '';
-    return description.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').trim();
+    return description
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .trim();
   }, [description]);
 
   return {

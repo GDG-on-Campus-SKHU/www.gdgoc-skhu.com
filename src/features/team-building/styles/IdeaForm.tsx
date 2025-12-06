@@ -1,5 +1,6 @@
-import styled, { css } from "styled-components";
-import { colors } from "../../../styles/constants";
+import styled, { css } from 'styled-components';
+
+import { colors } from '../../../styles/constants';
 
 export const PageContainer = styled.div<{ $isModalOpen?: boolean }>`
   width: 100%;
@@ -9,8 +10,6 @@ export const PageContainer = styled.div<{ $isModalOpen?: boolean }>`
   justify-content: center;
   padding: 40px 0 120px;
   position: relative;
-
-
 
   /* 모달이 열렸을 때 배경 blur 처리 */
   ${({ $isModalOpen }) =>
@@ -44,7 +43,6 @@ export const HeaderRow = styled.div`
   padding: 40px 0 20px;
   border-bottom: 0;
   gap: 12px;
-
 `;
 
 export const SectionTitle = styled.h2`
@@ -111,7 +109,11 @@ export const FieldHeader = styled.div`
   gap: 8px;
 `;
 
-export const FieldCounter = styled.span<{ $isOver?: boolean; $isActive?: boolean; $hasValue?: boolean }>`
+export const FieldCounter = styled.span<{
+  $isOver?: boolean;
+  $isActive?: boolean;
+  $hasValue?: boolean;
+}>`
   color: ${({ $isOver, $isActive, $hasValue }) =>
     $isOver
       ? '#EA4335'
@@ -285,8 +287,6 @@ export const TeamRow = styled.div`
   justify-content: space-between;
   gap: 280px;
   height: 50px;
-
-
 `;
 
 export const TeamLabel = styled.span`
@@ -443,8 +443,6 @@ export const ButtonBase = styled.button`
 
   cursor: pointer;
   border: none;
-
-
 `;
 
 export const PreviewButton = styled(ButtonBase)<{ disabled?: boolean }>`

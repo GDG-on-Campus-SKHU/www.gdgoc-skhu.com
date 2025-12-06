@@ -1,7 +1,8 @@
-import styled from 'styled-components';
-import SelectBoxBasic from '../components/SelectBoxBasic';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+import styled from 'styled-components';
+
+import SelectBoxBasic from '../components/SelectBoxBasic';
 
 export const Container = styled.div`
   width: 100%;
@@ -52,8 +53,6 @@ export const FilterContainer = styled.div`
   min-height: 64px;
   margin-top: 6px;
   margin-bottom: 30px;
-
-
 `;
 export const ProjectTitleRow = styled.div`
   display: flex;
@@ -87,8 +86,6 @@ export const StatusBar = styled.section`
   gap: clamp(1rem, 35vw, 717px);
   width: 100%;
   min-height: 70px;
-
-
 `;
 
 export const StatusText = styled.div`
@@ -336,7 +333,6 @@ export const Pagination = styled.nav`
   margin: 36px auto 0;
   width: fit-content;
   border-radius: 8px;
-
 `;
 
 export const PageButton = styled.button<{ $active?: boolean; $isArrow?: boolean }>`

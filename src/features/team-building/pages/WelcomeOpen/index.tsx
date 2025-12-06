@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import { Idea, resolveTotalMembers, useIdeaStore } from '../../components/store/IdeaStore';
 import WelcomeOpen from '../../components/WelcomeOpen/WelcomeOpen';
 
 const ITEMS_PER_PAGE = 10;
 
-export default function WelcomePage(pageNumber?: number) {
+export default function WelcomePage() {
   const ideas = useIdeaStore(state => state.ideas);
   const hasHydratedIdeas = useIdeaStore(state => state.hasHydrated);
   const hydrateIdeas = useIdeaStore(state => state.hydrateFromStorage);
@@ -46,8 +47,7 @@ export default function WelcomePage(pageNumber?: number) {
       0
     );
 
-    const baseCurrent =
-      typeof idea.currentMembers === 'number' ? idea.currentMembers : 0;
+    const baseCurrent = typeof idea.currentMembers === 'number' ? idea.currentMembers : 0;
 
     const ownerPlusFilled = 1 + filledTotal;
     const effectiveCurrent = Math.max(baseCurrent, ownerPlusFilled);

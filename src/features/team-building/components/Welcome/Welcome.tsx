@@ -42,8 +42,8 @@ const Wrapper = styled.div`
 `;
 
 const FeatureNavBar = styled.header`
-width: 1080px;
-height: 26px;
+  width: 1080px;
+  height: 26px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -56,7 +56,6 @@ const FeatureBrand = styled.span`
   font-weight: 700;
   line-height: 160%;
   color: #000000;
-
 `;
 
 const FeatureNavLinks = styled.nav`

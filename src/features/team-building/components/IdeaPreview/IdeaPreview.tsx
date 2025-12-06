@@ -182,7 +182,6 @@ const SectionTitle = styled.span`
   color: #040405;
 `;
 
-
 const MemberCard = styled.div`
   display: flex;
   width: 1080px;

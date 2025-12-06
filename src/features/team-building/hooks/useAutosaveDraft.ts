@@ -1,7 +1,8 @@
 import React from 'react';
+
+import { AUTO_SAVE_PLACEHOLDER, SESSION_DRAFT_KEY } from '../components/IdeaForm/constants';
 import type { Props } from '../components/IdeaForm/IdeaForm';
 import { TEAM_ROLES, TeamRole } from '../components/IdeaForm/IdeaFormUtils';
-import { SESSION_DRAFT_KEY, AUTO_SAVE_PLACEHOLDER } from '../components/IdeaForm/constants';
 import { formatSavedAt } from '../components/IdeaForm/utils';
 
 interface SessionDraftPayload {
@@ -25,8 +26,7 @@ export default function useAutosaveDraft({
   const [localSavedAt, setLocalSavedAt] = React.useState<string | null>(null);
   const [localIsSaving, setLocalIsSaving] = React.useState(false);
 
-  const [draftPayload, setDraftPayload] =
-    React.useState<SessionDraftPayload | null>(null);
+  const [draftPayload, setDraftPayload] = React.useState<SessionDraftPayload | null>(null);
   const [isDraftModalOpen, setIsDraftModalOpen] = React.useState(false);
   const hasCheckedDraftRef = React.useRef(false);
   const autoSaveTimerRef = React.useRef<number | null>(null);
@@ -74,7 +74,8 @@ export default function useAutosaveDraft({
       if (!stored) return;
 
       const parsed = JSON.parse(stored) as SessionDraftPayload | SessionDraftPayload['form'];
-      const draft = (parsed as SessionDraftPayload)?.form ?? (parsed as SessionDraftPayload['form']);
+      const draft =
+        (parsed as SessionDraftPayload)?.form ?? (parsed as SessionDraftPayload['form']);
       if (!draft || typeof draft !== 'object') return;
 
       const hasContent =

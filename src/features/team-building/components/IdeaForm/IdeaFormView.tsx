@@ -1,58 +1,59 @@
 import React from 'react';
-import ReactQuill from 'react-quill';
-import type  ReactQuillProps  from 'react-quill';
-import Radio from '../Radio';
-import SelectBoxBasic from '../SelectBoxBasic';
-import { PREFERRED_OPTIONS, TEAM_ROLES, TeamRole } from './IdeaFormUtils';
-import type { TeamCounts } from '../store/IdeaStore';
-import 'react-quill/dist/quill.snow.css';
+import ReactQuill, { ReactQuillProps } from 'react-quill';
+
 import {
-  PageContainer,
-  FormContainer,
-  HeaderRow,
-  SectionTitle,
   AutoSaveStatus,
-  FormSection,
-  FieldSet,
-  FieldHeader,
-  FieldLabel,
-  FieldCounter,
-  FieldInputWrapper,
-  Input,
-  SelectWrapper,
-  PreferredSection,
-  PreferredHeading,
-  RadioGroup,
-  TeamSection,
-  TeamHeading,
-  TeamTitle,
-  TeamHint,
-  TeamList,
-  TeamRow,
-  TeamLabel,
-  TeamControls,
-  StepButton,
-  TeamCount,
-  TextAreaWrapper,
-  QuillWrapper,
   ButtonGroup,
-  PreviewButton,
-  SubmitButton,
-  ModalOverlay,
-  ModalCard,
-  ModalTitle,
+  FieldCounter,
+  FieldHeader,
+  FieldInputWrapper,
+  FieldLabel,
+  FieldSet,
+  FormContainer,
+  FormSection,
+  HeaderRow,
+  Input,
   ModalActions,
   ModalButton,
+  ModalCard,
+  ModalOverlay,
+  ModalTitle,
+  PageContainer,
+  PreferredHeading,
+  PreferredSection,
+  PreviewButton,
+  QuillWrapper,
+  RadioGroup,
+  SectionTitle,
+  SelectWrapper,
+  StepButton,
+  SubmitButton,
+  TeamControls,
+  TeamCount,
+  TeamHeading,
+  TeamHint,
+  TeamLabel,
+  TeamList,
+  TeamRow,
+  TeamSection,
+  TeamTitle,
+  TextAreaWrapper,
 } from '../../styles/IdeaForm';
+import Radio from '../Radio';
+import ReQuill from '../ReQuill';
+import SelectBoxBasic from '../SelectBoxBasic';
+import type { TeamCounts } from '../store/IdeaStore';
 import {
-  TITLE_MAX_LENGTH,
-  INTRO_MAX_LENGTH,
-  TOPIC_OPTIONS,
-  TOPIC_PLACEHOLDER,
   AUTO_SAVE_PLACEHOLDER,
   formatSavedAt,
+  INTRO_MAX_LENGTH,
+  TITLE_MAX_LENGTH,
+  TOPIC_OPTIONS,
+  TOPIC_PLACEHOLDER,
 } from './constants';
-import ReQuill from '../ReQuill';
+import { PREFERRED_OPTIONS, TEAM_ROLES, TeamRole } from './IdeaFormUtils';
+
+import 'react-quill/dist/quill.snow.css';
 
 type ModalState = 'idle' | 'confirm' | 'success';
 
@@ -100,10 +101,8 @@ interface IdeaFormViewProps {
 export default function IdeaFormView({
   form,
   team,
-  preferredRoleKey,
   radioRenderVersion,
   onChange,
-  emitFieldChange,
   onTopicSelect,
   onPreferredPartSelect,
   onTeamAdjust,
@@ -137,12 +136,11 @@ export default function IdeaFormView({
   const introCounter = `${Math.min(intro.length, INTRO_MAX_LENGTH)}/${INTRO_MAX_LENGTH}`;
   const draftSavedAtLabel = formatSavedAt(draftSavedAt) ?? draftSavedAt ?? '최근';
 
-  const autoSaveDisplay =
-    autoSaveSaving
-      ? '임시저장 중...'
-      : autoSaveSavedAt
-        ? `임시저장 완료 ${autoSaveSavedAt}`
-        : AUTO_SAVE_PLACEHOLDER;
+  const autoSaveDisplay = autoSaveSaving
+    ? '임시저장 중...'
+    : autoSaveSavedAt
+      ? `임시저장 완료 ${autoSaveSavedAt}`
+      : AUTO_SAVE_PLACEHOLDER;
 
   React.useEffect(() => {
     // Occasionally ReactQuill renders an extra toolbar; trim to the active one.
@@ -169,7 +167,6 @@ export default function IdeaFormView({
   return (
     <PageContainer ref={pageRef} $isModalOpen={modalState !== 'idle' || isDraftModalOpen}>
       <FormContainer>
-
         <HeaderRow>
           <SectionTitle>아이디어 작성</SectionTitle>
           <AutoSaveStatus $saving={autoSaveSaving}>{autoSaveDisplay}</AutoSaveStatus>
@@ -184,7 +181,9 @@ export default function IdeaFormView({
                 불러오시겠습니까?
               </ModalTitle>
               <ModalActions>
-                <ModalButton type="button" onClick={onLoadDraft}>예</ModalButton>
+                <ModalButton type="button" onClick={onLoadDraft}>
+                  예
+                </ModalButton>
                 <ModalButton type="button" $variant="secondary" onClick={onSkipDraft}>
                   아니오
                 </ModalButton>
@@ -242,7 +241,6 @@ export default function IdeaFormView({
                 searchable={false}
                 value={form.topic ? [form.topic] : []}
                 onChange={onTopicSelect}
-
               />
             </SelectWrapper>
           </FieldSet>
@@ -285,10 +283,7 @@ export default function IdeaFormView({
                       -
                     </StepButton>
                     <TeamCount>{currentCount}</TeamCount>
-                    <StepButton
-                      type="button"
-                      onClick={() => onTeamAdjust(r.key, currentCount + 1)}
-                    >
+                    <StepButton type="button" onClick={() => onTeamAdjust(r.key, currentCount + 1)}>
                       +
                     </StepButton>
                   </TeamControls>
@@ -310,14 +305,14 @@ export default function IdeaFormView({
                 onChange={onImageFileChange}
               />
               <ReQuill
-  ref={quillRef}
-  value={form.description}
-  onChange={onDescriptionChange}
-  modules={quillModules}
-  formats={quillFormats}
-  placeholder="Github README 작성에 쓰이는 ‘markdown’을 이용해 작성해보세요."
-  height="100%"
-/>
+                ref={quillRef}
+                value={form.description}
+                onChange={onDescriptionChange}
+                modules={quillModules}
+                formats={quillFormats}
+                placeholder="Github README 작성에 쓰이는 ‘markdown’을 이용해 작성해보세요."
+                height="100%"
+              />
             </QuillWrapper>
           </TextAreaWrapper>
         </FieldSet>
@@ -341,11 +336,7 @@ export default function IdeaFormView({
                     <ModalButton type="button" onClick={onConfirmSubmit}>
                       예
                     </ModalButton>
-                    <ModalButton
-                      type="button"
-                      $variant="secondary"
-                      onClick={onCloseModal}
-                    >
+                    <ModalButton type="button" $variant="secondary" onClick={onCloseModal}>
                       아니오
                     </ModalButton>
                   </ModalActions>

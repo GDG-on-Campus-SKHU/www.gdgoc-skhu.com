@@ -1,8 +1,9 @@
 import React, { forwardRef } from 'react';
 import ReactQuill, { ReactQuillProps } from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
 
 import { quillWrapperCss } from '../styles/quillWrapper';
+
+import 'react-quill/dist/quill.snow.css';
 
 export interface ReQuillProps extends ReactQuillProps {
   /**
@@ -30,17 +31,8 @@ export interface ReQuillProps extends ReactQuillProps {
 const ReQuill = forwardRef<ReactQuill, ReQuillProps>(
   ({ placeholder, className, disabled = false, height = 300, style, ...rest }, ref) => {
     return (
-      <div
-        css={quillWrapperCss}
-        className={className}
-        style={{ height, ...style }}
-      >
-        <ReactQuill
-          ref={ref}
-          readOnly={disabled}
-          placeholder={placeholder}
-          {...rest}
-        />
+      <div css={quillWrapperCss} className={className} style={{ height, ...style }}>
+        <ReactQuill ref={ref} readOnly={disabled} placeholder={placeholder} {...rest} />
       </div>
     );
   }

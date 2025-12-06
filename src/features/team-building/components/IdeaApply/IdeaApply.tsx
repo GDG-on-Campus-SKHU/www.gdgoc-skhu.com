@@ -16,7 +16,6 @@ const PageContainer = styled.div`
   width: 100%;
   font-family: 'Pretendard', sans-serif;
   color: #040405;
-
 `;
 const ApplyCanvas = styled.div`
   display: flex;
@@ -43,7 +42,6 @@ const TitleContainer = styled.div`
 const ApplyContainer = styled.div`
   display: flex;
   flex-direction: column;
-
 `;
 
 const ApplyTitle = styled.h1`
@@ -295,14 +293,14 @@ const ModalButton = styled(Button)`
   border-radius: 12px;
   margin-top: 20px;
   background: var(--primary-600-main, #4285f4);
-  color: var(--grayscale-100, #F9F9FA);
+  color: var(--grayscale-100, #f9f9fa);
 
-/* body/b3/b3 */
-font-family: Pretendard;
-font-size: 18px;
-font-style: normal;
-font-weight: 500;
-line-height: 160%; /* 28.8px */
+  /* body/b3/b3 */
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%; /* 28.8px */
 `;
 import { Idea, resolveTotalMembers, useIdeaStore } from '../store/IdeaStore';
 
@@ -650,7 +648,6 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
                     onClick={() => {
                       if (!option.disabled) setPart(option.key);
                     }}
-
                   />
                 ))}
               </RadioList>
@@ -682,7 +679,6 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
           {modalState !== 'closed' && (
             <ModalOverlay>
               {modalState === 'confirm' && (
-
                 <ModalCard>
                   <ModalInfo>
                     <ModalTitle>{idea.title}</ModalTitle>
@@ -708,7 +704,6 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
                 </ModalCard>
               )}
               {modalState === 'success' && (
-
                 <ModalCard style={{ height: '200px', paddingTop: 0 }}>
                   <ModalOKCard>
                     <ModalTitleComplete>지원이 완료되었습니다.</ModalTitleComplete>

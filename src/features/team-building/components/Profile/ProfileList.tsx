@@ -4,7 +4,7 @@ import { colors } from '../../../../styles/constants';
 import { Link } from '../../hooks/useProfileEditor';
 import { TECH_STACK_OPTIONS } from '../../types/profile';
 import SelectBox from '../SelectBox';
-import SelectBoxLink from '../SelectBoxLink';
+import SelectBoxLink from '../SelectBoxLink_han';
 import Tag from './Tag';
 
 const BASE_PROFILE_ITEMS = [

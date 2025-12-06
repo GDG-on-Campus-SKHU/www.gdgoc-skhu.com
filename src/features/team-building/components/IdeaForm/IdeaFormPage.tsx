@@ -1,11 +1,10 @@
 import React, { useCallback, useState } from 'react';
 import { useRouter } from 'next/router';
-
-import IdeaForm from './IdeaForm';
 import Quill from 'quill';
 import MarkdownShortcuts from 'quill-markdown-shortcuts';
-import ReactQuill from 'react-quill';
-import type { ReactQuillProps } from 'react-quill';
+
+import IdeaForm from './IdeaForm';
+
 Quill.register('modules/markdownShortcuts', MarkdownShortcuts);
 type TeamCounts = {
   planning: number;

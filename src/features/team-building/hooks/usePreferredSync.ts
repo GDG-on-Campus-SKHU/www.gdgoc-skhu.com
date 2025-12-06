@@ -1,5 +1,6 @@
 import React from 'react';
-import { TEAM_ROLES, TeamRole, PREFERRED_OPTIONS } from '../components/IdeaForm/IdeaFormUtils';
+
+import { PREFERRED_OPTIONS, TEAM_ROLES, TeamRole } from '../components/IdeaForm/IdeaFormUtils';
 
 export default function usePreferredSync({
   preferredPart,
@@ -16,10 +17,7 @@ export default function usePreferredSync({
   }, [preferredPart]);
 
   const [radioRenderVersion, setRadioRenderVersion] = React.useState(0);
-  const syncPreferredPartRadio = React.useCallback(
-    () => setRadioRenderVersion(v => v + 1),
-    []
-  );
+  const syncPreferredPartRadio = React.useCallback(() => setRadioRenderVersion(v => v + 1), []);
 
   const previousPreferredRoleRef = React.useRef<TeamRole | null>(preferredRoleKey);
   const skipPreferredRoleSyncRef = React.useRef(false);

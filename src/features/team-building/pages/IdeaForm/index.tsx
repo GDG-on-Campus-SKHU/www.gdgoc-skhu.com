@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
-import type { ChangeEvent } from 'react';
-import { useIdeaStore, createEmptyTeamCounts } from '../../components/store/IdeaStore';
 import { useRouter } from 'next/router';
+import type { ChangeEvent } from 'react';
+
+import { createEmptyTeamCounts, useIdeaStore } from '../../components/store/IdeaStore';
 
 type IdeaFormState = {
   title: string;
