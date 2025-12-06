@@ -1,6 +1,5 @@
 /** @jsxImportSource @emotion/react */
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants/colors';
@@ -16,17 +15,19 @@ import FieldOfSignUp from '../FieldOfSignUp';
 import Modal from '../Modal';
 import SelectBoxBasic from '../SelectBoxBasic';
 
+type PositionType = 'MEMBER' | 'CORE' | 'ORGANIZER';
+
 interface Step3Props {
   orgType: 'internal' | 'external' | '';
   school: string;
   cohort: string;
   part: string;
-  role: string;
+  role: PositionType;
   agree: boolean;
   setSchool: (v: string) => void;
   setCohort: (v: string) => void;
   setPart: (v: string) => void;
-  setRole: (v: string) => void;
+  setRole: (v: PositionType) => void;
   setAgree: (v: boolean) => void;
   onPrev: () => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -45,30 +46,38 @@ export default function Step3({
   setRole,
   setAgree,
   onPrev,
+  onSubmit,
 }: Step3Props) {
-  const router = useRouter();
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
 
+useEffect(() => {
+  if (orgType === 'internal') {
+    setSchool('성공회대학교');
+  }
+
+  if (!cohort) setCohort('GEN_22_23');
+  if (!part) setPart('PM');
+  if (!role) setRole('MEMBER');
+}, [orgType, cohort, part, role, setSchool, setCohort, setPart, setRole]);
+
+
   useEffect(() => {
-    if (!cohort) setCohort('25-26');
-    if (!part) setPart('BE');
-    if (!role) setRole('Member');
-  }, [cohort, part, role, setCohort, setPart, setRole]);
+    const newErrors: Record<string, string> = {};
 
-  const handleShowTerms = () => setShowTermsModal(true);
-  const handleCloseTerms = () => setShowTermsModal(false);
+    if (orgType !== 'internal' && !school.trim()) {
+      newErrors.school = '학교명을 입력해주세요.';
+    }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setShowCompleteModal(true);
-  };
+    if (!cohort) newErrors.cohort = '기수를 선택해주세요.';
+    if (!part) newErrors.part = '파트를 선택해주세요.';
+    if (!role) newErrors.role = '분류를 선택해주세요.';
+    if (!agree) newErrors.agree = '약관에 동의해주세요.';
 
-  const handleComplete = () => {
-    setShowCompleteModal(false);
-    router.push('/login');
-  };
+    setLocalErrors(newErrors);
+  }, [school, cohort, part, role, agree, orgType]);
+
+  const isDisabled = Object.keys(localErrors).length > 0;
 
   const termsContent = `
 Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정보 처리방침
@@ -83,27 +92,10 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
 
 3. 개인정보의 보유 및 이용기간
 - 회원 탈퇴 시 즉시 파기
-- 단, 법적 의무 이행을 위해 필요한 경우 관련 법령에 따라 보관
 
 4. 동의 철회
-- 회원은 언제든지 개인정보 수집 및 이용에 대한 동의를 철회할 수 있습니다.
+- 회원은 언제든지 동의를 철회할 수 있습니다.
 `;
-
-  useEffect(() => {
-    const newErrors: Record<string, string> = {};
-    if (orgType !== 'internal') {
-      if (!school.trim()) newErrors.school = '학교명을 입력해주세요.';
-      else if (!/^[A-Za-z가-힣]+$/.test(school))
-        newErrors.school = '학교명은 영문 또는 한글만 입력 가능합니다.';
-    }
-    if (!cohort) newErrors.cohort = '기수를 선택해주세요.';
-    if (!part) newErrors.part = '파트를 선택해주세요.';
-    if (!role) newErrors.role = '분류를 선택해주세요.';
-    if (!agree) newErrors.agree = '약관에 동의해주세요.';
-    setLocalErrors(newErrors);
-  }, [school, cohort, part, role, agree, orgType]);
-
-  const isDisabled = Object.keys(localErrors).length > 0;
 
   return (
     <section css={sectionCss}>
@@ -114,7 +106,7 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
 
       <p css={[typography.b4, step1Desc]}>동아리 정보를 입력해주세요.</p>
 
-      <form css={formBox} onSubmit={handleSubmit}>
+      <form css={formBox} onSubmit={onSubmit}>
         <div css={formGroup}>
           <label css={labelCss}>학교</label>
           <FieldOfSignUp
@@ -132,9 +124,11 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
           <div css={formGroup}>
             <label css={labelCss}>기수</label>
             <SelectBoxBasic
-              options={['25-26', '24-25', '23-24', '22-23', 'Other']}
-              placeholder="25-26"
-              onChange={([value]) => setCohort(value)}
+              options={['22-23', '23-24', '24-25', '25-26']}
+              placeholder="22-23"
+              onChange={([value]) =>
+                setCohort(`GEN_${value.replace('-', '_')}`)
+              }
             />
             {!!localErrors.cohort && <p css={errorText}>{localErrors.cohort}</p>}
           </div>
@@ -142,8 +136,8 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
           <div css={formGroup}>
             <label css={labelCss}>파트</label>
             <SelectBoxBasic
-              options={['BE', 'FE', 'PM', 'Design', 'AI/ML']}
-              placeholder="BE"
+              options={['PM', 'BE', 'FE', 'Design', 'AI/ML']}
+              placeholder="PM"
               onChange={([value]) => setPart(value)}
             />
             {!!localErrors.part && <p css={errorText}>{localErrors.part}</p>}
@@ -153,7 +147,7 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
         <div css={formGroup}>
           <label css={labelCss}>분류</label>
           <div css={radioGroup}>
-            {['Member', 'Core', 'Organizer'].map(r => (
+            {(['MEMBER', 'CORE', 'ORGANIZER'] as PositionType[]).map(r => (
               <label key={r} css={radioLabel}>
                 <input
                   type="radio"
@@ -173,7 +167,11 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
             <div css={agreeCheck(agree)} onClick={() => setAgree(!agree)}>
               {agree && '✓'}
             </div>
-            <button type="button" css={agreeBtn} onClick={handleShowTerms}>
+            <button
+              type="button"
+              css={agreeBtn}
+              onClick={() => setShowTermsModal(true)}
+            >
               이용 약관 및 개인정보 처리 방침
             </button>
           </div>
@@ -182,7 +180,11 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
 
         <div css={buttonBox}>
           <Button variant="secondary" title="이전" onClick={onPrev} />
-          <button css={primaryBtn({ disabled: isDisabled })} disabled={isDisabled}>
+          <button
+            type="submit"
+            css={primaryBtn({ disabled: isDisabled })}
+            disabled={isDisabled}
+          >
             완료
           </button>
         </div>
@@ -205,18 +207,8 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
             </div>
           }
           buttonText="확인"
-          onClose={handleCloseTerms}
+          onClose={() => setShowTermsModal(false)}
           customTitleAlign="left"
-        />
-      )}
-
-      {showCompleteModal && (
-        <Modal
-          type="default"
-          title="회원가입 완료 🎉"
-          message={`회원가입이 정상적으로 완료되었습니다.\n관리자의 승인 후 로그인 가능합니다.`}
-          buttonText="확인"
-          onClose={handleComplete}
         />
       )}
     </section>
@@ -291,7 +283,6 @@ const radioInput = (checked: boolean) => css`
   box-shadow: inset 0 0 0
     ${checked ? `6px ${colors.primary[600]}` : `1.5px ${colors.grayscale[400]}`};
   cursor: pointer;
-  transition: box-shadow 0.15s ease;
 `;
 
 const agreeRow = css`
@@ -312,7 +303,6 @@ const agreeCheck = (checked: boolean) => css`
   color: ${colors.white};
   font-size: 13px;
   cursor: pointer;
-  transition: background 0.15s ease;
 `;
 
 const agreeBtn = css`

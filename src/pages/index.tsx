@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 
 import SEO from '../components/common/SEO';
 import IntroduceSection from '../components/IntroduceSection';
-import ProjectSection from '../components/ProjectSection';
 import PartSection from '../components/PartSection/PartSection';
+import ProjectSection from '../components/ProjectSection';
 import RecruitSection from '../components/RecruitSection';
 import { defaultFadeInVariants } from '../constants/motions';
 import { layoutCss } from '../styles/constants/layout';

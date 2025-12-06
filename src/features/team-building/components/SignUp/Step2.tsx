@@ -143,8 +143,13 @@ export default function Step2({
       </div>
 
       <div css={buttonBox}>
-        <Button variant="secondary" onClick={onPrev} />
-        <button css={primaryBtn({ disabled: isDisabled })} onClick={onNext} disabled={isDisabled}>
+        <Button variant="secondary" title="이전" onClick={onPrev} />
+        <button
+          type="button"
+          css={primaryBtn({ disabled: isDisabled })}
+          onClick={onNext}
+          disabled={isDisabled}
+        >
           다음
         </button>
       </div>
