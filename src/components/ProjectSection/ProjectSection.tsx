@@ -27,7 +27,7 @@ export default function ProjectSection() {
                 description: '프로젝트 한줄소개',
                 thumbnailUrl: '/images/project-dummy.png',
                 status: 'service',
-                generation: '25-26'
+                generation: '25-26',
             });
         }
 
@@ -67,7 +67,9 @@ export default function ProjectSection() {
             )}
 
             <div css={carouselWrapCss}>
-                <button onClick={prev} css={leftArrowCss}>‹</button>
+                <button onClick={prev} css={leftArrowCss}>
+                    <img src="/leftarrow.svg" alt="prev" css={leftArrowIconCss} />
+                </button>
 
                 <div css={viewportCss}>
                     <motion.div
@@ -78,7 +80,7 @@ export default function ProjectSection() {
                             type: 'spring',
                             stiffness: 220,
                             damping: 26,
-                            mass: 0.8
+                            mass: 0.8,
                         }}
                         css={cardRowCss}
                     >
@@ -104,7 +106,9 @@ export default function ProjectSection() {
                     </motion.div>
                 </div>
 
-                <button onClick={next} css={rightArrowCss}>›</button>
+                <button onClick={next} css={rightArrowCss}>
+                    <img src="/rightarrow.svg" alt="next" css={rightArrowIconCss} />
+                </button>
             </div>
 
             <Link href="/project-gallery" css={moreBtnCss}>
@@ -129,7 +133,7 @@ const sectionCss = css`
 
 const headerWrapCss = css`
     width: 100%;
-    margin-bottom: 70px;
+    margin-bottom: 64px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -146,7 +150,7 @@ const carouselWrapCss = css`
     position: relative;
     width: 100%;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
 `;
 
 const viewportCss = css`
@@ -157,7 +161,7 @@ const viewportCss = css`
 const cardRowCss = css`
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
+    gap: 40px;
 `;
 
 const cardCss = css`
@@ -175,31 +179,33 @@ const thumbFrameCss = css`
 `;
 
 const logoCss = css`
-    width: 200px;
-    height: 200px;
+    width: 220px;
+    height: 220px;
     object-fit: contain;
     display: block;
 `;
 
 const metaCss = css`
-    margin-top: 15px;
+    margin-top: 20px;
 `;
 
 const titleItemCss = css`
-    font-size: 18px;
-    font-weight: 700;
+    font-size: 24px;
+    font-weight: 600;
     color: #111111;
-    line-height: 160%;
+    line-height: 140%;
 `;
 
 const descItemCss = css`
-    font-size: 14px;
+    margin-top: 5px;
+    font-size: 16px;
+    font-weight: 400;
     color: #979ca5;
-    line-height: 160%;
+    line-height: 150%;
 `;
 
 const badgeRowCss = css`
-    margin-top: 5px;
+    margin-top: 14px;
     min-height: 28px;
     display: flex;
     align-items: center;
@@ -208,42 +214,55 @@ const badgeRowCss = css`
 const arrowBaseCss = css`
     position: absolute;
     top: 100px;
-    width: 44px;
-    height: 44px;
-    border-radius: 6px;
-    border: 1px solid #e5e7eb;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    border: 2px solid #d9d9d9;
     background: #ffffff;
-    font-size: 24px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
 `;
 
+const leftArrowIconCss = css`
+    width: 20px;
+    height: 20px;
+    display: block;
+    transform: translateX(-1px);
+`;
+
+const rightArrowIconCss = css`
+    width: 20px;
+    height: 20px;
+    display: block;
+    transform: translateX(1px);
+`;
+
 const leftArrowCss = css`
     ${arrowBaseCss};
     left: 0;
-    transform: translateX(-64px);
+    transform: translateX(-80px);
 `;
 
 const rightArrowCss = css`
     ${arrowBaseCss};
     right: 0;
-    transform: translateX(64px);
+    transform: translateX(80px);
 `;
 
 const moreBtnCss = css`
-    margin-top: 48px;
-    padding: 16px 32px;
-    border-radius: 8px;
+    margin-top: 72px;
+    padding: 18px 40px;
+    border-radius: 12px;
     background: #4285f4;
     color: #ffffff;
-    font-size: 15px;
-    font-weight: 400;
+    font-size: 16px;
+    font-weight: 500;
     text-decoration: none;
     cursor: pointer;
 
     &:hover {
-        opacity: 0.9;
+        background: #2171f2;
     }
 `;
