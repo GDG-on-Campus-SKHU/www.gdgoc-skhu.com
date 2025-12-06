@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 
 import SEO from '../components/common/SEO';
 import IntroduceSection from '../components/IntroduceSection';
+import ProjectSection from '../components/ProjectSection';
 import PartSection from '../components/PartSection/PartSection';
 import RecruitSection from '../components/RecruitSection';
 import { defaultFadeInVariants } from '../constants/motions';
@@ -34,6 +35,7 @@ export default function Root() {
           `}
         >
           <IntroduceSection />
+          <ProjectSection />
           <PartSection />
           <RecruitSection />
         </div>

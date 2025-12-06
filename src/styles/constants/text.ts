@@ -87,3 +87,24 @@ export const typography = {
     color: ${colors.grayscale[600]};
   `,
 };
+
+export const sectionTitleCss = css`
+  font-size: 2.65rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 18px;
+
+  ${mediaQuery('xs')} {
+    font-size: 2.1rem;
+  }
+`;
+
+export const sectionDescCss = css`
+  font-size: 1.7rem;
+  font-weight: 400;
+  color: ${colors.gray500};
+
+  ${mediaQuery('xs')} {
+    font-size: 1.3rem;
+  }
+`;
