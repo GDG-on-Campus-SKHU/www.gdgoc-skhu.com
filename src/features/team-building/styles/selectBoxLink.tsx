@@ -7,7 +7,6 @@ export const wrap = css`
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  margin-top: 300px;
 `;
 
 export const fieldWrap = css`
@@ -36,6 +35,7 @@ export const addButtonContainer = css`
 export const addButton = css`
   width: 100%;
   height: 3rem;
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -43,6 +43,5 @@ export const addButton = css`
   border-radius: 0.5rem;
   background-color: white;
   color: ${colors.gdscBlue};
-  font-size: 1.5rem;
   cursor: pointer;
 `;

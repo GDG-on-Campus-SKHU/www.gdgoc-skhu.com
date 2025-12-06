@@ -9,6 +9,9 @@ import Scene from '../components/Scene';
 import { BASE_URL } from '../constants/common';
 import GlobalStyle from '../styles/GlobalStyle';
 
+import '@uiw/react-md-editor/markdown-editor.css';
+import '@uiw/react-markdown-preview/markdown.css';
+
 export default function App({ Component, pageProps, router }: AppProps) {
   const CURRENT_URL = BASE_URL + router.route;
   return (
