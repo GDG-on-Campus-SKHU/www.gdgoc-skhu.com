@@ -3,12 +3,12 @@ import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
 import Button from '../../components/Button';
+import { SupportPhase } from '../../components/MyTeam/ApplyPeriodToggle';
 import ApplyStatusSection from '../../components/MyTeam/ApplyStatusSection';
 import CurrentTeamEmpty from '../../components/MyTeam/CurrentTeamEmpty';
 import CurrentTeamSection from '../../components/MyTeam/CurrentTeamSection';
 import MemberApplyStatusSection from '../../components/MyTeam/MemberApplyStatusSection';
 import TabBar from '../../components/TabBar';
-import { SupportPhase } from '../../components/MyTeam/ApplyPeriodToggle';
 import {
   mockMemberApplyCardsAfterResult,
   mockMemberApplyCardsBeforeResult,

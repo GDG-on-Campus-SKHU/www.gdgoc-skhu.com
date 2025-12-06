@@ -3,10 +3,10 @@ import { css } from '@emotion/react';
 
 import { JoinPhase, MOCK_PARTS, MyTeamMember, MyTeamPart } from '../../types/currentTeamData';
 import Modal from '../Modal_Fix';
+import { SupportPhase } from './ApplyPeriodToggle';
 import MyTeamCount from './MyTeamCount';
 import MyTeamMemberCard, { MyTeamMemberVariant } from './MyTeamMember';
 import MyTeamStatusCard from './MyTeamStatus';
-import { SupportPhase } from './ApplyPeriodToggle';
 
 type PartColumnProps = {
   part: MyTeamPart;
