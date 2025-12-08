@@ -11,7 +11,7 @@ const BASE_PROFILE_ITEMS = [
   { label: '학교', value: '성공회대학교' },
   { label: '역할', value: '25-26 Member' },
   { label: '파트', value: 'Design' },
-];
+] as const;
 
 interface ProfileListProps {
   isEditing: boolean;
@@ -30,20 +30,18 @@ export default function ProfileList({
   onTechStackChange,
   onLinksChange,
 }: ProfileListProps) {
-  // 편집 필드를 보여줄 조건: 편집 중이면서 미리보기 모드가 아닐 때
   const showEditFields = isEditing && !isPreviewMode;
-
-  // 프리뷰를 보여줄 조건: 편집 중이 아니거나, 편집 중이면서 미리보기 모드일 때
   const showPreview = !isEditing || (isEditing && isPreviewMode);
 
-  const hasValidLinks = links.some(link => link.platform && link.url);
+  const validLinks = links.filter(link => link.platform && link.url);
+  const hasValidLinks = validLinks.length > 0;
   const hasTechStack = selectedTechStack.length > 0;
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     e.currentTarget.src = '/icon/link.svg';
   };
 
-  const renderBaseProfileItem = (item: (typeof BASE_PROFILE_ITEMS)[0]) => (
+  const renderBaseProfileItem = (item: (typeof BASE_PROFILE_ITEMS)[number]) => (
     <li key={item.label} css={profileItemCss}>
       <p css={labelCss}>{item.label}</p>
       {item.label === '역할' ? (
@@ -72,10 +70,10 @@ export default function ProfileList({
 
     if (showPreview && hasTechStack) {
       return (
-        <div css={techStackPreviewCss}>
+        <div css={previewContainerCss}>
           {selectedTechStack.map(tech => (
-            <div key={tech} css={techIconWrapperCss}>
-              <div css={techIconCss}>
+            <div key={tech} css={iconWrapperCss}>
+              <div css={iconCss}>
                 <img src={`/icon/${tech}.svg`} alt={tech} />
               </div>
               <div css={tooltipCss}>{tech}</div>
@@ -99,25 +97,23 @@ export default function ProfileList({
 
     if (showPreview && hasValidLinks) {
       return (
-        <div css={linksPreviewCss}>
-          {links
-            .filter(link => link.platform && link.url)
-            .map(link => (
-              <a
-                key={link.id}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                css={linkIconCss}
-                title={link.platform}
-              >
-                <img
-                  src={`/icon/${link.platform}.svg`}
-                  alt={link.platform}
-                  onError={handleImageError}
-                />
-              </a>
-            ))}
+        <div css={previewContainerCss}>
+          {validLinks.map(link => (
+            <a
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              css={linkIconCss}
+              title={link.platform}
+            >
+              <img
+                src={`/icon/${link.platform}.svg`}
+                alt={link.platform}
+                onError={handleImageError}
+              />
+            </a>
+          ))}
         </div>
       );
     }
@@ -129,17 +125,21 @@ export default function ProfileList({
     <ul css={profileListCss}>
       {BASE_PROFILE_ITEMS.map(renderBaseProfileItem)}
 
-      {/* 기술스택 */}
       <li
-        css={[profileItemCss, (showEditFields || (showPreview && hasTechStack)) && editingItemCss]}
+        css={[
+          profileItemCss,
+          (showEditFields || (showPreview && hasTechStack)) && editingItemCss,
+        ]}
       >
         <p css={labelCss}>기술스택</p>
         {renderTechStackContent()}
       </li>
 
-      {/* 링크 */}
       <li
-        css={[profileItemCss, (showEditFields || (showPreview && hasValidLinks)) && editingItemCss]}
+        css={[
+          profileItemCss,
+          (showEditFields || (showPreview && hasValidLinks)) && editingItemCss,
+        ]}
       >
         <p css={labelCss}>링크</p>
         {renderLinksContent()}
@@ -200,7 +200,7 @@ const componentWrapperCss = css`
   gap: 0.75rem;
 `;
 
-const techIconWrapperCss = css`
+const iconWrapperCss = css`
   position: relative;
   display: inline-block;
 
@@ -210,14 +210,14 @@ const techIconWrapperCss = css`
   }
 `;
 
-const techStackPreviewCss = css`
+const previewContainerCss = css`
   display: flex;
   flex-direction: row;
   gap: 16px;
   flex-wrap: wrap;
 `;
 
-const techIconCss = css`
+const iconCss = css`
   width: 40px;
   height: 40px;
   display: flex;
@@ -245,9 +245,7 @@ const tooltipCss = css`
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
-  transition:
-    opacity 0.2s,
-    visibility 0.2s;
+  transition: opacity 0.2s, visibility 0.2s;
   pointer-events: none;
   z-index: 10;
 
@@ -262,13 +260,6 @@ const tooltipCss = css`
     background-color: ${colors.grayscale[700]};
     border-radius: 0 0 2px 0;
   }
-`;
-
-const linksPreviewCss = css`
-  display: flex;
-  flex-direction: row;
-  gap: 16px;
-  flex-wrap: wrap;
 `;
 
 const linkIconCss = css`
@@ -288,5 +279,9 @@ const linkIconCss = css`
     width: 100%;
     height: 100%;
     object-fit: contain;
+  }
+
+  &:hover {
+    border-color: ${colors.grayscale[600]};
   }
 `;
