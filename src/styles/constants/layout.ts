@@ -31,4 +31,3 @@ export const sectionVerticalSpacing = {
   medium: '100px',
   small: '70px',
 } as const;
-
