@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { login } from '@/lib/auth.api';
+import { useAuthStore } from '@/lib/authStore';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants/colors';
@@ -12,6 +14,7 @@ import Modal from '../../../team-building/components/Modal';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setAuth } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -27,20 +30,37 @@ export default function LoginPage() {
     };
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
 
-    if (!email.includes('@')) return setError('올바른 이메일 형식을 입력해주세요.');
-    if (email.includes('pending')) return showModalWithType('pending');
-    if (email.includes('banned')) return showModalWithType('banned');
-    if (email === '1234@gmail.com' && password === '1234') return router.push('/home');
+    if (!email.includes('@')) {
+      setError('올바른 이메일 형식을 입력해주세요.');
+      return;
+    }
 
-    setError('이메일 또는 비밀번호를 확인해주세요.');
-  };
+    try {
+      const res = await login(email, password);
+      const { accessToken, email: userEmail, name, role } = res.data;
+      setAuth({ accessToken, email: userEmail, name, role });
+      router.push('/home');
+    } catch (err: any) {
+      const msg = err.response?.data;
 
-  const showModalWithType = (type: 'pending' | 'banned') => {
-    setModalType(type);
-    setShowModal(true);
+      if (err.response?.status === 400 && msg === '관리자 승인 대기 중입니다.') {
+        setModalType('pending');
+        setShowModal(true);
+        return;
+      }
+
+      if (err.response?.status === 403 || msg === '로그인 제한된 계정입니다.') {
+        setModalType('banned');
+        setShowModal(true);
+        return;
+      }
+
+      setError(msg || '이메일 또는 비밀번호를 확인해주세요.');
+    }
   };
 
   return (

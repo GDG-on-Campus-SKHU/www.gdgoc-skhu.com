@@ -1,5 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { useState } from 'react';
+import { sendEmailCode } from '@/lib/auth.api';
 import { css } from '@emotion/react';
 
 import { typography } from '../../../../styles/constants/text';
@@ -20,21 +21,27 @@ interface Step1EmailProps {
 
 export default function Step1Email({ email, setEmail, onNext }: Step1EmailProps) {
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return setError('올바른 이메일 형식이 아닙니다.');
-    }
-
-    if (email === 'test@gdgoc.com') {
-      onNext();
+      setError('올바른 이메일 형식이 아닙니다.');
       return;
     }
 
-    setError('존재하지 않는 이메일 주소입니다.');
+    try {
+      setLoading(true);
+      await sendEmailCode(email);
+      onNext();
+    } catch (err: any) {
+      const msg = err.response?.data;
+      setError(msg || '인증번호 전송에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,8 +60,8 @@ export default function Step1Email({ email, setEmail, onNext }: Step1EmailProps)
       <div css={buttonBox}>
         <Button variant="secondary" title="이전" onClick={() => history.back()} />
         <button
-          css={primaryBtn({ disabled: !email.trim() })}
-          disabled={!email.trim()}
+          css={primaryBtn({ disabled: !email.trim() || loading })}
+          disabled={!email.trim() || loading}
           type="submit"
         >
           다음

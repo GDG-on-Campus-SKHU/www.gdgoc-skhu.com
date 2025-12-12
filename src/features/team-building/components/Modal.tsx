@@ -14,6 +14,7 @@ import {
   subTextCss,
   titleCss,
 } from '../styles/modalStyles';
+import Button from './Button';
 import { ModalProps } from './Modal.types';
 
 export default function Modal({
@@ -85,19 +86,18 @@ export default function Modal({
         {subText && <p css={subTextCss}>{subText}</p>}
 
         {(type === 'default' || type === 'textOnly' || type === 'scroll') && (
-          <button css={buttonCss} onClick={handleClose}>
-            {buttonText}
-          </button>
+          <Button type="button" title={buttonText} onClick={handleClose} css={buttonCss} />
         )}
 
         {(type === 'confirm' || type === 'textConfirm') && (
           <div css={buttonRowCss}>
-            <button css={buttonSecondaryCss} onClick={handleClose}>
-              {cancelText}
-            </button>
-            <button css={buttonCss} onClick={handleConfirm}>
-              {confirmText}
-            </button>
+            <Button
+              type="button"
+              title={cancelText}
+              onClick={handleClose}
+              css={buttonSecondaryCss}
+            />
+            <Button type="button" title={confirmText} onClick={handleConfirm} css={buttonCss} />
           </div>
         )}
       </div>

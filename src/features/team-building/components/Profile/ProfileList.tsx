@@ -126,20 +126,14 @@ export default function ProfileList({
       {BASE_PROFILE_ITEMS.map(renderBaseProfileItem)}
 
       <li
-        css={[
-          profileItemCss,
-          (showEditFields || (showPreview && hasTechStack)) && editingItemCss,
-        ]}
+        css={[profileItemCss, (showEditFields || (showPreview && hasTechStack)) && editingItemCss]}
       >
         <p css={labelCss}>기술스택</p>
         {renderTechStackContent()}
       </li>
 
       <li
-        css={[
-          profileItemCss,
-          (showEditFields || (showPreview && hasValidLinks)) && editingItemCss,
-        ]}
+        css={[profileItemCss, (showEditFields || (showPreview && hasValidLinks)) && editingItemCss]}
       >
         <p css={labelCss}>링크</p>
         {renderLinksContent()}
@@ -245,7 +239,9 @@ const tooltipCss = css`
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
   pointer-events: none;
   z-index: 10;
 
