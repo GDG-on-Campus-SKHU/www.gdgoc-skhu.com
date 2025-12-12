@@ -7,7 +7,6 @@ export const wrap = css`
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  margin-top: 300px;
 `;
 
 export const fieldWrap = css`
