@@ -6,17 +6,20 @@ export interface SignUpRequest {
   password: string;
   passwordConfirm: string;
   number: string;
-  introduction: string;
   school: string;
   generation: string;
   part: string;
   position: string;
   role: string;
-  status: 'ACTIVE' | 'BANNED';
-  approvalStatus: 'WAITING' | 'APPROVED' | 'REJECTED';
 }
 
 export interface SignUpResponse {
+  email: string;
+  name: string;
+  role: string;
+}
+
+export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
   email: string;
@@ -29,5 +32,23 @@ export const signUp = (data: SignUpRequest) => {
 };
 
 export const login = (email: string, password: string) => {
-  return api.post('/auth/login', { email, password });
+  return api.post<LoginResponse>('/auth/login', { email, password });
+};
+
+export const sendEmailCode = (email: string) => {
+  return api.post<string>('/email/send', { email });
+};
+
+export const verifyEmailCode = (email: string, code: string) => {
+  return api.post<string>('/email/verify', { email, code });
+};
+
+export const resetPassword = (email: string, code: string, newPassword: string) => {
+  return api.post<string>('/email/reset-password', null, {
+    params: {
+      email,
+      code,
+      newPassword,
+    },
+  });
 };

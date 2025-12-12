@@ -14,8 +14,8 @@ import {
   subTextCss,
   titleCss,
 } from '../styles/modalStyles';
-import { ModalProps } from './Modal.types';
 import Button from './Button';
+import { ModalProps } from './Modal.types';
 
 export default function Modal({
   type = 'default',
@@ -97,12 +97,7 @@ export default function Modal({
               onClick={handleClose}
               css={buttonSecondaryCss}
             />
-            <Button
-              type="button"
-              title={confirmText}
-              onClick={handleConfirm}
-              css={buttonCss}
-            />
+            <Button type="button" title={confirmText} onClick={handleConfirm} css={buttonCss} />
           </div>
         )}
       </div>

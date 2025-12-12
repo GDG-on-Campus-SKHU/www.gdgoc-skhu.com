@@ -51,24 +51,17 @@ export default function Step3({
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
 
-useEffect(() => {
-  if (orgType === 'internal') {
-    setSchool('성공회대학교');
-  }
-
-  if (!cohort) setCohort('GEN_22_23');
-  if (!part) setPart('PM');
-  if (!role) setRole('MEMBER');
-}, [orgType, cohort, part, role, setSchool, setCohort, setPart, setRole]);
-
+  useEffect(() => {
+    if (orgType === 'internal') setSchool('성공회대학교');
+    if (!cohort) setCohort('22-23');
+    if (!part) setPart('PM');
+    if (!role) setRole('MEMBER');
+  }, [orgType, cohort, part, role, setSchool, setCohort, setPart, setRole]);
 
   useEffect(() => {
     const newErrors: Record<string, string> = {};
 
-    if (orgType !== 'internal' && !school.trim()) {
-      newErrors.school = '학교명을 입력해주세요.';
-    }
-
+    if (orgType !== 'internal' && !school.trim()) newErrors.school = '학교명을 입력해주세요.';
     if (!cohort) newErrors.cohort = '기수를 선택해주세요.';
     if (!part) newErrors.part = '파트를 선택해주세요.';
     if (!role) newErrors.role = '분류를 선택해주세요.';
@@ -85,16 +78,24 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
 1. 개인정보의 수집 및 이용 목적
 - 회원 가입 및 관리
 - GDGoC 프로그램 운영 및 참가자 관리
-- 행사/활동 안내 및 공지 전달
+- 행사 및 활동 안내, 공지 전달
 
-2. 수집하는 항목
-- 이름, 이메일, 전화번호, 학교명, 역할 등
+2. 수집하는 개인정보 항목
+- 이름, 이메일, 전화번호, 학교명, 역할 등 회원가입 시 입력한 정보
 
-3. 개인정보의 보유 및 이용기간
+3. 개인정보의 보유 및 이용 기간
 - 회원 탈퇴 시 즉시 파기
+- 단, 관계 법령에 의해 보존할 필요가 있는 경우 해당 기간 동안 보관
 
-4. 동의 철회
-- 회원은 언제든지 동의를 철회할 수 있습니다.
+4. 개인정보 제공 및 위탁
+- 원칙적으로 외부에 제공하지 않으며, 서비스 운영에 필요한 경우에 한해 최소한으로 위탁
+
+5. 동의 거부 권리 및 불이익
+- 개인정보 수집 및 이용에 대한 동의를 거부할 수 있으나,
+  동의하지 않을 경우 회원가입 및 서비스 이용이 제한될 수 있음
+
+6. 동의 철회
+- 회원은 언제든지 개인정보 처리에 대한 동의를 철회할 수 있음
 `;
 
   return (
@@ -110,7 +111,6 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
         <div css={formGroup}>
           <label css={labelCss}>학교</label>
           <FieldOfSignUp
-            label=""
             placeholder={orgType === 'internal' ? '성공회대학교' : '예: 숙명여자대학교'}
             value={school}
             onChange={e => setSchool(e.target.value)}
@@ -126,9 +126,7 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
             <SelectBoxBasic
               options={['22-23', '23-24', '24-25', '25-26']}
               placeholder="22-23"
-              onChange={([value]) =>
-                setCohort(`GEN_${value.replace('-', '_')}`)
-              }
+              onChange={([value]) => setCohort(value)}
             />
             {!!localErrors.cohort && <p css={errorText}>{localErrors.cohort}</p>}
           </div>
@@ -136,7 +134,7 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
           <div css={formGroup}>
             <label css={labelCss}>파트</label>
             <SelectBoxBasic
-              options={['PM', 'BE', 'FE', 'Design', 'AI/ML']}
+              options={['PM', 'DESIGN', 'WEB', 'MOBILE', 'BACKEND', 'AI']}
               placeholder="PM"
               onChange={([value]) => setPart(value)}
             />
@@ -167,11 +165,7 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
             <div css={agreeCheck(agree)} onClick={() => setAgree(!agree)}>
               {agree && '✓'}
             </div>
-            <button
-              type="button"
-              css={agreeBtn}
-              onClick={() => setShowTermsModal(true)}
-            >
+            <button type="button" css={agreeBtn} onClick={() => setShowTermsModal(true)}>
               이용 약관 및 개인정보 처리 방침
             </button>
           </div>
@@ -180,11 +174,7 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
 
         <div css={buttonBox}>
           <Button variant="secondary" title="이전" onClick={onPrev} />
-          <button
-            type="submit"
-            css={primaryBtn({ disabled: isDisabled })}
-            disabled={isDisabled}
-          >
+          <button type="submit" css={primaryBtn({ disabled: isDisabled })} disabled={isDisabled}>
             완료
           </button>
         </div>
@@ -193,7 +183,7 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
       {showTermsModal && (
         <Modal
           type="scroll"
-          title="이용 약관 및 개인정보 처리 방침"
+          title="이용 약관 및 개인정보 처리방침"
           message={
             <div
               css={css`

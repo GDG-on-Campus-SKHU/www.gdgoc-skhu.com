@@ -30,6 +30,7 @@ export default function SignUpPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
 
   const validateStep = useCallback(
     (step: Step) => {
@@ -37,8 +38,10 @@ export default function SignUpPage() {
 
       if (step === 2) {
         if (!name.trim()) newErrors.name = '이름을 입력해주세요.';
-        else if (!/^[A-Za-z가-힣]+$/.test(name)) newErrors.name = '이름은 영문 또는 한글만 입력 가능합니다.';
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = '이메일 형식이 올바르지 않습니다.';
+        else if (!/^[A-Za-z가-힣]+$/.test(name))
+          newErrors.name = '이름은 영문 또는 한글만 입력 가능합니다.';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+          newErrors.email = '이메일 형식이 올바르지 않습니다.';
         if (pw.length < 8) newErrors.pw = '비밀번호는 8자 이상이어야 합니다.';
         if (pw !== pw2) newErrors.pw2 = '비밀번호가 일치하지 않습니다.';
         if (!/^\d{2,3}-\d{3,4}-\d{4}$/.test(phone))
@@ -46,24 +49,18 @@ export default function SignUpPage() {
       }
 
       if (step === 3) {
-  if (orgType !== 'internal' && !school.trim())
-    newErrors.school = '학교를 입력해주세요.';
-  if (!cohort) newErrors.cohort = '기수를 선택해주세요.';
-  if (!part) newErrors.part = '파트를 선택해주세요.';
-  if (!position) newErrors.position = '분류를 선택해주세요.';
-  if (!agree) newErrors.agree = '약관에 동의해주세요.';
-}
-
+        if (orgType !== 'internal' && !school.trim()) newErrors.school = '학교를 입력해주세요.';
+        if (!cohort) newErrors.cohort = '기수를 선택해주세요.';
+        if (!part) newErrors.part = '파트를 선택해주세요.';
+        if (!position) newErrors.position = '분류를 선택해주세요.';
+        if (!agree) newErrors.agree = '약관에 동의해주세요.';
+      }
 
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
     },
-    [name, email, pw, pw2, phone, school, cohort, part, position, agree]
+    [name, email, pw, pw2, phone, school, cohort, part, position, agree, orgType]
   );
-
-  useEffect(() => {
-    if (currentStep === 2) validateStep(2);
-  }, [currentStep, validateStep, name, email, pw, pw2, phone]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -85,40 +82,35 @@ export default function SignUpPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!validateStep(3)) return;
+    e.preventDefault();
+    if (!validateStep(3)) return;
 
-  const userRole = orgType === 'internal' ? 'SKHU_MEMBER' : 'OTHERS';
-  const finalSchool = orgType === 'internal' ? '성공회대학교' : school;
+    const userRole = orgType === 'internal' ? 'SKHU_MEMBER' : 'OTHERS';
+    const finalSchool = orgType === 'internal' ? '성공회대학교' : school;
 
-  try {
-    const res = await signUp({
-      name,
-      email,
-      password: pw,
-      passwordConfirm: pw2,
-      number: phone,
-      introduction: '',
-      school: finalSchool,
-      generation: cohort,
-      part,
-      position,
-      role: userRole,
-      status: 'ACTIVE',
-      approvalStatus: 'WAITING',
-    });
+    try {
+      await signUp({
+        name,
+        email,
+        password: pw,
+        passwordConfirm: pw2,
+        number: phone,
+        school: finalSchool,
+        generation: cohort,
+        part,
+        position,
+        role: userRole,
+      });
 
-    alert(
-      `회원가입 성공\n\n이름: ${res.data.name}\n이메일: ${res.data.email}\n권한: ${res.data.role}`
-    );
-
-    setShowCompleteModal(true);
-  } catch (error) {
-    console.error(error);
-    alert('회원가입 중 오류가 발생했습니다.');
-  }
-};
-
+      setShowCompleteModal(true);
+    } catch (err: any) {
+      if (err.response?.data === '이미 가입된 이메일입니다.') {
+        setShowDuplicateModal(true);
+        return;
+      }
+      alert('회원가입 중 오류가 발생했습니다.');
+    }
+  };
 
   const isStep2Disabled =
     !touched ||
@@ -191,13 +183,22 @@ export default function SignUpPage() {
   return (
     <main css={mainCss(visible, currentStep)}>
       {renderStep()}
+
+      {showDuplicateModal && (
+        <Modal
+          title="회원가입 불가"
+          message="이미 가입된 이메일입니다."
+          buttonText="확인"
+          onClose={() => setShowDuplicateModal(false)}
+        />
+      )}
+
       {showCompleteModal && (
         <Modal
-          type="default"
           title="회원가입 완료 🎉"
           message={'회원가입이 완료되었습니다.\n관리자 승인 후 로그인이 가능합니다.'}
           buttonText="확인"
-          onClose={() => setShowCompleteModal(false)}
+          onClose={() => (window.location.href = '/login')}
         />
       )}
     </main>
@@ -213,5 +214,7 @@ const mainCss = (visible: boolean, step: Step) => css`
   backdrop-filter: blur(22px);
   opacity: ${visible ? 1 : 0};
   transform: ${visible ? 'translateY(0)' : 'translateY(10px)'};
-  transition: opacity 0.6s ease, transform 0.6s ease;
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
 `;

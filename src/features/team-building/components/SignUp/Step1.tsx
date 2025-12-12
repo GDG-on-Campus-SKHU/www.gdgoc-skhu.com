@@ -19,13 +19,7 @@ interface Step1Props {
   onNext: () => void;
 }
 
-export default function Step1({
-  visible,
-  step,
-  orgType,
-  setOrgType,
-  onNext,
-}: Step1Props) {
+export default function Step1({ visible, step, orgType, setOrgType, onNext }: Step1Props) {
   return (
     <section css={sectionCss(visible, step)}>
       <h2 css={[typography.h2Bold, titleCss]}>회원가입</h2>
