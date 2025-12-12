@@ -133,13 +133,12 @@ function LoginForm({
       </div>
 
       <div css={buttonGroupCss}>
-        <button type="submit" style={{ all: 'unset' }}>
-          <Button title="로그인" />
-        </button>
+        <Button type="submit" title="로그인" />
         <Link href="/signup">
-          <Button variant="secondary" title="회원가입" />
+        <Button variant="secondary" title="회원가입" />
         </Link>
-      </div>
+</div>
+
     </form>
   );
 }

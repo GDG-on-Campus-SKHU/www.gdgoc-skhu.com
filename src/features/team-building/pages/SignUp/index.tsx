@@ -42,10 +42,14 @@ export default function SignUpPage() {
           newErrors.name = '이름은 영문 또는 한글만 입력 가능합니다.';
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
           newErrors.email = '이메일 형식이 올바르지 않습니다.';
-        if (pw.length < 8) newErrors.pw = '비밀번호는 8자 이상이어야 합니다.';
         if (pw !== pw2) newErrors.pw2 = '비밀번호가 일치하지 않습니다.';
+        if (pw.length < 8) {
+          newErrors.pw = '비밀번호는 8자 이상이어야 합니다.';
+        } else if (!/[A-Za-z]/.test(pw) || !/\d/.test(pw)) {
+          newErrors.pw = '비밀번호는 영문과 숫자 특수문자를 모두 포함해야 합니다.';
+        }
         if (!/^\d{2,3}-\d{3,4}-\d{4}$/.test(phone))
-          newErrors.phone = '전화번호 형식이 올바르지 않습니다.';
+          newErrors.phone = '전화번호 형식이 올바르지 않습니다.(예: 010-1234-5678)';
       }
 
       if (step === 3) {
@@ -61,6 +65,13 @@ export default function SignUpPage() {
     },
     [name, email, pw, pw2, phone, school, cohort, part, position, agree, orgType]
   );
+
+  useEffect(() => {
+  if (currentStep === 2 && touched) {
+    validateStep(2);
+  }
+}, [name, email, pw, pw2, phone, touched, currentStep, validateStep]);
+
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -85,7 +96,7 @@ export default function SignUpPage() {
     e.preventDefault();
     if (!validateStep(3)) return;
 
-    const userRole = orgType === 'internal' ? 'SKHU_MEMBER' : 'OTHERS';
+    const userRole = orgType === 'internal' ? 'ROLE_SKHU_MEMBER' : 'ROLE_OTHERS';
     const finalSchool = orgType === 'internal' ? '성공회대학교' : school;
 
     try {
@@ -113,11 +124,10 @@ export default function SignUpPage() {
   };
 
   const isStep2Disabled =
-    !touched ||
     !name.trim() ||
     !/^[A-Za-z가-힣]+$/.test(name) ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
-    pw.length < 8 ||
+    !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/.test(pw) ||
     pw !== pw2 ||
     !/^\d{2,3}-\d{3,4}-\d{4}$/.test(phone);
 
