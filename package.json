@@ -16,6 +16,7 @@
     "@react-three/fiber": "8.15.18",
     "@uiw/react-markdown-preview": "^5.1.5",
     "@uiw/react-md-editor": "^4.0.8",
+    "axios": "^1.13.2",
     "framer-motion": "^11.3.22",
     "next": "15.5.9",
     "next-remove-imports": "^1.0.12",
