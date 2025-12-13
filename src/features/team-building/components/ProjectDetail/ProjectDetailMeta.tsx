@@ -2,11 +2,12 @@ import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
 import Badge from '../ProjectGalleryPost/Badge';
+import { GenerationValue, Part } from '../../types/gallery';
 
-type Member = { name: string; role?: string };
+type Member = { name: string; role?: Part };
 
 type Props = {
-  generation: string;
+  generation: GenerationValue;
   leader: Member;
   members: Member[];
 };

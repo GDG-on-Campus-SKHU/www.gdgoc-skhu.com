@@ -7,13 +7,7 @@ import delete_icon from '../../assets/delete.svg';
 import Button from '../Button';
 import SelectBoxBasic from '../SelectBoxBasic_Fix';
 import Badge from './Badge';
-
-export type ProjectMemberBase = {
-  id: string;
-  name: string;
-  badge: string;
-  school: string;
-};
+import { ProjectMemberBase } from '../../types/gallery';
 
 type ProjectMemberRowProps = {
   member: ProjectMemberBase;

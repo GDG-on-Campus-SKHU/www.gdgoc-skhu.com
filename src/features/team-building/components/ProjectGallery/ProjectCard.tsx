@@ -1,17 +1,17 @@
 import Link from 'next/link';
 import { css } from '@emotion/react';
 
-import type { Project } from '../../types/gallery';
 import StatusBadge from './StatusBadge';
+import { ProjectGalleryListItem } from '../../types/gallery';
 
-type Props = { item: Project };
+type Props = { item: ProjectGalleryListItem };
 
 export default function ProjectCard({ item }: Props) {
   return (
     <Link href={`/project-gallery/${item.id}`}>
       <article css={articleCss}>
         <div css={thumbFrameCss}>
-          <img src={item.thumbnailUrl} alt={item.title} css={logoCss} />
+          <img src={item.thumbnailUrl ?? '/gdgoc_logo.svg'} alt={item.title} css={logoCss} />
         </div>
         <div css={metaCss}>
           <h3 css={titleCss}>{item.title}</h3>

@@ -4,17 +4,16 @@ import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
 import GalleryContent from '../../components/ProjectGallery/GalleryContent';
-import { Project } from '../../types/gallery';
+import { GenerationTab } from '../../types/gallery';
+import { useProjectGalleryList } from '../../../../lib/projectGallery.api';
 
-const TABS = ['전체', '25-26', '24-25', '이전 기수'] as const;
-type Tab = (typeof TABS)[number];
+const TABS: GenerationTab[] = ['전체', '25-26', '24-25', '이전 기수'];
 
 export default function ProjectGalleryPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<Tab>('전체');
+  const [activeTab, setActiveTab] = useState<GenerationTab>('전체');
 
-  // 데이터 타입 명시화 (추후 api 연결)
-  const projects: Project[] = [];
+  const { data: projects = [], isLoading, isError } = useProjectGalleryList(activeTab);
 
   return (
     <main css={mainCss}>
@@ -46,7 +45,12 @@ export default function ProjectGalleryPage() {
         </div>
 
         {/* 컨텐츠 영역 */}
-        <GalleryContent activeTab={activeTab} projects={projects} />
+        <GalleryContent
+          activeTab={activeTab}
+          projects={projects}
+          isLoading={isLoading}
+          isError={isError}
+        />
       </div>
     </main>
   );

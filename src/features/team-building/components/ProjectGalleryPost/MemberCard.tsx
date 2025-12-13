@@ -3,17 +3,11 @@ import { css } from '@emotion/react';
 import { colors } from '../../../../styles/constants';
 import Button from '../Button';
 import Badge from './Badge';
-
-type Member = {
-  id: string;
-  name: string;
-  badge: string;
-  school: string;
-};
+import { ProjectMemberBase } from '../../types/gallery';
 
 type MemberCardProps = {
-  member: Member;
-  onSelect: (member: Member) => void;
+  member: ProjectMemberBase;
+  onSelect: (member: ProjectMemberBase) => void;
   disabledSelect?: boolean;
 };
 

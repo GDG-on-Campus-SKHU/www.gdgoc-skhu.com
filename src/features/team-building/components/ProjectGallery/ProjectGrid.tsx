@@ -1,9 +1,9 @@
 import { css } from '@emotion/react';
 
-import type { Project } from '../../types/gallery';
 import ProjectCard from './ProjectCard';
+import { ProjectGalleryListItem } from '../../types/gallery';
 
-type Props = { items: Project[] };
+type Props = { items: ProjectGalleryListItem[] };
 
 export default function ProjectGrid({ items }: Props) {
   return (

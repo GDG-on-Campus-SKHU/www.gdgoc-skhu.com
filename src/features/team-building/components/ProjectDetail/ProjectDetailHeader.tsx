@@ -1,20 +1,22 @@
 import { css } from '@emotion/react';
 
-import { ProjectStatus } from '../../types/gallery';
 import StatusBadge from '../ProjectGallery/StatusBadge';
+import { ServiceStatus } from '../../types/gallery';
 
 type Props = {
   title: string;
   subtitle: string;
-  status?: ProjectStatus;
+  status?: ServiceStatus;
 };
 
 export default function ProjectDetailHeader({ title, subtitle, status }: Props) {
+  const showBadge = status === 'IN_SERVICE';
+
   return (
     <section css={wrapCss}>
       <div css={titleRowCss}>
         <h2 css={titleCss}>{title}</h2>
-        {status && <StatusBadge status={status} />}
+        {showBadge && <StatusBadge status={status} />}
       </div>
       <p css={subtitleCss}>{subtitle}</p>
     </section>
