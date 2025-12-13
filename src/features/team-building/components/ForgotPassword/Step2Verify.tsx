@@ -60,11 +60,14 @@ export default function Step2Verify({ email, code, setCode, onNext, onPrev }: Pr
       />
 
       <div css={buttonBox}>
-        <Button title="이전" onClick={onPrev} />
+        <div css={leftBtn}>
+          <Button variant="secondary" title="이전" onClick={onPrev} />
+        </div>
+
         <button
-          css={primaryBtn({ disabled: code.length !== 6 || loading })}
-          disabled={code.length !== 6 || loading}
           type="submit"
+          css={[primaryBtn({ disabled: code.length !== 6 || loading }), rightBtn]}
+          disabled={code.length !== 6 || loading}
         >
           다음
         </button>
@@ -77,4 +80,19 @@ const buttonBox = css`
   display: flex;
   gap: 12px;
   margin-top: 20px;
+  width: 100%;
+  align-items: stretch;
+`;
+
+const leftBtn = css`
+  flex: 1;
+  display: flex;
+
+  & > button {
+    height: 100%;
+  }
+`;
+
+const rightBtn = css`
+  flex: 2;
 `;

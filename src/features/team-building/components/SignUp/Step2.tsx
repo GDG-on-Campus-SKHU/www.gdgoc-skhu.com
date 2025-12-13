@@ -98,9 +98,7 @@ export default function Step2({
             setEmail(e.target.value);
           }}
           error={touched && !!errors.email}
-          errorMessage={
-            touched ? errors.email : '주로 사용하는 연락 가능한 이메일 주소를 작성해주세요.'
-          }
+          errorMessage={errors.email || '주로 사용하는 연락 가능한 이메일 주소를 작성해주세요.'}
         />
 
         <FieldOfSignUp
@@ -113,7 +111,7 @@ export default function Step2({
             setPw(e.target.value);
           }}
           error={touched && !!errors.pw}
-          errorMessage={touched ? errors.pw || '8자리 이상, 특수문자 포함' : ''}
+          errorMessage={errors.pw || '8자리 이상, 특수문자 포함'}
         />
 
         <FieldOfSignUp
@@ -138,15 +136,19 @@ export default function Step2({
             setPhone(e.target.value);
           }}
           error={touched && !!errors.phone}
-          errorMessage={touched ? errors.phone || '' : ''}
+          errorMessage={errors.phone || '010-1234-5678 형식'}
+          hideHelperOnValue
         />
       </div>
 
       <div css={buttonBox}>
-        <Button variant="secondary" title="이전" onClick={onPrev} />
+        <div css={leftBtn}>
+          <Button variant="secondary" title="이전" onClick={onPrev} />
+        </div>
+
         <button
           type="button"
-          css={primaryBtn({ disabled: isDisabled })}
+          css={[primaryBtn({ disabled: isDisabled }), rightBtn]}
           onClick={onNext}
           disabled={isDisabled}
         >
@@ -186,6 +188,15 @@ const formBox = css`
 const buttonBox = css`
   display: flex;
   gap: 12px;
+  width: 100%;
+`;
+
+const leftBtn = css`
+  flex: 1;
+`;
+
+const rightBtn = css`
+  flex: 2;
 `;
 
 export const sectionCss = (visible: boolean, step: Step, isMobile: boolean) => css`

@@ -58,11 +58,14 @@ export default function Step1Email({ email, setEmail, onNext }: Step1EmailProps)
       />
 
       <div css={buttonBox}>
-        <Button variant="secondary" title="이전" onClick={() => history.back()} />
+        <div css={leftBtn}>
+          <Button variant="secondary" title="이전" onClick={() => history.back()} />
+        </div>
+
         <button
-          css={primaryBtn({ disabled: !email.trim() || loading })}
-          disabled={!email.trim() || loading}
           type="submit"
+          css={[primaryBtn({ disabled: !email.trim() || loading }), rightBtn]}
+          disabled={!email.trim() || loading}
         >
           다음
         </button>
@@ -75,4 +78,19 @@ const buttonBox = css`
   display: flex;
   gap: 12px;
   margin-top: 16px;
+  width: 100%;
+  align-items: stretch;
+`;
+
+const leftBtn = css`
+  flex: 1;
+  display: flex;
+
+  & > button {
+    height: 100%;
+  }
+`;
+
+const rightBtn = css`
+  flex: 2;
 `;

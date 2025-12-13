@@ -11,6 +11,7 @@ interface FieldOfSignUpProps {
   disabled?: boolean;
   error?: boolean;
   errorMessage?: string;
+  hideHelperOnValue?: boolean;
 }
 
 export default function FieldOfSignUp({
@@ -22,8 +23,12 @@ export default function FieldOfSignUp({
   disabled = false,
   error = false,
   errorMessage = '',
+  hideHelperOnValue = false,
 }: FieldOfSignUpProps) {
-  const helper = !error && errorMessage ? errorMessage : null;
+  const hasValue = Boolean(value && value.trim().length > 0);
+
+  const showHelper = !error && errorMessage && !(hideHelperOnValue && hasValue);
+
   const errorText = error && errorMessage ? errorMessage : null;
 
   return (
@@ -38,7 +43,7 @@ export default function FieldOfSignUp({
         disabled={disabled}
       />
       {errorText && <p css={errorTextCss}>{errorText}</p>}
-      {!error && helper && <p css={helperTextCss}>{helper}</p>}
+      {showHelper && <p css={helperTextCss}>{errorMessage}</p>}
     </div>
   );
 }

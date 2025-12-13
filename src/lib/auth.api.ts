@@ -44,11 +44,9 @@ export const verifyEmailCode = (email: string, code: string) => {
 };
 
 export const resetPassword = (email: string, code: string, newPassword: string) => {
-  return api.post<string>('/email/reset-password', null, {
-    params: {
-      email,
-      code,
-      newPassword,
-    },
+  return api.post<string>('/email/reset-password', {
+    email,
+    code,
+    newPassword,
   });
 };

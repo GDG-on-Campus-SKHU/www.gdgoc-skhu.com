@@ -173,8 +173,15 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
         </div>
 
         <div css={buttonBox}>
-          <Button variant="secondary" title="이전" onClick={onPrev} />
-          <button type="submit" css={primaryBtn({ disabled: isDisabled })} disabled={isDisabled}>
+          <div css={leftBtn}>
+            <Button variant="secondary" title="이전" onClick={onPrev} />
+          </div>
+
+          <button
+            type="submit"
+            css={[primaryBtn({ disabled: isDisabled }), rightBtn]}
+            disabled={isDisabled}
+          >
             완료
           </button>
         </div>
@@ -314,5 +321,13 @@ const errorText = css`
 const buttonBox = css`
   display: flex;
   gap: 12px;
-  margin-top: 20px;
+  width: 100%;
+`;
+
+const leftBtn = css`
+  flex: 1;
+`;
+
+const rightBtn = css`
+  flex: 2;
 `;

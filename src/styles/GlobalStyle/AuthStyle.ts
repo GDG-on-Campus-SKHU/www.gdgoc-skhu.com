@@ -23,7 +23,7 @@ export const sectionCss = (visible: boolean, step: Step) => css`
   border-radius: 12px;
   box-shadow: 0 8px 36px rgba(0, 0, 0, 0.08);
   padding: 36px 36px 44px;
-  margin-top: ${step === 2 ? '280px' : '0px'};
+  margin-top: ${step === 2 ? '280px' : '-70px'};
   margin-bottom: ${step === 2 ? '100px' : '0px'};
   transform: ${visible ? 'translateY(0)' : 'translateY(20px)'};
   transition: all 0.4s ease;
