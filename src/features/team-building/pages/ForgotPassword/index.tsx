@@ -1,6 +1,5 @@
 /** @jsxImportSource @emotion/react */
 import { useState } from 'react';
-import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
 
 import Step1Email from '../../components/ForgotPassword/Step1Email';
@@ -10,19 +9,18 @@ import Step3ResetPw from '../../components/ForgotPassword/Step3ResetPw';
 export type Step = 1 | 2 | 3;
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
   const [step, setStep] = useState<Step>(1);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
 
   const handleNext = () => setStep(prev => (prev < 3 ? ((prev + 1) as Step) : prev));
-  const handlePrev = () => setStep(prev => (prev > 1 ? ((prev - 1) as Step) : prev));
 
-  const handleComplete = () => router.push('/login');
+  const handlePrev = () => setStep(prev => (prev > 1 ? ((prev - 1) as Step) : prev));
 
   return (
     <main css={mainCss}>
       {step === 1 && <Step1Email email={email} setEmail={setEmail} onNext={handleNext} />}
+
       {step === 2 && (
         <Step2Verify
           email={email}
@@ -32,7 +30,8 @@ export default function ForgotPasswordPage() {
           onPrev={handlePrev}
         />
       )}
-      {step === 3 && <Step3ResetPw email={email} onPrev={handlePrev} onComplete={handleComplete} />}
+
+      {step === 3 && <Step3ResetPw email={email} code={code} onPrev={handlePrev} />}
     </main>
   );
 }

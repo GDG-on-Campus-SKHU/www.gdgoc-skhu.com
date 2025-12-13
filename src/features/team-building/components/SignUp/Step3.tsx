@@ -1,6 +1,5 @@
 /** @jsxImportSource @emotion/react */
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants/colors';
@@ -16,17 +15,19 @@ import FieldOfSignUp from '../FieldOfSignUp';
 import Modal from '../Modal';
 import SelectBoxBasic from '../SelectBoxBasic';
 
+type PositionType = 'MEMBER' | 'CORE' | 'ORGANIZER';
+
 interface Step3Props {
   orgType: 'internal' | 'external' | '';
   school: string;
   cohort: string;
   part: string;
-  role: string;
+  role: PositionType;
   agree: boolean;
   setSchool: (v: string) => void;
   setCohort: (v: string) => void;
   setPart: (v: string) => void;
-  setRole: (v: string) => void;
+  setRole: (v: PositionType) => void;
   setAgree: (v: boolean) => void;
   onPrev: () => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -45,30 +46,31 @@ export default function Step3({
   setRole,
   setAgree,
   onPrev,
+  onSubmit,
 }: Step3Props) {
-  const router = useRouter();
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (!cohort) setCohort('25-26');
-    if (!part) setPart('BE');
-    if (!role) setRole('Member');
-  }, [cohort, part, role, setCohort, setPart, setRole]);
+    if (orgType === 'internal') setSchool('성공회대학교');
+    if (!cohort) setCohort('22-23');
+    if (!part) setPart('PM');
+    if (!role) setRole('MEMBER');
+  }, [orgType, cohort, part, role, setSchool, setCohort, setPart, setRole]);
 
-  const handleShowTerms = () => setShowTermsModal(true);
-  const handleCloseTerms = () => setShowTermsModal(false);
+  useEffect(() => {
+    const newErrors: Record<string, string> = {};
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setShowCompleteModal(true);
-  };
+    if (orgType !== 'internal' && !school.trim()) newErrors.school = '학교명을 입력해주세요.';
+    if (!cohort) newErrors.cohort = '기수를 선택해주세요.';
+    if (!part) newErrors.part = '파트를 선택해주세요.';
+    if (!role) newErrors.role = '분류를 선택해주세요.';
+    if (!agree) newErrors.agree = '약관에 동의해주세요.';
 
-  const handleComplete = () => {
-    setShowCompleteModal(false);
-    router.push('/login');
-  };
+    setLocalErrors(newErrors);
+  }, [school, cohort, part, role, agree, orgType]);
+
+  const isDisabled = Object.keys(localErrors).length > 0;
 
   const termsContent = `
 Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정보 처리방침
@@ -76,34 +78,25 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
 1. 개인정보의 수집 및 이용 목적
 - 회원 가입 및 관리
 - GDGoC 프로그램 운영 및 참가자 관리
-- 행사/활동 안내 및 공지 전달
+- 행사 및 활동 안내, 공지 전달
 
-2. 수집하는 항목
-- 이름, 이메일, 전화번호, 학교명, 역할 등
+2. 수집하는 개인정보 항목
+- 이름, 이메일, 전화번호, 학교명, 역할 등 회원가입 시 입력한 정보
 
-3. 개인정보의 보유 및 이용기간
+3. 개인정보의 보유 및 이용 기간
 - 회원 탈퇴 시 즉시 파기
-- 단, 법적 의무 이행을 위해 필요한 경우 관련 법령에 따라 보관
+- 단, 관계 법령에 의해 보존할 필요가 있는 경우 해당 기간 동안 보관
 
-4. 동의 철회
-- 회원은 언제든지 개인정보 수집 및 이용에 대한 동의를 철회할 수 있습니다.
+4. 개인정보 제공 및 위탁
+- 원칙적으로 외부에 제공하지 않으며, 서비스 운영에 필요한 경우에 한해 최소한으로 위탁
+
+5. 동의 거부 권리 및 불이익
+- 개인정보 수집 및 이용에 대한 동의를 거부할 수 있으나,
+  동의하지 않을 경우 회원가입 및 서비스 이용이 제한될 수 있음
+
+6. 동의 철회
+- 회원은 언제든지 개인정보 처리에 대한 동의를 철회할 수 있음
 `;
-
-  useEffect(() => {
-    const newErrors: Record<string, string> = {};
-    if (orgType !== 'internal') {
-      if (!school.trim()) newErrors.school = '학교명을 입력해주세요.';
-      else if (!/^[A-Za-z가-힣]+$/.test(school))
-        newErrors.school = '학교명은 영문 또는 한글만 입력 가능합니다.';
-    }
-    if (!cohort) newErrors.cohort = '기수를 선택해주세요.';
-    if (!part) newErrors.part = '파트를 선택해주세요.';
-    if (!role) newErrors.role = '분류를 선택해주세요.';
-    if (!agree) newErrors.agree = '약관에 동의해주세요.';
-    setLocalErrors(newErrors);
-  }, [school, cohort, part, role, agree, orgType]);
-
-  const isDisabled = Object.keys(localErrors).length > 0;
 
   return (
     <section css={sectionCss}>
@@ -114,11 +107,10 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
 
       <p css={[typography.b4, step1Desc]}>동아리 정보를 입력해주세요.</p>
 
-      <form css={formBox} onSubmit={handleSubmit}>
+      <form css={formBox} onSubmit={onSubmit}>
         <div css={formGroup}>
           <label css={labelCss}>학교</label>
           <FieldOfSignUp
-            label=""
             placeholder={orgType === 'internal' ? '성공회대학교' : '예: 숙명여자대학교'}
             value={school}
             onChange={e => setSchool(e.target.value)}
@@ -132,8 +124,8 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
           <div css={formGroup}>
             <label css={labelCss}>기수</label>
             <SelectBoxBasic
-              options={['25-26', '24-25', '23-24', '22-23', 'Other']}
-              placeholder="25-26"
+              options={['22-23', '23-24', '24-25', '25-26']}
+              placeholder="22-23"
               onChange={([value]) => setCohort(value)}
             />
             {!!localErrors.cohort && <p css={errorText}>{localErrors.cohort}</p>}
@@ -142,8 +134,8 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
           <div css={formGroup}>
             <label css={labelCss}>파트</label>
             <SelectBoxBasic
-              options={['BE', 'FE', 'PM', 'Design', 'AI/ML']}
-              placeholder="BE"
+              options={['PM', 'DESIGN', 'WEB', 'MOBILE', 'BACKEND', 'AI']}
+              placeholder="PM"
               onChange={([value]) => setPart(value)}
             />
             {!!localErrors.part && <p css={errorText}>{localErrors.part}</p>}
@@ -153,7 +145,7 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
         <div css={formGroup}>
           <label css={labelCss}>분류</label>
           <div css={radioGroup}>
-            {['Member', 'Core', 'Organizer'].map(r => (
+            {(['MEMBER', 'CORE', 'ORGANIZER'] as PositionType[]).map(r => (
               <label key={r} css={radioLabel}>
                 <input
                   type="radio"
@@ -173,7 +165,7 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
             <div css={agreeCheck(agree)} onClick={() => setAgree(!agree)}>
               {agree && '✓'}
             </div>
-            <button type="button" css={agreeBtn} onClick={handleShowTerms}>
+            <button type="button" css={agreeBtn} onClick={() => setShowTermsModal(true)}>
               이용 약관 및 개인정보 처리 방침
             </button>
           </div>
@@ -181,8 +173,15 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
         </div>
 
         <div css={buttonBox}>
-          <Button variant="secondary" title="이전" onClick={onPrev} />
-          <button css={primaryBtn({ disabled: isDisabled })} disabled={isDisabled}>
+          <div css={leftBtn}>
+            <Button variant="secondary" title="이전" onClick={onPrev} />
+          </div>
+
+          <button
+            type="submit"
+            css={[primaryBtn({ disabled: isDisabled }), rightBtn]}
+            disabled={isDisabled}
+          >
             완료
           </button>
         </div>
@@ -191,7 +190,7 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
       {showTermsModal && (
         <Modal
           type="scroll"
-          title="이용 약관 및 개인정보 처리 방침"
+          title="이용 약관 및 개인정보 처리방침"
           message={
             <div
               css={css`
@@ -205,18 +204,8 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
             </div>
           }
           buttonText="확인"
-          onClose={handleCloseTerms}
+          onClose={() => setShowTermsModal(false)}
           customTitleAlign="left"
-        />
-      )}
-
-      {showCompleteModal && (
-        <Modal
-          type="default"
-          title="회원가입 완료 🎉"
-          message={`회원가입이 정상적으로 완료되었습니다.\n관리자의 승인 후 로그인 가능합니다.`}
-          buttonText="확인"
-          onClose={handleComplete}
         />
       )}
     </section>
@@ -291,7 +280,6 @@ const radioInput = (checked: boolean) => css`
   box-shadow: inset 0 0 0
     ${checked ? `6px ${colors.primary[600]}` : `1.5px ${colors.grayscale[400]}`};
   cursor: pointer;
-  transition: box-shadow 0.15s ease;
 `;
 
 const agreeRow = css`
@@ -312,7 +300,6 @@ const agreeCheck = (checked: boolean) => css`
   color: ${colors.white};
   font-size: 13px;
   cursor: pointer;
-  transition: background 0.15s ease;
 `;
 
 const agreeBtn = css`
@@ -334,5 +321,13 @@ const errorText = css`
 const buttonBox = css`
   display: flex;
   gap: 12px;
-  margin-top: 20px;
+  width: 100%;
+`;
+
+const leftBtn = css`
+  flex: 1;
+`;
+
+const rightBtn = css`
+  flex: 2;
 `;

@@ -1,3 +1,4 @@
+const path = require('path');
 const withPlugins = require('next-compose-plugins');
 const withTM = require('next-transpile-modules')([
   'three',
@@ -22,6 +23,12 @@ const nextConfig = {
 
   webpack: config => {
     config.plugins.push(new CompressionPlugin());
+
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      '@': path.resolve(__dirname, 'src'),
+    };
+
     return config;
   },
 };
