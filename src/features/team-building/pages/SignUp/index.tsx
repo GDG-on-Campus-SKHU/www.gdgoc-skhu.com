@@ -31,6 +31,7 @@ export default function SignUpPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateType, setDuplicateType] = useState<'email' | 'phone' | null>(null);
 
   const validateStep = useCallback(
     (step: Step) => {
@@ -114,10 +115,20 @@ export default function SignUpPage() {
 
       setShowCompleteModal(true);
     } catch (err: any) {
-      if (err.response?.data === '이미 가입된 이메일입니다.') {
+      const message = err.response?.data;
+
+      if (message === '이미 가입된 이메일입니다.') {
+        setDuplicateType('email');
         setShowDuplicateModal(true);
         return;
       }
+
+      if (message === '이미 가입된 전화번호입니다.') {
+        setDuplicateType('phone');
+        setShowDuplicateModal(true);
+        return;
+      }
+
       alert('회원가입 중 오류가 발생했습니다.');
     }
   };
@@ -196,9 +207,17 @@ export default function SignUpPage() {
       {showDuplicateModal && (
         <Modal
           title="회원가입 불가"
-          message="이미 가입된 이메일입니다."
+          message={
+            duplicateType === 'email'
+              ? '이미 가입된 이메일입니다.'
+              : '이미 가입된 전화번호입니다.'
+          }
           buttonText="확인"
-          onClose={() => setShowDuplicateModal(false)}
+          onClose={() => {
+            setShowDuplicateModal(false);
+            setDuplicateType(null);
+            setCurrentStep(2);
+          }}
         />
       )}
 
