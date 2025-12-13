@@ -102,6 +102,8 @@ export default function Step3ResetPw({ email, code, onPrev }: Props) {
           {passwordMatchError && <p css={errorText}>{passwordMatchError}</p>}
         </div>
 
+        {error && <p css={errorText}>{error}</p>}
+
         <div css={buttonBox}>
           <div css={leftBtn}>
             <Button variant="secondary" title="이전" onClick={onPrev} />
@@ -164,4 +166,10 @@ const leftBtn = css`
 
 const rightBtn = css`
   flex: 2;
+`;
+
+const errorText = css`
+  color: red;
+  font-size: 14px;
+  margin-top: 8px;
 `;
