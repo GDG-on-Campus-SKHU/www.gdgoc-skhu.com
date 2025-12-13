@@ -1,110 +1,84 @@
+export type GenerationValue = '25-26' | '24-25' | '23-24' | '22-23';
+// 나머지 두개 기수는 이전 기수로 처리 예정
 export type GenerationTab = '전체' | '25-26' | '24-25' | '이전 기수';
-export type ProjectStatus = 'service';
 
-export type Project = {
-  id: string;
-  title: string;
-  description: string;
-  generation: Exclude<GenerationTab, '전체'>;
-  status?: ProjectStatus;
-  thumbnailUrl: string;
-  team?: string;
+export type ServiceStatus = 'IN_SERVICE' | 'NOT_IN_SERVICE';
+
+export type MemberRole = 'LEADER' | 'MEMBER';
+
+export type Part = 'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI';
+
+/** 갤러리 목록 카드에서 사용하는 도메인 타입 */
+export type ProjectGalleryListItem = {
+  id: number; // galleryProjectId
+  title: string; // projectName
+  generation: GenerationValue; // 서버에서 내려주는 generation
+  description: string; // shortDescription
+  status: ServiceStatus; // serviceStatus
+  thumbnailUrl: string | null;
+};
+
+export type ProjectMember = {
+  userId: number;
+  memberRole: MemberRole;
+  name: string;
+  part: Part;
 };
 
 export type ProjectDetail = {
-  id: string;
+  id: number;
   title: string;
-  description: string;
+  generation: GenerationValue;
+  shortDescription: string;
+  status: ServiceStatus;
   longDescription: string;
-  status?: ProjectStatus;
-  generation: string;
-  leader: { name: string; role?: string };
-  members: Array<{ name: string; role?: string }>;
+
+  leaderId?: number; // 서버가 내려주면 보관만(추후 필요할 때 사용)
+
+  leader: ProjectMember | null; // members에서 LEADER 찾아서 세팅
+  members: ProjectMember[];
+
+  thumbnailUrl: string | null; // 추후 제거 가능성 → optional
 };
 
-/** 임시 데이터 */
-export const MOCK_PROJECTS: Project[] = [
-  {
-    id: 'p1',
-    title: '프로젝트명',
-    description: '프로젝트 한줄소개',
-    generation: '25-26',
-    status: 'service',
-    thumbnailUrl: '/gdgoc_logo.svg',
-  },
-  {
-    id: 'p2',
-    title: '프로젝트명',
-    description: '프로젝트 한줄소개',
-    generation: '24-25',
-    status: 'service',
-    thumbnailUrl: '/gdgoc_logo.svg',
-  },
-  {
-    id: 'p3',
-    title: '프로젝트명',
-    description: '프로젝트 한줄소개',
-    generation: '이전 기수',
-    thumbnailUrl: '/gdgoc_logo.svg',
-  },
-  {
-    id: 'p4',
-    title: '프로젝트명',
-    description: '프로젝트 한줄소개',
-    generation: '이전 기수',
-    thumbnailUrl: '/gdgoc_logo.svg',
-  },
-  {
-    id: 'p5',
-    title: '프로젝트명',
-    description: '프로젝트 한줄소개',
-    generation: '24-25',
-    thumbnailUrl: '/gdgoc_logo.svg',
-  },
-  {
-    id: 'p6',
-    title: '프로젝트명',
-    description: '프로젝트 한줄소개',
-    generation: '25-26',
-    status: 'service',
-    thumbnailUrl: '/gdgoc_logo.svg',
-  },
-];
-
-const MOCK_DETAILS: Record<string, ProjectDetail> = {
-  p1: {
-    id: 'p1',
-    title: '프로젝트 명',
-    description: '프로젝트 한줄소개',
-    status: 'service',
-    generation: '24-25',
-    leader: { name: '윤준석', role: '백엔드' },
-    members: [
-      { name: '권지후', role: '기획' },
-      { name: '최인석', role: 'AI/ML' },
-      { name: '조정현', role: '디자인' },
-      { name: '이솔', role: '프론트엔드 (웹)' },
-    ],
-    // ui 확인을 위해 각각 스타일 조정
-    longDescription: `
-      <h2 style="font-size: 24px; font-weight: 500; margin-bottom: 20px;">
-        청년들의 월세 부담을 덜어줄 메이트, 리빙메이트
-      </h2>
-
-      <p style="font-size: 18px; font-weight: 500;">
-        다들 월세 얼마씩 내세요?
-      </p>
-
-      <p style="font-size: 16px; font-weight: 500;">
-        저는 80만원이나 내고 있는데, 이걸 반반 부담할 친구가 있다면 얼마나 좋을까요?
-      </p>
-    `,
-  },
+export type ProjectGalleryMemberSearchItem = {
+  userId: number; // 현재는 "추후 넣을 예정"이라 했지만, 이제 있다고 가정
+  name: string;
+  school: string;
+  generationAndPosition: string;
+  isSelected: boolean; // “선택 여부는 프론트에서 관리”라 했지만 서버가 내려주므로 그대로 보관
 };
 
-// 임시 상세조회 함수
-export const getMockProjectDetailById = (id: string): ProjectDetail | null => {
-  const detail = MOCK_DETAILS[id];
+export type ProjectGalleryMemberSearchResponse = {
+  members: ProjectGalleryMemberSearchItem[];
+};
 
-  return detail ?? MOCK_DETAILS['p1'] ?? null; // ui 확인용이므로 p1 데이터로 전부 fallback
+/* =========================
+ * Form/UI Reusable Types
+ * - ProjectPostForm / MemberSelectModal / ProjectMemberRow에서 재사용
+ * ========================= */
+export type ProjectMemberBase = {
+  userId: number;
+  name: string;
+  badge: string; // UI 라벨(= generationAndPosition)
+  school: string;
+};
+
+// 작성/수정 폼에서 teamMembers로 쓰는 타입(파트 선택 포함)
+export type TeamMember = ProjectMemberBase & {
+  part: string[];
+};
+
+/* =========================
+ * Upsert (Create/Update) Body Type
+ * - API 구현 전이라도 프론트 payload 만들 때 타입으로 고정
+ * ========================= */
+export type ProjectGalleryUpsertBody = {
+  projectName: string;
+  generation: GenerationValue;
+  serviceStatus: ServiceStatus;
+  description: string;
+  leader: { userId: number; part: Part };
+  members: Array<{ userId: number; part: Part }>;
+  thumbnailUrl?: string | null;
 };

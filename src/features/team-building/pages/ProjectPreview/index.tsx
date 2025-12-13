@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Modal from '../../components/Modal_Fix';
 import ProjectDetailView from '../../components/ProjectDetail/ProjectDetailView';
-import type { ProjectStatus } from '../../types/gallery';
+import type { GenerationValue, Part, ServiceStatus } from '../../types/gallery';
 
 type PreviewQuery = {
   title?: string | string[];
@@ -34,6 +34,37 @@ const parseTeamMembers = (value: string | string[] | undefined): RawTeamMember[]
   }
 };
 
+/** 따로 분리하여 정리할 예정 */
+function parseGeneration(value: string): GenerationValue {
+  if (value === '25-26' || value === '24-25' || value === '23-24' || value === '22-23') {
+    return value;
+  }
+  return '25-26';
+}
+
+function mapUiPartToEnum(ui: string): Part | undefined {
+  switch (ui) {
+    case '기획':
+      return 'PM';
+    case '디자인':
+      return 'DESIGN';
+    case '프론트엔드 (웹)':
+      return 'WEB';
+    case '프론트엔드 (모바일)':
+      return 'MOBILE';
+    case '백엔드':
+      return 'BACKEND';
+    case 'AI/ML':
+      return 'AI';
+    default:
+      return undefined;
+  }
+}
+
+function mapUiServiceStatusToEnum(raw: string): ServiceStatus {
+  return raw === 'RUNNING' ? 'IN_SERVICE' : 'NOT_IN_SERVICE';
+}
+
 export default function ProjectPreviewPage() {
   const router = useRouter();
   const query = router.query as PreviewQuery;
@@ -41,22 +72,33 @@ export default function ProjectPreviewPage() {
   const title = asString(query.title);
   const oneLiner = asString(query.oneLiner);
   const description = asString(query.description);
-  const generation = asString(query.generation);
 
-  const rawStatus = asString(query.serviceStatus);
-  const status: ProjectStatus | undefined = rawStatus === 'RUNNING' ? 'service' : undefined;
+  const generation = useMemo<GenerationValue>(() => {
+    const raw = asString(query.generation);
+    return parseGeneration(raw);
+  }, [query.generation]);
 
-  const teamMembers = parseTeamMembers(query.teamMembers);
+  const status = useMemo<ServiceStatus>(() => {
+    const raw = asString(query.serviceStatus);
+    return mapUiServiceStatusToEnum(raw);
+  }, [query.serviceStatus]);
 
-  const leader = {
-    name: '주현지',
-    role: asString(query.leaderPart),
-  };
+  const teamMembers = useMemo(() => parseTeamMembers(query.teamMembers), [query.teamMembers]);
 
-  const members = teamMembers.map(m => ({
-    name: m.name,
-    role: m.part?.[0] ?? '',
-  }));
+  const leader = useMemo(() => {
+    const leaderPartUi = asString(query.leaderPart);
+    return {
+      name: '주현지', // 추후 로그인 유저 정보로 대체 (없어서 임시)
+      role: mapUiPartToEnum(leaderPartUi),
+    };
+  }, [query.leaderPart]);
+
+  const members = useMemo(() => {
+    return teamMembers.map(m => ({
+      name: m.name,
+      role: mapUiPartToEnum(m.part?.[0] ?? ''),
+    }));
+  }, [teamMembers]);
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -77,6 +119,8 @@ export default function ProjectPreviewPage() {
     setShowConfirmModal(false);
     setShowSuccessModal(true);
   };
+
+  if (!router.isReady) return null;
 
   return (
     <>

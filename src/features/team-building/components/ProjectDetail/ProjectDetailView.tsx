@@ -4,7 +4,7 @@ import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
 import eye from '../../assets/eye.svg';
-import { ProjectStatus } from '../../types/gallery';
+import { GenerationValue, Part, ServiceStatus } from '../../types/gallery';
 import Button from '../Button';
 import ProjectDetailDescription from './ProjectDetailDescription';
 import ProjectDetailHeader from './ProjectDetailHeader';
@@ -14,10 +14,12 @@ export type ProjectDetailViewProps = {
   title: string;
   description: string;
   longDescription: string;
-  status?: ProjectStatus;
-  generation: string;
-  leader: { name: string; role?: string };
-  members: Array<{ name: string; role?: string }>;
+  status: ServiceStatus;
+  generation: GenerationValue;
+
+  leader: { name: string; role?: Part };
+  members: Array<{ name: string; role?: Part }>;
+
   isPreview?: boolean;
   canEdit?: boolean;
   onClickBackToForm?: () => void;

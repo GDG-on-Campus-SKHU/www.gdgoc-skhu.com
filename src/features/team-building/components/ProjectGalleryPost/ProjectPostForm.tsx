@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
+import { ProjectMemberBase } from '../../types/gallery';
 import Button from '../Button';
 import Field from '../Field';
 import Modal from '../Modal_Fix';
@@ -12,7 +13,7 @@ import Radio from '../Radio_Fix';
 import SelectBoxBasic from '../SelectBoxBasic_Fix';
 import MemberSelectModal, { Member } from './MemberSelectModal';
 import ProjectDescriptionEditor from './ProjectDescriptionEditor';
-import ProjectMemberRow, { ProjectMemberBase } from './ProjectMemberRow';
+import ProjectMemberRow from './ProjectMemberRow';
 
 // 기수 / 파트 옵션
 const GENERATION_OPTIONS = ['25-26', '24-25', '이전 기수'] as const;
@@ -34,43 +35,56 @@ export type TeamMember = ProjectMemberBase & {
 const TITLE_MAX = 20;
 const ONE_LINER_MAX = 30;
 
-// 임시 팀장 정보 (ui용)
-const DEFAULT_LEADER: ProjectMemberBase = {
-  id: 'leader-1',
-  name: '주현지',
-  badge: '25-26 Core',
-  school: '성공회대학교',
-};
-
 // ProjectPostForm 에서 쓸 초기값 타입
-export type ProjectPostFormInitialValues = {
+export type ProjectPostFormValues = {
   title?: string;
   oneLiner?: string;
-  generation?: '25-26' | '24-25' | '이전 기수';
+  generation?: string;
+  leader?: ProjectMemberBase;
   leaderPart?: string;
   serviceStatus?: 'RUNNING' | 'PAUSED';
   description?: string;
   teamMembers?: TeamMember[];
-  leader?: ProjectMemberBase; // 초기 팀장 정보 (수정페이지)
+  thumbnailUrl?: string | null;
 };
 
-type ProjectPostFormProps = {
+export type ProjectPostFormInitialValues = Partial<ProjectPostFormValues>;
+
+type Props = {
   initialValues?: ProjectPostFormInitialValues;
   isEditMode?: boolean;
+
+  // 작성/수정 페이지에서 실제 API 연결할 때 사용할 포인트
+  onSubmit?: (values: ProjectPostFormValues) => void;
+
+  // 추후 인증 붙으면 leader를 외부에서 내려주는 방식으로도 쉽게 전환 가능
+  defaultLeader?: ProjectMemberBase;
 };
 
 export default function ProjectPostForm({
   initialValues,
   isEditMode = false,
-}: ProjectPostFormProps) {
+  onSubmit,
+  defaultLeader,
+}: Props) {
   const router = useRouter();
+
+  // leader는 인증 붙으면 보통 "내 정보"로 세팅
+  // 지금은 initialValues에 leader가 있으면 우선 사용, 없으면 defaultLeader 필요
+  const resolvedLeader = initialValues?.leader ??
+    defaultLeader ?? {
+      userId: 0,
+      name: '임시 유저',
+      badge: '25-26 Member',
+      school: '성공회대학교',
+    };
 
   const [title, setTitle] = useState(initialValues?.title ?? '');
   const [oneLiner, setOneLiner] = useState(initialValues?.oneLiner ?? '');
   const [generation, setGeneration] = useState<string[]>(
     initialValues?.generation ? [initialValues.generation] : []
   );
-  const [leader, setLeader] = useState<ProjectMemberBase>(initialValues?.leader ?? DEFAULT_LEADER);
+  const [leader, setLeader] = useState<ProjectMemberBase>(resolvedLeader);
   const [leaderPart, setLeaderPart] = useState<string[]>(
     initialValues?.leaderPart ? [initialValues.leaderPart] : []
   );
@@ -87,52 +101,50 @@ export default function ProjectPostForm({
   const isTitleMax = title.length === TITLE_MAX;
   const isOneLinerMax = oneLiner.length === ONE_LINER_MAX;
 
-  // 모달에서 팀원 선택 시 호출
+  // 팀원 선택(모달) → 폼에 등록
   const handleSelectMember = (member: Member) => {
+    // leader와 동일 인물 선택 방지(원하면)
+    if (member.userId === leader.userId) return;
+
     setTeamMembers(prev => {
-      if (prev.some(m => m.id === member.id)) return prev;
+      if (prev.some(m => m.userId === member.userId)) return prev; // 중복 방지
       return [...prev, { ...member, part: [] }];
     });
   };
 
-  const handleRemoveMember = (id: string) => {
-    setTeamMembers(prev => prev.filter(m => m.id !== id));
+  const handleRemoveMember = (userId: number) => {
+    setTeamMembers(prev => prev.filter(m => m.userId !== userId));
   };
 
-  const handleChangeMemberPart = (id: string, next: string[]) => {
-    setTeamMembers(prev => prev.map(m => (m.id === id ? { ...m, part: next } : m)));
+  const handleChangeMemberPart = (userId: number, next: string[]) => {
+    setTeamMembers(prev => prev.map(m => (m.userId === userId ? { ...m, part: next } : m)));
   };
 
   // 팀장 위임
-  const handleDelegateLeader = (memberId: string) => {
+  const handleDelegateLeader = (memberUserId: number) => {
     setTeamMembers(prevMembers => {
-      const target = prevMembers.find(m => m.id === memberId);
+      const target = prevMembers.find(m => m.userId === memberUserId);
       if (!target) return prevMembers;
 
-      // 새 팀장으로 올릴 멤버
       const newLeader: ProjectMemberBase = {
-        id: target.id,
+        userId: target.userId,
         name: target.name,
         badge: target.badge,
         school: target.school,
       };
 
-      // 기존 팀장을 팀원으로 내려보내기
+      // 기존 팀장을 팀원으로 내려보내기 (파트 포함)
       const prevLeaderAsMember: TeamMember = {
         ...leader,
         part: leaderPart,
       };
 
-      // 기존 멤버 리스트에서
-      // - 위임받은 사람 제거
-      // - 혹시 기존 팀장이 이미 팀원에 있다면 제거
-      const rest = prevMembers.filter(m => m.id !== memberId && m.id !== leader.id);
+      const rest = prevMembers.filter(m => m.userId !== memberUserId && m.userId !== leader.userId);
 
       // state 업데이트
       setLeader(newLeader);
-      setLeaderPart(target.part);
+      setLeaderPart(target.part); // 기존 팀원 파트를 그대로 팀장 파트로 승격
 
-      // 기존 팀장을 제일 위에 추가
       return [prevLeaderAsMember, ...rest];
     });
   };
@@ -146,7 +158,7 @@ export default function ProjectPostForm({
     const hasDescription = description.trim().length > 0;
 
     const membersAllHavePart =
-      teamMembers.length === 0 || teamMembers.every(m => m.part.some(p => p.trim().length > 0));
+      teamMembers.length === 0 || teamMembers.every(m => (m.part?.[0] ?? '').trim().length > 0);
 
     return (
       hasTitle &&
@@ -163,20 +175,42 @@ export default function ProjectPostForm({
     setShowConfirmModal(true);
   };
 
+  const buildValues = (): ProjectPostFormValues => ({
+    title,
+    oneLiner,
+    generation: generation[0] ?? '',
+    leader,
+    leaderPart: leaderPart[0] ?? '',
+    serviceStatus,
+    description,
+    teamMembers,
+    thumbnailUrl: null, // 지금은 null
+  });
+
+  const handleConfirmSubmit = () => {
+    const values = buildValues();
+    onSubmit?.(values); // 작성/수정 페이지에서 여기서 payload 변환 & API 호출
+
+    setShowConfirmModal(false);
+    setShowSuccessModal(true);
+  };
+
   const handlePreviewClick = () => {
-    const generationValue = generation[0] ?? '';
-    const leaderPartValue = leaderPart[0] ?? '';
+    const values = buildValues();
 
     router.push({
       pathname: '/project-gallery/preview',
       query: {
-        title,
-        oneLiner,
-        generation: generationValue,
-        leaderPart: leaderPartValue,
-        description,
-        teamMembers: JSON.stringify(teamMembers),
-        serviceStatus,
+        title: values.title,
+        oneLiner: values.oneLiner,
+        generation: values.generation,
+        leaderPart: values.leaderPart,
+        description: values.description,
+        teamMembers: JSON.stringify(values.teamMembers),
+        serviceStatus: values.serviceStatus,
+
+        // leader도 유지하고 싶으면 같이 넘겨도 됨
+        leader: JSON.stringify(values.leader),
       },
     });
   };
@@ -196,10 +230,7 @@ export default function ProjectPostForm({
             placeholder="제목을 입력해주세요."
             maxLength={TITLE_MAX}
             value={title}
-            onChange={e => {
-              const next = e.target.value.slice(0, TITLE_MAX);
-              setTitle(next);
-            }}
+            onChange={e => setTitle(e.target.value.slice(0, TITLE_MAX))}
             error={isTitleMax}
           />
         </section>
@@ -216,10 +247,7 @@ export default function ProjectPostForm({
             placeholder="프로젝트를 간단하게 소개해주세요."
             maxLength={ONE_LINER_MAX}
             value={oneLiner}
-            onChange={e => {
-              const next = e.target.value.slice(0, ONE_LINER_MAX);
-              setOneLiner(next);
-            }}
+            onChange={e => setOneLiner(e.target.value.slice(0, ONE_LINER_MAX))}
             error={isOneLinerMax}
           />
         </section>
@@ -264,14 +292,14 @@ export default function ProjectPostForm({
           <div css={teamListCss}>
             {teamMembers.map(member => (
               <ProjectMemberRow
-                key={member.id}
+                key={member.userId}
                 member={member}
                 partOptions={PART_OPTIONS as unknown as string[]}
                 partValue={member.part}
-                onPartChange={next => handleChangeMemberPart(member.id, next)}
-                onRemove={() => handleRemoveMember(member.id)}
+                onPartChange={next => handleChangeMemberPart(member.userId, next)}
+                onRemove={() => handleRemoveMember(member.userId)}
                 isEditMode={isEditMode}
-                onDelegateLeader={() => handleDelegateLeader(member.id)}
+                onDelegateLeader={() => handleDelegateLeader(member.userId)}
               />
             ))}
           </div>
@@ -351,7 +379,7 @@ export default function ProjectPostForm({
         open={isTeamModalOpen}
         onClose={() => setIsTeamModalOpen(false)}
         onSelectMember={handleSelectMember}
-        selectedMemberIds={teamMembers.map(m => m.id)}
+        selectedMemberIds={teamMembers.map(m => m.userId)}
       />
 
       {/* 전시 확인 모달 */}
@@ -363,10 +391,7 @@ export default function ProjectPostForm({
           confirmText="예"
           cancelText="아니오"
           onClose={() => setShowConfirmModal(false)}
-          onConfirm={() => {
-            setShowConfirmModal(false);
-            setShowSuccessModal(true);
-          }}
+          onConfirm={handleConfirmSubmit}
           customTitleAlign="center"
         />
       )}

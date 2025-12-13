@@ -1,22 +1,26 @@
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
-import { ProjectStatus } from '../../types/gallery';
+import type { ServiceStatus } from '../../types/gallery';
 
-type Props = { status: ProjectStatus };
+type Props = { status: ServiceStatus };
 
-const LABEL: Record<ProjectStatus, string> = {
-  service: '서비스 중',
+const LABEL: Record<Extract<ServiceStatus, 'IN_SERVICE'>, string> = {
+  IN_SERVICE: '서비스 중',
 };
 
-const STATE: Record<ProjectStatus, string> = {
-  service: colors.primary[600],
+const STATE_COLOR: Record<Extract<ServiceStatus, 'IN_SERVICE'>, string> = {
+  IN_SERVICE: colors.primary[600],
 };
 
 export default function StatusBadge({ status }: Props) {
+  if (status === 'NOT_IN_SERVICE') {
+    return null;
+  }
+
   return (
     <span css={badgeCss}>
-      <i css={dotCss(STATE[status])} />
+      <i css={dotCss(STATE_COLOR[status])} />
       {LABEL[status]}
     </span>
   );
