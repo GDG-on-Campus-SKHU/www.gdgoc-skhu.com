@@ -135,10 +135,9 @@ function LoginForm({
       <div css={buttonGroupCss}>
         <Button type="submit" title="로그인" />
         <Link href="/signup">
-        <Button variant="secondary" title="회원가입" />
+          <Button variant="secondary" title="회원가입" />
         </Link>
-</div>
-
+      </div>
     </form>
   );
 }

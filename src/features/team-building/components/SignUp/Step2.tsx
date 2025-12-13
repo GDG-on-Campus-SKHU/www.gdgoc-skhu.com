@@ -90,34 +90,29 @@ export default function Step2({
         />
 
         <FieldOfSignUp
-  label="이메일"
-  placeholder="이메일 주소를 입력해주세요."
-  value={email}
-  onChange={e => {
-    if (!touched) setTouched(true);
-    setEmail(e.target.value);
-  }}
-  error={touched && !!errors.email}
-  errorMessage={
-    errors.email || '주로 사용하는 연락 가능한 이메일 주소를 작성해주세요.'
-  }
-/>
-
+          label="이메일"
+          placeholder="이메일 주소를 입력해주세요."
+          value={email}
+          onChange={e => {
+            if (!touched) setTouched(true);
+            setEmail(e.target.value);
+          }}
+          error={touched && !!errors.email}
+          errorMessage={errors.email || '주로 사용하는 연락 가능한 이메일 주소를 작성해주세요.'}
+        />
 
         <FieldOfSignUp
-  label="비밀번호"
-  type="password"
-  placeholder="비밀번호를 입력해주세요."
-  value={pw}
-  onChange={e => {
-    if (!touched) setTouched(true);
-    setPw(e.target.value);
-  }}
-  error={touched && !!errors.pw}
-  errorMessage={errors.pw || '8자리 이상, 특수문자 포함'}
-/>
-
-
+          label="비밀번호"
+          type="password"
+          placeholder="비밀번호를 입력해주세요."
+          value={pw}
+          onChange={e => {
+            if (!touched) setTouched(true);
+            setPw(e.target.value);
+          }}
+          error={touched && !!errors.pw}
+          errorMessage={errors.pw || '8자리 이상, 특수문자 포함'}
+        />
 
         <FieldOfSignUp
           label="비밀번호 재입력"
@@ -136,31 +131,30 @@ export default function Step2({
           label="전화번호"
           placeholder="- 포함 전화번호 입력"
           value={phone}
-        onChange={e => {
-          if (!touched) setTouched(true);
-          setPhone(e.target.value);
-        }}
+          onChange={e => {
+            if (!touched) setTouched(true);
+            setPhone(e.target.value);
+          }}
           error={touched && !!errors.phone}
           errorMessage={errors.phone || '010-1234-5678 형식'}
           hideHelperOnValue
         />
       </div>
 
-    <div css={buttonBox}>
-    <div css={leftBtn}>
-      <Button variant="secondary" title="이전" onClick={onPrev} />
-    </div>
+      <div css={buttonBox}>
+        <div css={leftBtn}>
+          <Button variant="secondary" title="이전" onClick={onPrev} />
+        </div>
 
-    <button
-      type="button"
-      css={[primaryBtn({ disabled: isDisabled }), rightBtn]}
-      onClick={onNext}
-      disabled={isDisabled}
-    >
-      다음
-    </button>
-    </div>
-    
+        <button
+          type="button"
+          css={[primaryBtn({ disabled: isDisabled }), rightBtn]}
+          onClick={onNext}
+          disabled={isDisabled}
+        >
+          다음
+        </button>
+      </div>
     </section>
   );
 }
@@ -204,7 +198,6 @@ const leftBtn = css`
 const rightBtn = css`
   flex: 2;
 `;
-
 
 export const sectionCss = (visible: boolean, step: Step, isMobile: boolean) => css`
   width: 420px;

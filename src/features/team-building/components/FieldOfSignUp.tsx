@@ -27,10 +27,7 @@ export default function FieldOfSignUp({
 }: FieldOfSignUpProps) {
   const hasValue = Boolean(value && value.trim().length > 0);
 
-  const showHelper =
-    !error &&
-    errorMessage &&
-    !(hideHelperOnValue && hasValue);
+  const showHelper = !error && errorMessage && !(hideHelperOnValue && hasValue);
 
   const errorText = error && errorMessage ? errorMessage : null;
 

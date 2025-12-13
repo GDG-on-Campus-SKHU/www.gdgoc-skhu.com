@@ -67,11 +67,10 @@ export default function SignUpPage() {
   );
 
   useEffect(() => {
-  if (currentStep === 2 && touched) {
-    validateStep(2);
-  }
-}, [name, email, pw, pw2, phone, touched, currentStep, validateStep]);
-
+    if (currentStep === 2 && touched) {
+      validateStep(2);
+    }
+  }, [name, email, pw, pw2, phone, touched, currentStep, validateStep]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
