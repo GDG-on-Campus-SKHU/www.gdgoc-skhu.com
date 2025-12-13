@@ -1,7 +1,3 @@
-/** 
- * API 연동 완료 후 삭제 예정인 임시 타입 및 데이터
- */
-
 export type ActivityCategory = '카테고리 이름 1' | '카테고리 이름 2';
 
 export type Activity = {
@@ -16,7 +12,7 @@ export type Activity = {
   description?: string;
 };
 
-/** 임시 데이터 - API 연동 후 삭제 */
+/** 임시 데이터 */
 export const MOCK_ACTIVITIES: Activity[] = [
   {
     id: 'a1',
@@ -84,7 +80,6 @@ export const MOCK_ACTIVITIES: Activity[] = [
   },
 ];
 
-/** 임시 유틸 함수 - API 연동 후 삭제 */
 export const getActivitiesByCategory = (
   activities: Activity[],
   category: ActivityCategory

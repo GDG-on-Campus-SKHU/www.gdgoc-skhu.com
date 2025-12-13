@@ -1,10 +1,14 @@
 import { css } from '@emotion/react';
 
-import { Activity } from '../../types/activity';
 import StatusBadge from './Badge';
 
-interface ActivityCardProps
-  extends Pick<Activity, 'title' | 'author' | 'thumbnailUrl' | 'youtubeId' | 'year'> {}
+interface ActivityCardProps {
+  title: string;
+  author: string;
+  thumbnailUrl?: string;
+  youtubeId?: string;
+  year: string;
+}
 
 export default function ActivityCard({
   title,
@@ -12,7 +16,7 @@ export default function ActivityCard({
   thumbnailUrl,
   youtubeId,
   year,
-}: ActivityCardProps & { youtubeId?: string }) {
+}: ActivityCardProps) {
   const resolvedThumbnail = thumbnailUrl
     ? thumbnailUrl
     : youtubeId
@@ -22,7 +26,7 @@ export default function ActivityCard({
   return (
     <article css={articleCss}>
       <div css={thumbFrameCss}>
-        {resolvedThumbnail && (
+        {resolvedThumbnail && youtubeId && (
           <a
             href={`https://www.youtube.com/watch?v=${youtubeId}`}
             target="_blank"

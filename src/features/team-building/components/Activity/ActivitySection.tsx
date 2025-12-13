@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { Activity } from '../../types/activity';
+import { Activity } from '@/lib/activity.api';
 import ActivityCard from './ActivityCard';
 
 interface ActivitySectionProps {
@@ -13,14 +13,13 @@ export default function ActivitySection({ categoryName, activities }: ActivitySe
     <div>
       <h2 css={categoryCss}>{categoryName}</h2>
       <div css={gridCss}>
-        {activities.map(activity => (
+        {activities.map((activity, index) => (
           <ActivityCard
-            key={activity.id}
+            key={`${categoryName}-${index}`}
             title={activity.title}
-            author={activity.author}
-            thumbnailUrl={activity.thumbnailUrl}
+            author={activity.speaker}
             youtubeId={activity.youtubeId}
-            year={activity.year}
+            year={activity.generation}
           />
         ))}
       </div>

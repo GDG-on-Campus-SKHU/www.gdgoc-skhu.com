@@ -1,11 +1,45 @@
 import { css } from '@emotion/react';
 
 import ActivitySection from '../../components/Activity/ActivitySection';
-import { getActivitiesByCategory, MOCK_ACTIVITIES } from '../../types/activity';
-
+import { usePublishedActivities } from '@/lib/activity.api';
 export default function ActivityPage() {
-  const category1Activities = getActivitiesByCategory(MOCK_ACTIVITIES, '카테고리 이름 1');
-  const category2Activities = getActivitiesByCategory(MOCK_ACTIVITIES, '카테고리 이름 2');
+  const { data: categories, isLoading, error } = usePublishedActivities();
+
+  // 로딩 상태 처리
+  if (isLoading) {
+    return (
+      <main css={mainCss}>
+        <div css={innerCss}>
+          <div css={loadingCss}>로딩 중...</div>
+        </div>
+      </main>
+    );
+  }
+
+  // 에러 상태 처리
+  if (error) {
+    return (
+      <main css={mainCss}>
+        <div css={innerCss}>
+          <div css={errorCss}>데이터를 불러오는 중 오류가 발생했습니다.</div>
+        </div>
+      </main>
+    );
+  }
+
+  // 데이터 없음 처리
+  if (!categories || categories.length === 0) {
+    return (
+      <main css={mainCss}>
+        <div css={innerCss}>
+          <div css={headerCss}>
+            <h1 css={titleCss}>Activity</h1>
+          </div>
+          <div css={emptyStateCss}>등록된 액티비티가 없습니다.</div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main css={mainCss}>
@@ -15,8 +49,13 @@ export default function ActivityPage() {
         </div>
 
         <div css={sectionContainerCss}>
-          <ActivitySection categoryName="카테고리 이름 1" activities={category1Activities} />
-          <ActivitySection categoryName="카테고리 이름 2" activities={category2Activities} />
+          {categories.map(category => (
+            <ActivitySection
+              key={category.categoryId}
+              categoryName={category.categoryTitle}
+              activities={category.activities}
+            />
+          ))}
         </div>
       </div>
     </main>
@@ -61,4 +100,32 @@ const titleCss = css`
   font-size: 50px;
   font-weight: 700;
   line-height: 160%;
+`;
+
+// State styles
+const loadingCss = css`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  font-size: 18px;
+  color: #666;
+`;
+
+const errorCss = css`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  font-size: 18px;
+  color: #e53e3e;
+`;
+
+const emptyStateCss = css`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  font-size: 18px;
+  color: #999;
 `;
