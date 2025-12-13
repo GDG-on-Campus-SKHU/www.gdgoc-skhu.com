@@ -4,12 +4,12 @@ import { css } from '@emotion/react';
 import type React from 'react';
 import { createPortal } from 'react-dom';
 
+import { useProjectGalleryMemberSearch } from '../../../../lib/projectGallery.api';
 import { colors } from '../../../../styles/constants';
 import close from '../../assets/close.svg';
+import { ProjectGalleryMemberSearchItem, ProjectMemberBase } from '../../types/gallery';
 import FieldOfSearch from '../FieldOfSearch';
 import MemberCard from './MemberCard';
-import { ProjectGalleryMemberSearchItem, ProjectMemberBase } from '../../types/gallery';
-import { useProjectGalleryMemberSearch } from '../../../../lib/projectGallery.api';
 
 export type Member = ProjectMemberBase;
 
