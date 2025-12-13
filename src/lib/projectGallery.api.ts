@@ -1,5 +1,5 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
-import { api } from './api-token';
+
 import type {
   GenerationTab,
   GenerationValue,
@@ -11,6 +11,7 @@ import type {
   ProjectGalleryMemberSearchResponse,
   ServiceStatus,
 } from '../features/team-building/types/gallery';
+import { api } from './api-token';
 
 /* =========================================================
  * Query Keys

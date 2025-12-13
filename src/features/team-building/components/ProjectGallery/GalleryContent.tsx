@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { css } from '@emotion/react';
 
 import type { GenerationTab, GenerationValue, ProjectGalleryListItem } from '../../types/gallery';
@@ -58,26 +58,4 @@ export default function GalleryContent({ activeTab, projects, isLoading, isError
 
 const wrapCss = css`
   width: 100%;
-`;
-
-const toolbarCss = css`
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  justify-content: flex-end;
-  margin-bottom: 12px;
-`;
-
-const btnCss = (active: boolean) => css`
-  border: 1px solid ${active ? '#111' : '#e5e7eb'};
-  background: ${active ? '#111' : '#fff'};
-  color: ${active ? '#fff' : '#111'};
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-
-  &:hover {
-    border-color: #111;
-  }
 `;

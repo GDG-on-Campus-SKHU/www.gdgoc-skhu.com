@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
 
+import { useProjectGalleryList } from '../../../../lib/projectGallery.api';
 import { colors } from '../../../../styles/constants';
 import GalleryContent from '../../components/ProjectGallery/GalleryContent';
 import { GenerationTab } from '../../types/gallery';
-import { useProjectGalleryList } from '../../../../lib/projectGallery.api';
 
 const TABS: GenerationTab[] = ['전체', '25-26', '24-25', '이전 기수'];
 

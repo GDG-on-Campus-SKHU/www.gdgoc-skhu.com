@@ -1,8 +1,8 @@
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
-import Badge from '../ProjectGalleryPost/Badge';
 import { GenerationValue, Part } from '../../types/gallery';
+import Badge from '../ProjectGalleryPost/Badge';
 
 type Member = { name: string; role?: Part };
 

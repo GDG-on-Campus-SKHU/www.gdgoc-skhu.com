@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
+import { ProjectMemberBase } from '../../types/gallery';
 import Button from '../Button';
 import Field from '../Field';
 import Modal from '../Modal_Fix';
@@ -13,7 +14,6 @@ import SelectBoxBasic from '../SelectBoxBasic_Fix';
 import MemberSelectModal, { Member } from './MemberSelectModal';
 import ProjectDescriptionEditor from './ProjectDescriptionEditor';
 import ProjectMemberRow from './ProjectMemberRow';
-import { ProjectMemberBase } from '../../types/gallery';
 
 // 기수 / 파트 옵션
 const GENERATION_OPTIONS = ['25-26', '24-25', '이전 기수'] as const;

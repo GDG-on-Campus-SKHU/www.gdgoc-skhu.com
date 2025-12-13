@@ -2,8 +2,8 @@
 import { useMemo } from 'react';
 import { useRouter } from 'next/router';
 
-import ProjectDetailView from '../../components/ProjectDetail/ProjectDetailView';
 import { useProjectGalleryDetail } from '../../../../lib/projectGallery.api';
+import ProjectDetailView from '../../components/ProjectDetail/ProjectDetailView';
 
 export default function ProjectDetailPage() {
   const router = useRouter();

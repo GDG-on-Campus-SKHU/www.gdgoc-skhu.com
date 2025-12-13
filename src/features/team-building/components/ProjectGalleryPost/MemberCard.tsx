@@ -1,9 +1,9 @@
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
+import { ProjectMemberBase } from '../../types/gallery';
 import Button from '../Button';
 import Badge from './Badge';
-import { ProjectMemberBase } from '../../types/gallery';
 
 type MemberCardProps = {
   member: ProjectMemberBase;

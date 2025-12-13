@@ -1,7 +1,7 @@
 import { css } from '@emotion/react';
 
-import ProjectCard from './ProjectCard';
 import { ProjectGalleryListItem } from '../../types/gallery';
+import ProjectCard from './ProjectCard';
 
 type Props = { items: ProjectGalleryListItem[] };
 
