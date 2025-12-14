@@ -4,8 +4,8 @@ import { css } from '@emotion/react';
 import { motion } from 'framer-motion';
 
 import StatusBadge from '../../features/team-building/components/ProjectGallery/StatusBadge';
-import type { Project } from '../../features/team-building/types/gallery';
-import { MOCK_PROJECTS } from '../../features/team-building/types/gallery';
+import type { Project } from '../../features/team-building/types/gallery_past';
+import { MOCK_PROJECTS } from '../../features/team-building/types/gallery_past';
 import {
   sectionDescCss,
   sectionLayoutCss,
@@ -26,7 +26,7 @@ export default function ProjectSection() {
         title: `프로젝트 ${num}`,
         description: '프로젝트 한줄소개',
         thumbnailUrl: '/images/project-dummy.png',
-        status: 'service',
+        status: 'IN_SERVICE', // StatusBadge의 Enum을 수정해서 맞춰서 바꿔놨습니다
         generation: '25-26',
       });
     }

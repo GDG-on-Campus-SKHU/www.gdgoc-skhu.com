@@ -32,15 +32,21 @@ export default function Step3ResetPw({ email, code, onPrev }: Props) {
     onClose: () => void;
   } | null>(null);
 
-  const isValidPassword = (value: string) => value.length >= 8 && /[!@#$%^&*]/.test(value);
+  const isValidPassword = (value: string) =>
+    value.length >= 8 && /[!@#$%^&*]/.test(value);
 
   const passwordRuleError =
-    pw !== '' && !isValidPassword(pw) ? '8자 이상, 특수문자가 포함된 비밀번호를 입력해주세요.' : '';
+    pw !== '' && !isValidPassword(pw)
+      ? '8자 이상, 특수문자가 포함된 비밀번호를 입력해주세요.'
+      : '';
 
   const passwordMatchError =
-    pw2 !== '' && isValidPassword(pw) && pw !== pw2 ? '비밀번호가 일치하지 않습니다.' : '';
+    pw2 !== '' && isValidPassword(pw) && pw !== pw2
+      ? '비밀번호가 일치하지 않습니다.'
+      : '';
 
-  const isSubmitDisabled = !pw || !pw2 || !isValidPassword(pw) || pw !== pw2 || loading;
+  const isSubmitDisabled =
+    !pw || !pw2 || !isValidPassword(pw) || pw !== pw2 || loading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,17 +82,19 @@ export default function Step3ResetPw({ email, code, onPrev }: Props) {
     <>
       <form onSubmit={handleSubmit} css={authStepSection}>
         <h2 css={[typography.h2Bold, authStepTitle]}>비밀번호 재설정</h2>
-        <p css={[typography.b4, authStepDesc]}>새로운 비밀번호를 설정해주세요.</p>
+        <p css={[typography.b4, authStepDesc]}>
+          새로운 비밀번호를 설정해주세요.
+        </p>
 
         <div css={fieldOverride}>
-  <FieldOfAuth
-    label="새 비밀번호"
-    type="password"
-    placeholder="8자 이상, 특수문자 포함"
-    value={pw}
-    onChange={e => setPw(e.target.value)}
-    error={pw !== '' && !isValidPassword(pw)}
-  />
+          <FieldOfAuth
+            label="새 비밀번호"
+            type="password"
+            placeholder="8자 이상, 특수문자 포함"
+            value={pw}
+            onChange={e => setPw(e.target.value)}
+            error={pw !== '' && !isValidPassword(pw)}
+          />
           {passwordRuleError && <p css={errorText}>{passwordRuleError}</p>}
         </div>
 
@@ -132,16 +140,8 @@ export default function Step3ResetPw({ email, code, onPrev }: Props) {
 
 const fieldOverride = css`
   label {
-    margin-bottom: 5px;
+    margin-bottom: 6px;
   }
-`;
-
-const fieldBlock = css`
-  margin-bottom: 4px;
-`;
-
-const fieldBlockWithGap = css`
-  margin-bottom: 16px;
 `;
 
 const errorText = css`

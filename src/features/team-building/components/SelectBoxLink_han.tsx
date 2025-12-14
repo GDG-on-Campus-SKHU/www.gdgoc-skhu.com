@@ -8,6 +8,7 @@ import {
   selectBoxContainer,
   wrap,
 } from '../styles/selectBoxLink';
+import { UserLinkOption } from '@/lib/mypageProfile.api';
 import Field from './Field';
 import SelectBoxBasic from './SelectBoxBasic';
 
@@ -35,10 +36,9 @@ interface SelectBoxLinkProps {
    */
   maxLinks?: number;
   /**
-   * 선택 가능한 플랫폼 목록
-   * @default ['GitHub', 'LinkedIn', 'Twitter', 'Website']
+   * 선택 가능한 플랫폼 목록 (API에서 받은 옵션)
    */
-  platforms?: string[];
+  options?: UserLinkOption[];
 }
 
 export default function SelectBoxLink({
@@ -46,7 +46,7 @@ export default function SelectBoxLink({
   value,
   defaultValue = [{ id: 0, platform: '', url: '' }],
   maxLinks = 10,
-  platforms = ['GitHub', 'LinkedIn', 'Twitter', 'Website'],
+  options = [],
 }: SelectBoxLinkProps) {
   // Controlled vs Uncontrolled
   const isControlled = value !== undefined;
@@ -54,6 +54,11 @@ export default function SelectBoxLink({
 
   // Controlled 모드일 때 외부 value 사용
   const links = isControlled ? value : internalLinks;
+
+  // 플랫폼 옵션을 SelectBoxBasic에 맞게 변환 (type 값만 추출)
+  const platformOptions = options.length > 0 
+    ? options.map(opt => opt.type)
+    : ['GitHub', 'LinkedIn', 'Twitter', 'Website']; // fallback
 
   // value prop이 변경되면 내부 상태 업데이트 (초기화 시)
   useEffect(() => {
@@ -99,7 +104,7 @@ export default function SelectBoxLink({
         <div key={link.id} css={fieldWrap}>
           <div css={selectBoxContainer}>
             <SelectBoxBasic
-              options={platforms}
+              options={platformOptions}
               placeholder="플랫폼 선택"
               value={link.platform ? [link.platform] : []}
               onChange={selected => handlePlatformChange(link.id, selected[0] || '')}

@@ -4,37 +4,20 @@ import { css } from '@emotion/react';
 import type React from 'react';
 import { createPortal } from 'react-dom';
 
+import { useProjectGalleryMemberSearch } from '../../../../lib/projectGallery.api';
 import { colors } from '../../../../styles/constants';
 import close from '../../assets/close.svg';
+import { ProjectGalleryMemberSearchItem, ProjectMemberBase } from '../../types/gallery';
 import FieldOfSearch from '../FieldOfSearch';
 import MemberCard from './MemberCard';
 
-export type Member = {
-  id: string;
-  name: string;
-  badge: string;
-  school: string;
-};
+export type Member = ProjectMemberBase;
 
-// 임시 팀원 데이터
-const MOCK_MEMBERS: Member[] = [
-  { id: '1', name: '김준', badge: '25-26 Organizer', school: '성공회대학교' },
-  { id: '2', name: '김기웅', badge: '25-26 Member', school: '성공회대학교' },
-  { id: '3', name: '김규빈', badge: '25-26 Member', school: '성공회대학교' },
-  { id: '4', name: '김보정', badge: '24-25 Core', school: '성공회대학교' },
-  { id: '5', name: '박지민', badge: '25-26 Member', school: '성공회대학교' },
-  { id: '6', name: '이도현', badge: '24-25 Member', school: '성공회대학교' },
-  { id: '7', name: '김다은', badge: '25-26 Member', school: '성공회대학교' },
-  { id: '8', name: '윤준석', badge: '25-26 Organizer', school: '성공회대학교' },
-  { id: '9', name: '이슬', badge: '25-26 Core', school: '성공회대학교' },
-  { id: '10', name: '이서영', badge: '25-26 Core', school: '성공회대학교' },
-];
-
-type TeamMemberSelectModalProps = {
+type Props = {
   open: boolean;
   onClose: () => void;
   onSelectMember?: (member: Member) => void;
-  selectedMemberIds?: string[];
+  selectedMemberIds?: number[];
 };
 
 export default function MemberSelectModal({
@@ -42,7 +25,7 @@ export default function MemberSelectModal({
   onClose,
   onSelectMember,
   selectedMemberIds = [],
-}: TeamMemberSelectModalProps) {
+}: Props) {
   const [keyword, setKeyword] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -65,10 +48,21 @@ export default function MemberSelectModal({
 
   const trimmed = keyword.trim();
 
-  const filteredMembers = useMemo(() => {
-    if (!trimmed) return MOCK_MEMBERS;
-    return MOCK_MEMBERS.filter(m => m.name.includes(trimmed));
-  }, [trimmed]);
+  // 검색 API: "검색 버튼/엔터"를 눌렀을 때만 hasSearched = true
+  const { data, isFetching, isError } = useProjectGalleryMemberSearch(trimmed, {
+    enabled: open && hasSearched && trimmed.length > 0,
+  });
+
+  // API 응답 → 폼에서 그대로 쓸 수 있는 Member(ProjectMemberBase)로 변환
+  const members = useMemo<Member[]>(() => {
+    const list = data?.members ?? [];
+    return list.map((m: ProjectGalleryMemberSearchItem) => ({
+      userId: m.userId,
+      name: m.name,
+      school: m.school,
+      badge: m.generationAndPosition,
+    }));
+  }, [data]);
 
   const handleSelect = (member: Member) => {
     onSelectMember?.(member);
@@ -76,13 +70,13 @@ export default function MemberSelectModal({
 
   const handleChangeKeyword = (value: string) => {
     setKeyword(value);
-    setHasSearched(value.trim().length > 0);
+    // 입력만 했을 땐 리스트 안 보여주고, "검색" 수행 시에만 보여주려면 hasSearched는 여기서 건드리지 않음
+    if (value.trim().length === 0) setHasSearched(false);
   };
 
   const handleSearch = (value: string) => {
     setKeyword(value);
     setHasSearched(value.trim().length > 0);
-    // 나중에 API 호출
   };
 
   // wheel 이벤트를 전역에서 잡고, 조건에 따라 배경 스크롤을 막을지 결정
@@ -153,15 +147,21 @@ export default function MemberSelectModal({
           {/* 팀원 리스트 영역 */}
           {hasSearched && (
             <div css={listWrapCss} ref={listRef}>
-              {filteredMembers.length === 0 ? (
+              {trimmed.length === 0 ? (
+                <div>검색어를 입력해주세요.</div>
+              ) : isFetching ? (
+                <div css={emptyCss}>불러오는 중...</div>
+              ) : isError ? (
+                <div css={emptyCss}>팀원 목록을 불러오지 못했습니다.</div>
+              ) : members.length === 0 ? (
                 <div css={emptyCss}>검색 결과가 없습니다.</div>
               ) : (
-                filteredMembers.map(member => (
+                members.map(member => (
                   <MemberCard
-                    key={member.id}
+                    key={member.userId}
                     member={member}
                     onSelect={handleSelect}
-                    disabledSelect={selectedMemberIds.includes(member.id)}
+                    disabledSelect={selectedMemberIds.includes(member.userId)}
                   />
                 ))
               )}

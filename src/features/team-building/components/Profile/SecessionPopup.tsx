@@ -1,21 +1,18 @@
-import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
 import Button from '../Button';
 
-export default function SecessionPopup() {
-  const router = useRouter();
+interface SecessionPopupProps {
+  onConfirm: () => void;
+}
 
-  const handleConfirm = () => {
-    router.push('/');
-  };
-
+export default function SecessionPopup({ onConfirm }: SecessionPopupProps) {
   return (
     <main css={mainCss}>
       <div css={boxCss}>
         <h1 css={titleCss}>탈퇴가 완료되었습니다.</h1>
-        <Button title="확인" onClick={handleConfirm} />
+        <Button title="확인" onClick={onConfirm} />
       </div>
     </main>
   );
@@ -23,7 +20,9 @@ export default function SecessionPopup() {
 
 const mainCss = css`
   z-index: 999;
-  position: absolute;
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100vh;
   background: rgba(4, 4, 5, 0.3);

@@ -4,16 +4,10 @@ import { css } from '@emotion/react';
 import { colors } from '../../../../styles/constants';
 import crown from '../../assets/crown.svg';
 import delete_icon from '../../assets/delete.svg';
+import { ProjectMemberBase } from '../../types/gallery';
 import Button from '../Button';
 import SelectBoxBasic from '../SelectBoxBasic_Fix';
 import Badge from './Badge';
-
-export type ProjectMemberBase = {
-  id: string;
-  name: string;
-  badge: string;
-  school: string;
-};
 
 type ProjectMemberRowProps = {
   member: ProjectMemberBase;

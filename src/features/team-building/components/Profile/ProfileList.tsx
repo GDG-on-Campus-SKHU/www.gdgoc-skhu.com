@@ -1,21 +1,17 @@
 import { css } from '@emotion/react';
+import { useState } from 'react';
 
 import { colors } from '../../../../styles/constants';
+import { MyProfile, useTechStackOptions, useUserLinkOptions } from '@/lib/mypageProfile.api';
 import { Link } from '../../hooks/useProfileEditor';
-import { TECH_STACK_OPTIONS } from '../../types/profile';
 import SelectBox from '../SelectBox';
 import SelectBoxLink from '../SelectBoxLink_han';
 import Tag from './Tag';
 
-const BASE_PROFILE_ITEMS = [
-  { label: '학교', value: '성공회대학교' },
-  { label: '역할', value: '25-26 Member' },
-  { label: '파트', value: 'Design' },
-] as const;
-
 interface ProfileListProps {
   isEditing: boolean;
   isPreviewMode: boolean;
+  profile: MyProfile;
   selectedTechStack: string[];
   links: Link[];
   onTechStackChange: (techStack: string[]) => void;
@@ -25,11 +21,16 @@ interface ProfileListProps {
 export default function ProfileList({
   isEditing,
   isPreviewMode,
+  profile,
   selectedTechStack,
   links,
   onTechStackChange,
   onLinksChange,
 }: ProfileListProps) {
+  // 옵션 데이터 조회
+  const { data: techStackOptions = [] } = useTechStackOptions();
+  const { data: userLinkOptions = [] } = useUserLinkOptions();
+
   const showEditFields = isEditing && !isPreviewMode;
   const showPreview = !isEditing || (isEditing && isPreviewMode);
 
@@ -37,17 +38,32 @@ export default function ProfileList({
   const hasValidLinks = validLinks.length > 0;
   const hasTechStack = selectedTechStack.length > 0;
 
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    e.currentTarget.src = '/icon/link.svg';
+  // 메인 기수 찾기
+  const mainGeneration = profile.generations.find(gen => gen.isMain);
+  const generationLabel = mainGeneration
+    ? `${mainGeneration.generation} ${mainGeneration.position}`
+    : '정보 없음';
+
+  const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
+
+  const handleImageError = (linkId: number) => {
+    setFailedImages(prev => new Set(prev).add(linkId));
   };
 
-  const renderBaseProfileItem = (item: (typeof BASE_PROFILE_ITEMS)[number]) => (
+  const baseProfileItems = [
+    { label: '학교', value: profile.school, isRole: false },
+    { label: '역할', value: generationLabel, isRole: true },
+    { label: '파트', value: profile.part, isRole: false },
+  ] as const;
+
+  const renderBaseProfileItem = (item: (typeof baseProfileItems)[number]) => (
     <li key={item.label} css={profileItemCss}>
       <p css={labelCss}>{item.label}</p>
-      {item.label === '역할' ? (
+      {item.isRole ? (
         <div css={roleContainerCss}>
-          <Tag label={item.value} />
-          <Tag label={item.value} disabled />
+          {profile.generations.map(gen => (
+            <Tag key={gen.id} label={`${gen.generation} ${gen.position}`} disabled={!gen.isMain} />
+          ))}
         </div>
       ) : (
         <p css={valueCss}>{item.value}</p>
@@ -57,10 +73,13 @@ export default function ProfileList({
 
   const renderTechStackContent = () => {
     if (showEditFields) {
+      // 옵션을 SelectBox 형식에 맞게 변환
+      const techStackSelectOptions = techStackOptions.map(opt => opt.code);
+
       return (
         <div css={componentWrapperCss}>
           <SelectBox
-            options={TECH_STACK_OPTIONS}
+            options={techStackSelectOptions}
             value={selectedTechStack}
             onChange={onTechStackChange}
           />
@@ -71,14 +90,20 @@ export default function ProfileList({
     if (showPreview && hasTechStack) {
       return (
         <div css={previewContainerCss}>
-          {selectedTechStack.map(tech => (
-            <div key={tech} css={iconWrapperCss}>
-              <div css={iconCss}>
-                <img src={`/icon/${tech}.svg`} alt={tech} />
+          {selectedTechStack.map(techCode => {
+            const techOption = techStackOptions.find(opt => opt.code === techCode);
+            return (
+              <div key={techCode} css={iconWrapperCss}>
+                <div css={iconCss}>
+                  <img
+                    src={techOption?.iconUrl || `/icon/${techCode}.svg`}
+                    alt={techOption?.displayName || techCode}
+                  />
+                </div>
+                <div css={tooltipCss}>{techOption?.displayName || techCode}</div>
               </div>
-              <div css={tooltipCss}>{tech}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       );
     }
@@ -90,7 +115,7 @@ export default function ProfileList({
     if (showEditFields) {
       return (
         <div css={componentWrapperCss}>
-          <SelectBoxLink value={links} onChange={onLinksChange} />
+          <SelectBoxLink value={links} onChange={onLinksChange} options={userLinkOptions} />
         </div>
       );
     }
@@ -98,22 +123,27 @@ export default function ProfileList({
     if (showPreview && hasValidLinks) {
       return (
         <div css={previewContainerCss}>
-          {validLinks.map(link => (
-            <a
-              key={link.id}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              css={linkIconCss}
-              title={link.platform}
-            >
-              <img
-                src={`/icon/${link.platform}.svg`}
-                alt={link.platform}
-                onError={handleImageError}
-              />
-            </a>
-          ))}
+          {validLinks.map(link => {
+            const linkOption = userLinkOptions.find(opt => opt.type === link.platform);
+            const hasImageError = failedImages.has(link.id);
+            
+            return (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                css={hasImageError ? linkIconWithBorderCss : linkIconSimpleCss}
+                title={linkOption?.name || link.platform}
+              >
+                <img
+                  src={hasImageError ? '/icon/link.svg' : (linkOption?.iconUrl || `/icon/${link.platform}.svg`)}
+                  alt={linkOption?.name || link.platform}
+                  onError={() => handleImageError(link.id)}
+                />
+              </a>
+            );
+          })}
         </div>
       );
     }
@@ -123,7 +153,7 @@ export default function ProfileList({
 
   return (
     <ul css={profileListCss}>
-      {BASE_PROFILE_ITEMS.map(renderBaseProfileItem)}
+      {baseProfileItems.map(renderBaseProfileItem)}
 
       <li
         css={[profileItemCss, (showEditFields || (showPreview && hasTechStack)) && editingItemCss]}
@@ -258,7 +288,18 @@ const tooltipCss = css`
   }
 `;
 
-const linkIconCss = css`
+const linkIconSimpleCss = css`
+  width: 40px;
+  height: 40px;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+`;
+
+const linkIconWithBorderCss = css`
   width: 40px;
   height: 40px;
   display: flex;
