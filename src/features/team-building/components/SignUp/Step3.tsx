@@ -4,12 +4,7 @@ import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants/colors';
 import { typography } from '../../../../styles/constants/text';
-import {
-  headerCss,
-  primaryBtn,
-  step1Desc,
-  titleCss,
-} from '../../../../styles/GlobalStyle/AuthStyle';
+import { headerCss, step1Desc, titleCss } from '../../../../styles/GlobalStyle/AuthStyle';
 import Button from '../Button';
 import FieldOfSignUp from '../FieldOfSignUp';
 import Modal from '../Modal';
@@ -177,13 +172,9 @@ Google Developer Groups on Campus(GDGoC)의 서비스 이용약관 및 개인정
             <Button variant="secondary" title="이전" onClick={onPrev} />
           </div>
 
-          <button
-            type="submit"
-            css={[primaryBtn({ disabled: isDisabled }), rightBtn]}
-            disabled={isDisabled}
-          >
-            완료
-          </button>
+          <div css={rightBtn}>
+            <Button type="submit" title="완료" disabled={isDisabled} />
+          </div>
         </div>
       </form>
 

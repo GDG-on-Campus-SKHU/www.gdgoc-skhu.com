@@ -56,7 +56,8 @@ interface TechStackOptionDto {
   iconUrl: string;
 }
 
-interface UpdateMyProfileRequest {
+/* eslint-disable @typescript-eslint/naming-convention */
+interface _UpdateMyProfileRequest {
   techStacks: Array<{ techStackType: string }>;
   userLinks: Array<{ linkType: string; url: string }>;
   introduction: string;

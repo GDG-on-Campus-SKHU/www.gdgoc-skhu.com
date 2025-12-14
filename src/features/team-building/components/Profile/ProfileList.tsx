@@ -1,8 +1,8 @@
-import { css } from '@emotion/react';
 import { useState } from 'react';
+import { MyProfile, useTechStackOptions, useUserLinkOptions } from '@/lib/mypageProfile.api';
+import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
-import { MyProfile, useTechStackOptions, useUserLinkOptions } from '@/lib/mypageProfile.api';
 import { Link } from '../../hooks/useProfileEditor';
 import SelectBox from '../SelectBox';
 import SelectBoxLink from '../SelectBoxLink_han';
@@ -126,7 +126,7 @@ export default function ProfileList({
           {validLinks.map(link => {
             const linkOption = userLinkOptions.find(opt => opt.type === link.platform);
             const hasImageError = failedImages.has(link.id);
-            
+
             return (
               <a
                 key={link.id}
@@ -137,7 +137,11 @@ export default function ProfileList({
                 title={linkOption?.name || link.platform}
               >
                 <img
-                  src={hasImageError ? '/icon/link.svg' : (linkOption?.iconUrl || `/icon/${link.platform}.svg`)}
+                  src={
+                    hasImageError
+                      ? '/icon/link.svg'
+                      : linkOption?.iconUrl || `/icon/${link.platform}.svg`
+                  }
                   alt={linkOption?.name || link.platform}
                   onError={() => handleImageError(link.id)}
                 />

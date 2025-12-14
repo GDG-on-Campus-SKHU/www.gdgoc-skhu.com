@@ -1,8 +1,8 @@
 import Link from 'next/link';
+import { useMyProfile } from '@/lib/mypageProfile.api';
 import { css } from '@emotion/react';
 
 import { colors, layoutCss } from '../../../../styles/constants';
-import { useMyProfile } from '@/lib/mypageProfile.api';
 import ProfileBio from '../../components/Profile/ProfileBio';
 import ProfileEditButtons from '../../components/Profile/ProfileEditButtons';
 import ProfileHeader from '../../components/Profile/ProfileHeader';

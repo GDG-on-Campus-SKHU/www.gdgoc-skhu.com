@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import { useAuthStore } from '@/lib/authStore';
+import { useDeleteAccount } from '@/lib/mypageProfile.api';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
 import Button from '../../components/Button';
 import SecessionPopup from '../../components/Profile/SecessionPopup';
-import { useDeleteAccount } from '@/lib/mypageProfile.api';
-import { useAuthStore } from '@/lib/authStore';
 
 export default function SecessionPage() {
   const router = useRouter();
   const [click, setClick] = useState(false);
   const [visible, setVisible] = useState(false);
-  
+
   const { mutate: deleteAccount, isPending } = useDeleteAccount();
   const clearAuth = useAuthStore(state => state.clearAuth);
 
@@ -28,7 +28,7 @@ export default function SecessionPage() {
         // 팝업 표시
         setVisible(true);
       },
-      onError: (error) => {
+      onError: error => {
         console.error('회원 탈퇴 실패:', error);
         alert('회원 탈퇴에 실패했습니다. 다시 시도해주세요.');
       },
@@ -91,10 +91,10 @@ export default function SecessionPage() {
       </div>
 
       <div css={{ width: '190px' }} onClick={onDeleteClick}>
-        <Button 
-          title={isPending ? '처리 중...' : '탈퇴하기'} 
-          disabled={!click || isPending} 
-          variant="secondary" 
+        <Button
+          title={isPending ? '처리 중...' : '탈퇴하기'}
+          disabled={!click || isPending}
+          variant="secondary"
         />
       </div>
     </main>

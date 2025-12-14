@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-
 import { MyProfile, useUpdateMyProfile } from '@/lib/mypageProfile.api';
 
 export interface Link {
