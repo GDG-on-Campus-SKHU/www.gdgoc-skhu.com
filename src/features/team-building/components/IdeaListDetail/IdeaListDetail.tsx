@@ -1,8 +1,10 @@
 import React from 'react';
 import { useRouter } from 'next/router';
+import axios from 'axios';
 import styled from 'styled-components';
 
-import { createEmptyTeamCounts, Idea, useIdeaStore } from '../store/IdeaStore';
+import { fetchIdeaDetail } from '../../api/ideas';
+import { createEmptyTeamCounts, Idea } from '../store/IdeaStore';
 import { sanitizeDescription } from '../utils/sanitizeDescription';
 
 const SMALL_BREAKPOINT = '600px';
@@ -19,6 +21,82 @@ const TEAM_GROUPS: Array<Array<(typeof TEAM_ROLES)[number]['key']>> = [
   ['planning', 'design', 'aiMl'],
   ['frontendWeb', 'frontendMobile', 'backend'],
 ];
+
+// part를 team key로 매핑
+const partToKey: Record<string, (typeof TEAM_ROLES)[number]['key']> = {
+  PM: 'planning',
+  DESIGN: 'design',
+  WEB: 'frontendWeb',
+  MOBILE: 'frontendMobile',
+  BACKEND: 'backend',
+  AI: 'aiMl',
+};
+
+type IdeaDetailResponse = {
+  ideaId: number;
+  title: string;
+  introduction: string;
+  description: string;
+  topicId: number;
+  topic: string;
+  creator: {
+    creatorName: string;
+    part: string;
+    school: string;
+  };
+  compositions: Array<{
+    part: string;
+    maxCount: number;
+    currentCount: number;
+  }>;
+};
+
+// API 응답을 Idea 타입으로 변환
+const normalizeIdeaDetail = (apiIdea: IdeaDetailResponse): Idea => {
+  const compositions = apiIdea.compositions || [];
+  const totalMembers = compositions.reduce((sum, comp) => sum + comp.maxCount, 0);
+  const currentMembers = compositions.reduce((sum, comp) => sum + comp.currentCount, 0);
+
+  const team: Idea['team'] = {
+    planning: 0,
+    design: 0,
+    frontendWeb: 0,
+    frontendMobile: 0,
+    backend: 0,
+    aiMl: 0,
+  };
+
+  const filledTeam: Idea['team'] = {
+    planning: 0,
+    design: 0,
+    frontendWeb: 0,
+    frontendMobile: 0,
+    backend: 0,
+    aiMl: 0,
+  };
+
+  compositions.forEach(comp => {
+    const key = partToKey[comp.part];
+    if (key) {
+      team[key] = comp.maxCount || 0;
+      filledTeam[key] = comp.currentCount || 0;
+    }
+  });
+
+  return {
+    id: apiIdea.ideaId,
+    topic: apiIdea.topic || '',
+    title: apiIdea.title || '',
+    intro: apiIdea.introduction || '',
+    description: apiIdea.description || '',
+    preferredPart: apiIdea.creator?.part || '',
+    team,
+    filledTeam,
+    totalMembers: totalMembers || 1,
+    currentMembers: currentMembers || 0,
+    status: currentMembers >= totalMembers ? '모집 마감' : '모집 중',
+  };
+};
 
 const PageContainer = styled.div`
   background: #ffffff;
@@ -103,6 +181,7 @@ const SubjectValue = styled.span`
   font-weight: 500;
   line-height: 160%;
 `;
+
 const MentorContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -110,6 +189,7 @@ const MentorContainer = styled.div`
   margin-left: 16px;
   align-self: baseline;
 `;
+
 const MentorPart = styled.p`
   margin: 0;
   font-size: 0.98rem;
@@ -117,6 +197,7 @@ const MentorPart = styled.p`
   font-weight: 400;
   line-height: 160%;
 `;
+
 const Mentor = styled.p`
   margin: 0;
   font-size: 0.98rem;
@@ -168,13 +249,11 @@ const MemberCount = styled.div`
 
 const RoleName = styled.span`
   color: var(--grayscale-1000, #040405);
-
-  /* body/b3/b3-bold */
   font-family: Pretendard;
   font-size: 18px;
   font-style: normal;
   font-weight: 700;
-  line-height: 160%; /* 28.8px */
+  line-height: 160%;
 `;
 
 const CountStat = styled.span`
@@ -287,31 +366,75 @@ const PrimaryButton = styled(ActionButton)`
   padding: 10px 8px;
 `;
 
+const LoadingMessage = styled.div`
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+  color: #626873;
+`;
+
+const ErrorMessage = styled.div`
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+  color: #ea4335;
+`;
+
 export default function IdeaListPage() {
   const router = useRouter();
   const { id } = router.query;
 
-  const hasHydratedIdeas = useIdeaStore(state => state.hasHydrated);
-  const hydrateIdeas = useIdeaStore(state => state.hydrateFromStorage);
+  const [idea, setIdea] = React.useState<Idea | null>(null);
+  const [creatorInfo, setCreatorInfo] = React.useState<IdeaDetailResponse['creator'] | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [projectId, setProjectId] = React.useState<number | null>(null);
 
   const numericId = React.useMemo(() => {
     if (Array.isArray(id)) return Number(id[0]);
     return id ? Number(id) : NaN;
   }, [id]);
 
-  const idea: Idea | undefined = useIdeaStore(state =>
-    Number.isFinite(numericId) ? state.getIdeaById(numericId) : undefined
-  );
-
+  // 프로젝트 ID 가져오기 (URL 쿼리 또는 다른 소스에서)
   React.useEffect(() => {
-    if (!hasHydratedIdeas) {
-      hydrateIdeas();
-    }
-  }, [hasHydratedIdeas, hydrateIdeas]);
+    // 예: localStorage나 다른 방법으로 projectId 가져오기
+    // 임시로 2로 설정 (실제로는 적절한 방법으로 가져와야 함)
+    setProjectId(2);
+  }, []);
 
-  const [resolvedTitle, setResolvedTitle] = React.useState<string>(idea?.title || '');
-  const [resolvedIntro, setResolvedIntro] = React.useState<string>(idea?.intro || '');
-  const [rawDescription, setRawDescription] = React.useState<string>(idea?.description || '');
+  // API에서 아이디어 상세 정보 로드
+  React.useEffect(() => {
+    if (!Number.isFinite(numericId) || !projectId) return;
+
+    const loadIdeaDetail = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetchIdeaDetail(projectId, numericId);
+        const data = response.data as IdeaDetailResponse;
+
+        const normalizedIdea = normalizeIdeaDetail(data);
+        setIdea(normalizedIdea);
+        setCreatorInfo(data.creator);
+      } catch (err) {
+        console.error('아이디어 상세 조회 실패:', err);
+        if (axios.isAxiosError(err)) {
+          if (err.response?.status === 404) {
+            setError('아이디어를 찾을 수 없습니다.');
+          } else {
+            setError('아이디어를 불러오는데 실패했습니다.');
+          }
+        } else {
+          setError('아이디어를 불러오는데 실패했습니다.');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadIdeaDetail();
+  }, [numericId, projectId]);
 
   const roleMap = React.useMemo(
     () =>
@@ -332,11 +455,15 @@ export default function IdeaListPage() {
     }),
     [idea?.team]
   );
+
   const preferredRoleKey = React.useMemo<(typeof TEAM_ROLES)[number]['key'] | null>(() => {
     const preferred = idea?.preferredPart;
     if (!preferred) return null;
     const matched = TEAM_ROLES.find(role => role.label === preferred || role.key === preferred);
-    return matched ? matched.key : null;
+    if (matched) return matched.key;
+    // part 코드로도 확인
+    const keyFromPart = partToKey[preferred];
+    return keyFromPart || null;
   }, [idea?.preferredPart]);
 
   const filledTeam = React.useMemo(
@@ -346,6 +473,7 @@ export default function IdeaListPage() {
     }),
     [idea?.filledTeam]
   );
+
   const displayTotals = React.useMemo(() => {
     const totals: Record<(typeof TEAM_ROLES)[number]['key'], number> = {
       ...createEmptyTeamCounts(),
@@ -356,6 +484,7 @@ export default function IdeaListPage() {
     }
     return totals;
   }, [preferredRoleKey, team]);
+
   const displayCurrents = React.useMemo(() => {
     const currents: Record<(typeof TEAM_ROLES)[number]['key'], number> = createEmptyTeamCounts();
     TEAM_ROLES.forEach(role => {
@@ -368,37 +497,26 @@ export default function IdeaListPage() {
     return currents;
   }, [displayTotals, filledTeam, preferredRoleKey]);
 
-  React.useEffect(() => {
-    if (idea?.title) setResolvedTitle(idea.title);
-    if (idea?.intro) setResolvedIntro(idea.intro);
-    if (idea?.description) setRawDescription(idea.description);
-
-    if (typeof window === 'undefined') return;
-    try {
-      const stored = window.sessionStorage.getItem('ideaFormData');
-      if (!stored) return;
-      const parsed = JSON.parse(stored);
-      const draft = parsed?.form ?? parsed;
-      if (!idea?.title && draft?.title) setResolvedTitle(draft.title);
-      if (!idea?.intro && draft?.intro) setResolvedIntro(draft.intro);
-      if (!idea?.description && draft?.description) setRawDescription(draft.description);
-    } catch (error) {
-      console.error('Failed to load idea data from session', error);
-    }
-  }, [idea?.description, idea?.intro, idea?.title]);
-
   const safeDescription = React.useMemo(
-    () => sanitizeDescription(rawDescription || ''),
-    [rawDescription]
+    () => sanitizeDescription(idea?.description || ''),
+    [idea?.description]
   );
 
-  if (!idea) {
+  if (isLoading) {
     return (
       <PageContainer>
         <PreviewCanvas>
-          {hasHydratedIdeas
-            ? '불러올 아이디어가 없어요. 목록에서 다시 선택해 주세요.'
-            : '아이디어를 불러오는 중이에요...'}
+          <LoadingMessage>아이디어를 불러오는 중입니다...</LoadingMessage>
+        </PreviewCanvas>
+      </PageContainer>
+    );
+  }
+
+  if (error || !idea) {
+    return (
+      <PageContainer>
+        <PreviewCanvas>
+          <ErrorMessage>{error || '아이디어를 찾을 수 없습니다.'}</ErrorMessage>
         </PreviewCanvas>
       </PageContainer>
     );
@@ -409,23 +527,24 @@ export default function IdeaListPage() {
       <PreviewCanvas>
         <ResponsiveWrapper>
           <TitleSection>
-            <TitleText>{resolvedTitle || '아이디어 제목'}</TitleText>
+            <TitleText>{idea.title || '아이디어 제목'}</TitleText>
 
             <IntroRow>
-              <IntroText>{resolvedIntro || '아이디어 한줄소개'}</IntroText>
-              <MentorContainer>
-                <MentorPart>
-                  성공회대 디자인 <Mentor as="span">주현지</Mentor>
-                </MentorPart>
-              </MentorContainer>
+              <IntroText>{idea.intro || '아이디어 한줄소개'}</IntroText>
+              {creatorInfo && (
+                <MentorContainer>
+                  <MentorPart>
+                    {creatorInfo.school} {creatorInfo.part}{' '}
+                    <Mentor as="span">{creatorInfo.creatorName}</Mentor>
+                  </MentorPart>
+                </MentorContainer>
+              )}
             </IntroRow>
           </TitleSection>
 
           <SubjectRow>
             <SubjectLabel>아이디어 주제</SubjectLabel>
-            <SubjectValue>
-              {idea.topic || '청년 세대의 경제적, 사회적 어려움을 해결하기 위한 솔루션'}
-            </SubjectValue>
+            <SubjectValue>{idea.topic || '주제 없음'}</SubjectValue>
           </SubjectRow>
 
           <MembersSection>

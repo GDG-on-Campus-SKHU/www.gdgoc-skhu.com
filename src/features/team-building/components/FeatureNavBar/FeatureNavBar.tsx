@@ -32,8 +32,25 @@ const FeatureNavContainer = styled.header`
     filter: blur(6px);
     background: #f3f4f6;
     backdrop-filter: blur(6px);
-    color: #d4d7dd;
+    color: #d4d7dd !important;
     pointer-events: none;
+  }
+
+  body.schedule-modal-open & {
+    /* Navbar는 자기 배경을 유지해야 사진과 동일하게 나옴 */
+    background: inherit !important;
+    filter: none !important; /* Navbar 전체 blur 금지 */
+    backdrop-filter: none !important; /* Navbar 배경 흐림 금지 */
+
+    pointer-events: none !important;
+    box-shadow: none !important;
+  }
+
+  /* 🔥 Navbar 내부 글씨 + 아이콘만 흐리게 */
+  body.schedule-modal-open & * {
+    filter: blur(4px) !important; /* 글씨만 blur */
+    opacity: 0.65 !important; /* 사진처럼 살짝 투명하게 */
+    color: inherit !important; /* 기존 색 유지 (검정) */
   }
 `;
 
@@ -63,21 +80,35 @@ const baseItemCss = `
   text-decoration: none;
 `;
 
-const FeatureNavItem = styled.span<{ $bold?: boolean }>`
-  ${baseItemCss};
-  --item-weight: ${({ $bold }) => ($bold ? 700 : 500)};
-`;
-
 const FeatureNavLink = styled(Link)<{ $bold?: boolean }>`
   ${baseItemCss};
   --item-weight: ${({ $bold }) => ($bold ? 700 : 500)};
 `;
 
-const FEATURE_NAV_LINKS = ['TeamBuild', 'Gallery', 'Community', 'Mypage', 'Logout'] as const;
+type FeatureNavItem = {
+  label: string;
+  href: string;
+  bold?: boolean;
+};
+
+const FEATURE_NAV_ITEMS: FeatureNavItem[] = [
+  { label: 'TeamBuild', href: '/WelcomeOpen' },
+  { label: 'Gallery', href: '/IdeaLayout' },
+  { label: 'Community', href: '/contact' },
+  { label: 'Mypage', href: '/login' },
+  { label: 'Logout', href: '/login' },
+] as const;
 
 export function FeatureNavBarComponent() {
   const router = useRouter();
   const isHome = router.pathname === '/';
+  const pathDepth = React.useMemo(
+    () => router.pathname.split('/').filter(Boolean).length,
+    [router.pathname]
+  );
+  const isAdminRoute = router.pathname.toLowerCase().startsWith('/admin');
+  // show on root and first-level folders (and their files); hide on deeper nested routes or admin pages
+  const shouldHide = isAdminRoute || pathDepth > 2;
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -114,25 +145,19 @@ export function FeatureNavBarComponent() {
     return <Nav />;
   }
 
+  if (shouldHide) {
+    return null;
+  }
+
   return (
     <FeatureNavContainer data-feature-nav="true">
       <FeatureBrand>Google Developer Groups on Campus SKHU</FeatureBrand>
       <FeatureNavLinks data-feature-nav-link="true">
-        {FEATURE_NAV_LINKS.map(link => {
-          const isEmphasized = link === 'TeamBuild' || link === 'Gallery' || link === 'Community';
-          if (link === 'TeamBuild') {
-            return (
-              <FeatureNavLink key={link} href="/WelcomeOpen" $bold={isEmphasized}>
-                {link}
-              </FeatureNavLink>
-            );
-          }
-          return (
-            <FeatureNavItem key={link} $bold={isEmphasized}>
-              {link}
-            </FeatureNavItem>
-          );
-        })}
+        {FEATURE_NAV_ITEMS.map(item => (
+          <FeatureNavLink key={item.label} href={item.href} $bold={item.bold}>
+            {item.label}
+          </FeatureNavLink>
+        ))}
       </FeatureNavLinks>
     </FeatureNavContainer>
   );

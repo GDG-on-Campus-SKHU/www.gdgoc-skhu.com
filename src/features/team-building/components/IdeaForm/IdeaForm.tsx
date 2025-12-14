@@ -21,6 +21,7 @@ export interface Props {
     status: '모집 중' | '모집 마감';
     team: Partial<Record<TeamRole, number>>;
   };
+  topicOptions?: string[];
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => void;
@@ -37,6 +38,7 @@ export interface Props {
 export default function IdeaForm(props: Props) {
   const {
     form,
+    topicOptions,
     onChange,
     onRegister,
     onPreview,
@@ -158,38 +160,42 @@ export default function IdeaForm(props: Props) {
   }, [isAnyModalOpen]);
 
   const handleModalDone = React.useCallback(async () => {
-    setModalState('idle');
+    try {
+      if (onRegister) {
+        await onRegister();
+      } else {
+        const teamCounts = form.team ?? {};
+        const teamTotal = Object.values(teamCounts).reduce((s, c) => s + (c ?? 0), 0);
+        const totalMembers =
+          teamTotal > 0 ? teamTotal : form.totalMembers > 0 ? form.totalMembers : 1;
 
-    if (onRegister) {
-      await onRegister();
-    } else {
-      const teamCounts = form.team ?? {};
-      const teamTotal = Object.values(teamCounts).reduce((s, c) => s + (c ?? 0), 0);
-      const totalMembers =
-        teamTotal > 0 ? teamTotal : form.totalMembers > 0 ? form.totalMembers : 1;
+        const created = addIdea({
+          topic,
+          title,
+          intro,
+          description: form.description,
+          preferredPart,
+          team: {
+            planning: teamCounts.planning ?? 0,
+            design: teamCounts.design ?? 0,
+            frontendWeb: teamCounts.frontendWeb ?? 0,
+            frontendMobile: teamCounts.frontendMobile ?? 0,
+            backend: teamCounts.backend ?? 0,
+            aiMl: teamCounts.aiMl ?? 0,
+          },
+          totalMembers,
+          currentMembers: form.currentMembers ?? 0,
+        });
 
-      const created = addIdea({
-        topic,
-        title,
-        intro,
-        description: form.description,
-        preferredPart,
-        team: {
-          planning: teamCounts.planning ?? 0,
-          design: teamCounts.design ?? 0,
-          frontendWeb: teamCounts.frontendWeb ?? 0,
-          frontendMobile: teamCounts.frontendMobile ?? 0,
-          backend: teamCounts.backend ?? 0,
-          aiMl: teamCounts.aiMl ?? 0,
-        },
-        totalMembers,
-        currentMembers: form.currentMembers ?? 0,
-      });
+        sessionStorage.setItem('completedIdea', JSON.stringify(created));
+      }
 
-      sessionStorage.setItem('completedIdea', JSON.stringify(created));
+      router.push('/WelcomeOpen');
+    } catch (error) {
+      console.error('아이디어 등록 실패', error);
+    } finally {
+      setModalState('idle');
     }
-
-    router.push('/WelcomeOpen');
   }, [addIdea, form, intro, onRegister, preferredPart, router, title, topic]);
 
   const handlePreviewClick = React.useCallback(() => {
@@ -206,6 +212,7 @@ export default function IdeaForm(props: Props) {
       // data
       form={form}
       team={team}
+      topicOptions={topicOptions}
       preferredRoleKey={preferredRoleKey}
       radioRenderVersion={radioRenderVersion}
       // handlers
