@@ -1,10 +1,10 @@
-import Link from 'next/link';
-import { css } from '@emotion/react';
 import React from 'react';
-
-import { colors } from '../../../../styles/constants';
+import Link from 'next/link';
 import type { MyPageProject } from '@/lib/mypageProject.api';
 import { useUpdateProjectExhibit } from '@/lib/mypageProject.api';
+import { css } from '@emotion/react';
+
+import { colors } from '../../../../styles/constants';
 import Toggle from '../Toggle';
 
 type Props = { item: MyPageProject };
@@ -21,7 +21,7 @@ export default function MyProjectCard({ item }: Props) {
         onSuccess: () => {
           console.log('전시 여부가 변경되었습니다.');
         },
-        onError: (error) => {
+        onError: error => {
           console.error('전시 여부 변경 실패:', error);
           alert('전시 여부 변경에 실패했습니다.');
         },
@@ -39,16 +39,16 @@ export default function MyProjectCard({ item }: Props) {
       <Link href={`/project-gallery/${item.projectId}`}>
         <div css={leftSectionCss}>
           <div css={thumbFrameCss}>
-            <img 
-              src={item.thumbnailUrl || '/gdgoc_logo.svg'} 
-              alt={item.projectName} 
+            <img
+              src={item.thumbnailUrl || '/gdgoc_logo.svg'}
+              alt={item.projectName}
               css={logoCss}
               onError={handleImageError}
             />
           </div>
         </div>
       </Link>
-      
+
       <div css={rightSectionCss}>
         <div css={titleRowCss}>
           <div css={titleSectionCss}>
@@ -58,8 +58,8 @@ export default function MyProjectCard({ item }: Props) {
           {item.isLeader && (
             <div css={displayStatusCss}>
               전시 여부{' '}
-              <Toggle 
-                checked={item.exhibited} 
+              <Toggle
+                checked={item.exhibited}
                 onChange={handleToggleExhibit}
                 disabled={isPending}
               />
