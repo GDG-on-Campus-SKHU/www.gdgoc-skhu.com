@@ -142,19 +142,18 @@ export default function Step2({
       </div>
 
       <div css={buttonBox}>
-        <div css={leftBtn}>
-          <Button variant="secondary" title="이전" onClick={onPrev} />
-        </div>
+  <div css={leftBtn}>
+    <Button variant="secondary" title="이전" onClick={onPrev} />
+  </div>
 
-        <button
-          type="button"
-          css={[primaryBtn({ disabled: isDisabled }), rightBtn]}
-          onClick={onNext}
-          disabled={isDisabled}
-        >
-          다음
-        </button>
-      </div>
+  <div css={rightBtn}>
+    <Button
+      title="다음"
+      onClick={onNext}
+      disabled={isDisabled}
+    />
+  </div>
+</div>
     </section>
   );
 }
