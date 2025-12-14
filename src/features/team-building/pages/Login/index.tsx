@@ -14,7 +14,7 @@ import Modal from '../../../team-building/components/Modal';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setAuth } = useAuthStore();
+  const { setAuth, accessToken } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -23,12 +23,18 @@ export default function LoginPage() {
   const [modalType, setModalType] = useState<'pending' | 'banned' | null>(null);
 
   useEffect(() => {
+    if (accessToken) {
+      router.replace('/');
+      return;
+    }
+
     document.body.style.overflow = 'hidden';
     setTimeout(() => setVisible(true), 30);
+
     return () => {
       document.body.style.overflow = 'auto';
     };
-  }, []);
+  }, [accessToken, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +49,7 @@ export default function LoginPage() {
       const res = await login(email, password);
       const { accessToken, email: userEmail, name, role } = res.data;
       setAuth({ accessToken, email: userEmail, name, role });
-      router.push('/home');
+      router.replace('/');
     } catch (err: any) {
       const msg = err.response?.data;
 
