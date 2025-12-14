@@ -1,12 +1,36 @@
+import { useMyPageProjects } from '@/lib/mypageProject.api';
 import { css } from '@emotion/react';
 
 import { layoutCss } from '../../../../styles/constants';
 import MyProjectCard from '../../components/MyProject/MyProjectCard';
-import { MOCK_PROJECTS } from '../../types/myproject';
 
 export default function MyProjectPage() {
-  // MOCK_PROJECTS를 사용
-  const projects = MOCK_PROJECTS;
+  const { data: projects, isLoading, error } = useMyPageProjects();
+
+  // 로딩 상태
+  if (isLoading) {
+    return (
+      <main css={mainCss}>
+        <div css={innerCss}>
+          <div css={loadingCss}>프로젝트를 불러오는 중...</div>
+        </div>
+      </main>
+    );
+  }
+
+  // 에러 상태
+  if (error) {
+    return (
+      <main css={mainCss}>
+        <div css={innerCss}>
+          <div css={errorCss}>프로젝트를 불러오는 중 오류가 발생했습니다.</div>
+        </div>
+      </main>
+    );
+  }
+
+  // 프로젝트 없음
+  const hasProjects = projects && projects.length > 0;
 
   return (
     <main css={mainCss}>
@@ -16,11 +40,16 @@ export default function MyProjectPage() {
             마이페이지 <span css={subTitleCss}>| My project</span>
           </p>
         </div>
-        <div css={projectListCss}>
-          {projects.map(project => (
-            <MyProjectCard key={project.id} item={project} />
-          ))}
-        </div>
+
+        {hasProjects ? (
+          <div css={projectListCss}>
+            {projects.map(project => (
+              <MyProjectCard key={project.projectId} item={project} />
+            ))}
+          </div>
+        ) : (
+          <div css={emptyStateCss}>참여한 프로젝트가 없습니다.</div>
+        )}
       </div>
     </main>
   );
@@ -67,4 +96,31 @@ const projectListCss = css`
   flex-direction: column;
   gap: 0;
   width: 100%;
+`;
+
+const loadingCss = css`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  font-size: 18px;
+  color: #666;
+`;
+
+const errorCss = css`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  font-size: 18px;
+  color: #e53e3e;
+`;
+
+const emptyStateCss = css`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  font-size: 20px;
+  color: #999;
 `;
