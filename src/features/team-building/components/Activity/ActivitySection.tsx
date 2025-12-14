@@ -1,6 +1,6 @@
+import { Activity } from '@/lib/activity.api';
 import { css } from '@emotion/react';
 
-import { Activity } from '@/lib/activity.api';
 import ActivityCard from './ActivityCard';
 
 interface ActivitySectionProps {

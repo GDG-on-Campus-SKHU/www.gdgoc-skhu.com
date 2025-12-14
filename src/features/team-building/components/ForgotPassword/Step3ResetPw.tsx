@@ -32,21 +32,15 @@ export default function Step3ResetPw({ email, code, onPrev }: Props) {
     onClose: () => void;
   } | null>(null);
 
-  const isValidPassword = (value: string) =>
-    value.length >= 8 && /[!@#$%^&*]/.test(value);
+  const isValidPassword = (value: string) => value.length >= 8 && /[!@#$%^&*]/.test(value);
 
   const passwordRuleError =
-    pw !== '' && !isValidPassword(pw)
-      ? '8자 이상, 특수문자가 포함된 비밀번호를 입력해주세요.'
-      : '';
+    pw !== '' && !isValidPassword(pw) ? '8자 이상, 특수문자가 포함된 비밀번호를 입력해주세요.' : '';
 
   const passwordMatchError =
-    pw2 !== '' && isValidPassword(pw) && pw !== pw2
-      ? '비밀번호가 일치하지 않습니다.'
-      : '';
+    pw2 !== '' && isValidPassword(pw) && pw !== pw2 ? '비밀번호가 일치하지 않습니다.' : '';
 
-  const isSubmitDisabled =
-    !pw || !pw2 || !isValidPassword(pw) || pw !== pw2 || loading;
+  const isSubmitDisabled = !pw || !pw2 || !isValidPassword(pw) || pw !== pw2 || loading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,9 +76,7 @@ export default function Step3ResetPw({ email, code, onPrev }: Props) {
     <>
       <form onSubmit={handleSubmit} css={authStepSection}>
         <h2 css={[typography.h2Bold, authStepTitle]}>비밀번호 재설정</h2>
-        <p css={[typography.b4, authStepDesc]}>
-          새로운 비밀번호를 설정해주세요.
-        </p>
+        <p css={[typography.b4, authStepDesc]}>새로운 비밀번호를 설정해주세요.</p>
 
         <div css={fieldOverride}>
           <FieldOfAuth

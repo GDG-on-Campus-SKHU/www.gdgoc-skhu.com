@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { UserLinkOption } from '@/lib/mypageProfile.api';
 
 import {
   addButton,
@@ -8,7 +9,6 @@ import {
   selectBoxContainer,
   wrap,
 } from '../styles/selectBoxLink';
-import { UserLinkOption } from '@/lib/mypageProfile.api';
 import Field from './Field';
 import SelectBoxBasic from './SelectBoxBasic';
 
@@ -56,9 +56,10 @@ export default function SelectBoxLink({
   const links = isControlled ? value : internalLinks;
 
   // 플랫폼 옵션을 SelectBoxBasic에 맞게 변환 (type 값만 추출)
-  const platformOptions = options.length > 0 
-    ? options.map(opt => opt.type)
-    : ['GitHub', 'LinkedIn', 'Twitter', 'Website']; // fallback
+  const platformOptions =
+    options.length > 0
+      ? options.map(opt => opt.type)
+      : ['GitHub', 'LinkedIn', 'Twitter', 'Website']; // fallback
 
   // value prop이 변경되면 내부 상태 업데이트 (초기화 시)
   useEffect(() => {

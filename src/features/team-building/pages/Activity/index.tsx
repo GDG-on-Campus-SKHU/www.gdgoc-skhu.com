@@ -1,7 +1,8 @@
+import { usePublishedActivities } from '@/lib/activity.api';
 import { css } from '@emotion/react';
 
 import ActivitySection from '../../components/Activity/ActivitySection';
-import { usePublishedActivities } from '@/lib/activity.api';
+
 export default function ActivityPage() {
   const { data: categories, isLoading, error } = usePublishedActivities();
 

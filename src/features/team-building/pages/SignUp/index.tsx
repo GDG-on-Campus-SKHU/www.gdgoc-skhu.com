@@ -208,9 +208,7 @@ export default function SignUpPage() {
         <Modal
           title="회원가입 불가"
           message={
-            duplicateType === 'email'
-              ? '이미 가입된 이메일입니다.'
-              : '이미 가입된 전화번호입니다.'
+            duplicateType === 'email' ? '이미 가입된 이메일입니다.' : '이미 가입된 전화번호입니다.'
           }
           buttonText="확인"
           onClose={() => {

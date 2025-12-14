@@ -57,12 +57,12 @@ function extractYoutubeId(url: string): string | undefined {
 
   try {
     const urlObj = new URL(url);
-    
+
     // youtu.be 형식
     if (urlObj.hostname === 'youtu.be') {
       return urlObj.pathname.slice(1);
     }
-    
+
     // youtube.com 형식
     if (urlObj.hostname.includes('youtube.com')) {
       return urlObj.searchParams.get('v') || undefined;
