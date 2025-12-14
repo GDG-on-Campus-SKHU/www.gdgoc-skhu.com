@@ -1,7 +1,7 @@
+import { useMyPageProjects } from '@/lib/mypageProject.api';
 import { css } from '@emotion/react';
 
 import { layoutCss } from '../../../../styles/constants';
-import { useMyPageProjects } from '@/lib/mypageProject.api';
 import MyProjectCard from '../../components/MyProject/MyProjectCard';
 
 export default function MyProjectPage() {
@@ -40,10 +40,10 @@ export default function MyProjectPage() {
             마이페이지 <span css={subTitleCss}>| My project</span>
           </p>
         </div>
-        
+
         {hasProjects ? (
           <div css={projectListCss}>
-            {projects.map((project) => (
+            {projects.map(project => (
               <MyProjectCard key={project.projectId} item={project} />
             ))}
           </div>

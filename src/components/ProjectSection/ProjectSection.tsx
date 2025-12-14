@@ -30,10 +30,7 @@ export default function ProjectSection() {
     setPage(prev => (prev === maxPage ? 0 : prev + 1));
   };
 
-  const visible = useMemo(
-    () => projects.slice(page * 3, page * 3 + 3),
-    [projects, page]
-  );
+  const visible = useMemo(() => projects.slice(page * 3, page * 3 + 3), [projects, page]);
 
   const hasEnoughProjects = projects.length >= 3;
 
@@ -45,17 +42,11 @@ export default function ProjectSection() {
       </div>
 
       {!isLoading && !hasEnoughProjects && (
-        <div css={emptyNoticeCss}>
-          아직 프로젝트가 충분하지 않습니다. 프로젝트를 등록해보세요.
-        </div>
+        <div css={emptyNoticeCss}>아직 프로젝트가 충분하지 않습니다. 프로젝트를 등록해보세요.</div>
       )}
 
       <div css={carouselWrapCss}>
-        <button
-          onClick={prev}
-          css={leftArrowCss}
-          disabled={projects.length <= 3}
-        >
+        <button onClick={prev} css={leftArrowCss} disabled={projects.length <= 3}>
           <img src="/leftarrow.svg" alt="prev" css={leftArrowIconCss} />
         </button>
 
@@ -73,11 +64,7 @@ export default function ProjectSection() {
             css={cardRowCss}
           >
             {visible.map(item => (
-              <Link
-                key={item.id}
-                href={`/project-gallery/${item.id}`}
-                css={linkResetCss}
-              >
+              <Link key={item.id} href={`/project-gallery/${item.id}`} css={linkResetCss}>
                 <div css={cardCss}>
                   <div css={thumbFrameCss}>
                     <img
@@ -100,11 +87,7 @@ export default function ProjectSection() {
           </motion.div>
         </div>
 
-        <button
-          onClick={next}
-          css={rightArrowCss}
-          disabled={projects.length <= 3}
-        >
+        <button onClick={next} css={rightArrowCss} disabled={projects.length <= 3}>
           <img src="/rightarrow.svg" alt="next" css={rightArrowIconCss} />
         </button>
       </div>
