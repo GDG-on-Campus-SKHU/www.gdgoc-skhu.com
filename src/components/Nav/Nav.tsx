@@ -4,11 +4,10 @@ import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
 
 import DropdownMenu from '../../features/team-building/components/MyPage/DropdownMenu';
-import { layoutCss } from '../../styles/constants/layout';
 import { useAuthStore } from '../../lib/authStore';
+import { layoutCss } from '../../styles/constants/layout';
 
-const GDG_OC_LINK =
-  'https://sites.google.com/view/gdeveloperskorea/gdg-on-campus';
+const GDG_OC_LINK = 'https://sites.google.com/view/gdeveloperskorea/gdg-on-campus';
 
 const AUTH_PAGES = ['/login', '/signup', '/forgot-password'];
 

@@ -6,20 +6,20 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence } from 'framer-motion';
 
 import Footer from '../components/Footer';
-import Scene from '../components/Scene';
-import GlobalStyle from '../styles/GlobalStyle';
 import Nav from '../components/Nav';
-import { AppNavBar } from '../features/team-building/components/FeatureNavBar/FeatureNavBar';
+import Scene from '../components/Scene';
 import { BASE_URL } from '../constants/common';
+import GlobalStyle from '../styles/GlobalStyle';
 
-const PUBLIC_ROUTES = ['/login', '/signup', '/forgot-password'];
+import '@uiw/react-md-editor/markdown-editor.css';
+import '@uiw/react-markdown-preview/markdown.css';
+
+const HIDE_FOOTER_PAGES = ['/403', '/404'];
 
 export default function App({ Component, pageProps, router }: AppProps) {
   const CURRENT_URL = BASE_URL + router.route;
   const [queryClient] = useState(() => new QueryClient());
-
-  const isPublicPage = PUBLIC_ROUTES.includes(router.pathname);
-  const isHome = router.pathname === '/';
+  const hideFooter = HIDE_FOOTER_PAGES.includes(router.pathname);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -29,10 +29,7 @@ export default function App({ Component, pageProps, router }: AppProps) {
       </Head>
 
       <GlobalStyle />
-
-      {!isPublicPage && isHome && <Nav />}
-      {!isPublicPage && !isHome && <AppNavBar />}
-
+      <Nav />
       <Scene />
 
       <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
@@ -47,7 +44,7 @@ export default function App({ Component, pageProps, router }: AppProps) {
         </div>
       </AnimatePresence>
 
-      {!isPublicPage && <Footer />}
+      {!hideFooter && <Footer />}
     </QueryClientProvider>
   );
 }
