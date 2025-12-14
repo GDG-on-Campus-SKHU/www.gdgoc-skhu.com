@@ -181,7 +181,7 @@ const formBox = css`
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 32px;
+  margin-bottom: 26px;
 `;
 
 const buttonBox = css`
