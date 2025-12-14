@@ -4,8 +4,7 @@ import { css } from '@emotion/react';
 import { motion } from 'framer-motion';
 
 import StatusBadge from '../../features/team-building/components/ProjectGallery/StatusBadge';
-import type { Project } from '../../features/team-building/types/gallery_past';
-import { MOCK_PROJECTS } from '../../features/team-building/types/gallery_past';
+import { useProjectGalleryList } from '../../lib/projectGallery.api';
 import {
   sectionDescCss,
   sectionLayoutCss,
@@ -14,30 +13,12 @@ import {
 } from '../../styles/constants';
 
 export default function ProjectSection() {
-  const projects = useMemo<Project[]>(() => {
-    if (MOCK_PROJECTS.length >= 6) return MOCK_PROJECTS.slice(0, 6);
-
-    const filled = [...MOCK_PROJECTS];
-
-    while (filled.length < 6) {
-      const num = filled.length + 1;
-      filled.push({
-        id: `dummy-${num}`,
-        title: `프로젝트 ${num}`,
-        description: '프로젝트 한줄소개',
-        thumbnailUrl: '/images/project-dummy.png',
-        status: 'IN_SERVICE', // StatusBadge의 Enum을 수정해서 맞춰서 바꿔놨습니다
-        generation: '25-26',
-      });
-    }
-
-    return filled;
-  }, []);
+  const { data: projects = [], isLoading } = useProjectGalleryList();
 
   const [page, setPage] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
 
-  const maxPage = Math.floor((projects.length - 1) / 3);
+  const maxPage = Math.max(0, Math.floor((projects.length - 1) / 3));
 
   const prev = () => {
     setDirection(-1);
@@ -49,9 +30,12 @@ export default function ProjectSection() {
     setPage(prev => (prev === maxPage ? 0 : prev + 1));
   };
 
-  const visible = projects.slice(page * 3, page * 3 + 3);
+  const visible = useMemo(
+    () => projects.slice(page * 3, page * 3 + 3),
+    [projects, page]
+  );
 
-  const hasRealProject = MOCK_PROJECTS.length >= 3;
+  const hasEnoughProjects = projects.length >= 3;
 
   return (
     <section css={sectionCss}>
@@ -60,12 +44,18 @@ export default function ProjectSection() {
         <p css={sectionDescCss}>GDGoC SKHU 멤버들이 실현한 아이디어에요.</p>
       </div>
 
-      {!hasRealProject && (
-        <div css={emptyNoticeCss}>아직 프로젝트가 충분하지 않습니다. 프로젝트를 등록해보세요.</div>
+      {!isLoading && !hasEnoughProjects && (
+        <div css={emptyNoticeCss}>
+          아직 프로젝트가 충분하지 않습니다. 프로젝트를 등록해보세요.
+        </div>
       )}
 
       <div css={carouselWrapCss}>
-        <button onClick={prev} css={leftArrowCss}>
+        <button
+          onClick={prev}
+          css={leftArrowCss}
+          disabled={projects.length <= 3}
+        >
           <img src="/leftarrow.svg" alt="prev" css={leftArrowIconCss} />
         </button>
 
@@ -82,18 +72,26 @@ export default function ProjectSection() {
             }}
             css={cardRowCss}
           >
-            {visible.map((item, idx) => (
-              <Link key={item.id} href={`/project-gallery/${item.id}`} css={linkResetCss}>
+            {visible.map(item => (
+              <Link
+                key={item.id}
+                href={`/project-gallery/${item.id}`}
+                css={linkResetCss}
+              >
                 <div css={cardCss}>
                   <div css={thumbFrameCss}>
-                    <img src={item.thumbnailUrl} alt={item.title} css={logoCss} />
+                    <img
+                      src={item.thumbnailUrl ?? '/images/project-dummy.png'}
+                      alt={item.title}
+                      css={logoCss}
+                    />
                   </div>
 
                   <div css={metaCss}>
-                    <h3 css={titleItemCss}>{item.title || `프로젝트 ${page * 3 + idx + 1}`}</h3>
+                    <h3 css={titleItemCss}>{item.title}</h3>
                     <p css={descItemCss}>{item.description}</p>
                     <div css={badgeRowCss}>
-                      {item.status && <StatusBadge status={item.status} />}
+                      <StatusBadge status={item.status} />
                     </div>
                   </div>
                 </div>
@@ -102,7 +100,11 @@ export default function ProjectSection() {
           </motion.div>
         </div>
 
-        <button onClick={next} css={rightArrowCss}>
+        <button
+          onClick={next}
+          css={rightArrowCss}
+          disabled={projects.length <= 3}
+        >
           <img src="/rightarrow.svg" alt="next" css={rightArrowIconCss} />
         </button>
       </div>

@@ -11,7 +11,7 @@ import type {
   ProjectGalleryMemberSearchResponse,
   ServiceStatus,
 } from '../features/team-building/types/gallery';
-import { api } from './api-token';
+import { api } from './api';
 
 /* =========================================================
  * Query Keys
