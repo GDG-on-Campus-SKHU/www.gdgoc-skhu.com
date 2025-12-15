@@ -1,110 +1,192 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
 import { titleNormalCss, titleStrongCss } from '../../styles/modalStyles_Fix';
 import {
-  ApplyApplicant,
-  ApplyStatus,
-  mockFirstPhaseApplicants,
-  mockSecondPhaseApplicants,
+  ApplyStatusRow,
+  EnrollmentReadability,
+  EnrollmentScheduleType,
+  ReceivedEnrollment,
 } from '../../types/applyStatusData';
 import Modal from '../Modal_Fix';
 import ApplyPeriodToggle, { SupportPhase } from './ApplyPeriodToggle';
 import ApplyStatusTable from './ApplyStatusTable';
-
-type ApplyStatusSectionProps = {
-  /** 1차 지원자 리스트 (기본값 임시) */
-  firstPhaseApplicants?: ApplyApplicant[];
-  /** 2차 지원자 리스트 (기본값 임시) */
-  secondPhaseApplicants?: ApplyApplicant[];
-  /** 2차 지원기간이 열렸는지 여부 */
-  secondEnabled?: boolean;
-  /** 각 지원기간별 결과 발표 여부 (first/second) */
-  resultAnnouncedByPhase?: Record<SupportPhase, boolean>;
-};
+import {
+  useDetermineEnrollment,
+  useEnrollmentReadabilities,
+  useReceivedEnrollments,
+} from '@/lib/myTeam.api';
 
 type PendingAction = 'ACCEPT' | 'REJECT';
 
 type ConfirmModalState = {
   phase: SupportPhase;
-  applicant: ApplyApplicant;
+  applicant: ApplyStatusRow;
   action: PendingAction;
 } | null;
 
-export default function ApplyStatusSection({
-  firstPhaseApplicants,
-  secondPhaseApplicants,
-  secondEnabled = false,
-  resultAnnouncedByPhase,
-}: ApplyStatusSectionProps) {
+/** SupportPhase -> scheduleType 매핑 */
+function toScheduleType(phase: SupportPhase): EnrollmentScheduleType {
+  return phase === 'first' ? 'FIRST_TEAM_BUILDING' : 'SECOND_TEAM_BUILDING';
+}
+
+/** choice enum -> 라벨 */
+function choiceToLabel(choice: ReceivedEnrollment['choice']) {
+  if (choice === 'FIRST') return '1지망';
+  if (choice === 'SECOND') return '2지망';
+  return '3지망';
+}
+
+/**
+ * 이 매핑 함수 유틸로 분리 예정
+ */
+function partToLabel(part: string) {
+  switch (part) {
+    case 'PM':
+      return '기획';
+    case 'DESIGN':
+      return '디자인';
+    case 'WEB':
+      return '프론트엔드 (웹)';
+    case 'MOBILE':
+      return '모바일';
+    case 'BACKEND':
+      return '백엔드';
+    case 'AI':
+      return 'AI/ML';
+    default:
+      return part;
+  }
+}
+
+export default function ApplyStatusSection() {
+  const {
+    data: readabilities,
+    isLoading: isReadLoading,
+    isError: isReadError,
+  } = useEnrollmentReadabilities({
+    retry: false,
+  });
+
+  // readable scheduleType만 추림
+  const readableSet = useMemo(() => {
+    const set = new Set<EnrollmentScheduleType>();
+    (readabilities ?? []).forEach((r: EnrollmentReadability) => {
+      if (r.readable) set.add(r.scheduleType);
+    });
+    return set;
+  }, [readabilities]);
+
+  // 1차/2차 탭 사용 가능 여부
+  const firstReadable = readableSet.has('FIRST_TEAM_BUILDING');
+  const secondReadable = readableSet.has('SECOND_TEAM_BUILDING');
+
+  // UI 토글에서 쓰는 값
+  // const secondEnabled = secondReadable;
+
   const [activePhase, setActivePhase] = useState<SupportPhase>('first');
 
-  // api 연결 전 초기값 (없으면 임시 데이터)
-  const initialFirst = firstPhaseApplicants ?? mockFirstPhaseApplicants;
-  const initialSecond = secondPhaseApplicants ?? mockSecondPhaseApplicants;
-  const [firstRows, setFirstRows] = useState<ApplyApplicant[]>(initialFirst);
-  const [secondRows, setSecondRows] = useState<ApplyApplicant[]>(initialSecond);
-
-  // index 에서 api 주입 시 동기화
   useEffect(() => {
-    setFirstRows(firstPhaseApplicants ?? mockFirstPhaseApplicants);
-  }, [firstPhaseApplicants]);
+    if (isReadLoading) return;
 
-  useEffect(() => {
-    setSecondRows(secondPhaseApplicants ?? mockSecondPhaseApplicants);
-  }, [secondPhaseApplicants]);
+    // 1차가 불가이고 2차가 가능하면 2차로 스위치
+    if (!firstReadable && secondReadable) setActivePhase('second');
+
+    // 둘 다 불가면 일단 first 유지(빈 UI 처리)
+  }, [isReadLoading, firstReadable, secondReadable]);
+
+  // 둘 다 readable이 아니면 (아직 기간 전) => 빈 화면 처리 가능
+  const readableNone = !firstReadable && !secondReadable;
+  const phaseReadable = activePhase === 'first' ? firstReadable : secondReadable;
+  const scheduleType = toScheduleType(activePhase);
+
+  const {
+    data: received,
+    isLoading,
+    isError,
+  } = useReceivedEnrollments(scheduleType, {
+    // 해당 phase가 readable 할 때만 조회
+    enabled: phaseReadable && !readableNone,
+    retry: false,
+  });
+
+  const rows: ApplyStatusRow[] = useMemo(() => {
+    const list = received?.enrollments ?? [];
+    return list.map(e => ({
+      id: e.enrollmentId,
+      priorityLabel: choiceToLabel(e.choice),
+      name: e.applicantName,
+      partLabel: partToLabel(e.applicantPart),
+      school: e.applicantSchool,
+      status: e.enrollmentStatus,
+      enrollmentAcceptable: e.enrollmentAcceptable,
+    }));
+  }, [received]);
+
+  const totalCount = rows.length;
+
+  const scheduleEnded = received?.scheduleEnded ?? false;
+
+  const canOpenAccept = (row: ApplyStatusRow) => {
+    if (row.status !== 'WAITING') return false;
+    if (scheduleEnded) return false;
+    if (!row.enrollmentAcceptable) return false;
+    return true;
+  };
+
+  const canOpenReject = (row: ApplyStatusRow) => {
+    if (row.status !== 'WAITING') return false;
+    if (scheduleEnded) return false;
+    return true;
+  };
 
   const [confirmModal, setConfirmModal] = useState<ConfirmModalState>(null);
 
-  const currentRows = activePhase === 'first' ? firstRows : secondRows;
-  const totalCount = currentRows.length;
+  const determineMutation = useDetermineEnrollment({
+    onSuccess: () => {
+      setConfirmModal(null);
+    },
+  });
 
-  const controlsDisabled = resultAnnouncedByPhase?.[activePhase] ?? false;
+  const isDetermining = determineMutation.isPending;
+  const pendingEnrollmentId = determineMutation.variables?.enrollmentId ?? null;
 
-  const updateRowStatus = (phase: SupportPhase, id: string, nextStatus: ApplyStatus) => {
-    const setter = phase === 'first' ? setFirstRows : setSecondRows;
-    setter(prev => prev.map(row => (row.id === id ? { ...row, status: nextStatus } : row)));
+  const handleClickAccept = (enrollmentId: number) => {
+    if (isDetermining) return;
+
+    const row = rows.find(r => r.id === enrollmentId);
+    if (!row) return;
+    if (!canOpenAccept(row)) return;
+
+    setConfirmModal({ phase: activePhase, applicant: row, action: 'ACCEPT' });
   };
 
-  /** 수락버튼 */
-  const handleClickAccept = (id: string) => {
-    if (controlsDisabled) return; // 발표 후에는 수락 불가
-    const source = activePhase === 'first' ? firstRows : secondRows;
-    const applicant = source.find(row => row.id === id);
-    if (!applicant) return;
+  const handleClickReject = (enrollmentId: number) => {
+    if (isDetermining) return;
 
-    setConfirmModal({
-      phase: activePhase,
-      applicant,
-      action: 'ACCEPT',
-    });
+    const row = rows.find(r => Number(r.id) === enrollmentId);
+    if (!row) return;
+    if (!canOpenReject(row)) return;
+
+    setConfirmModal({ phase: activePhase, applicant: row, action: 'REJECT' });
   };
 
-  /** 거절버튼 */
-  const handleClickReject = (id: string) => {
-    if (controlsDisabled) return; // 발표 후에는 거절 불가
-    const source = activePhase === 'first' ? firstRows : secondRows;
-    const applicant = source.find(row => row.id === id);
-    if (!applicant) return;
-
-    setConfirmModal({
-      phase: activePhase,
-      applicant,
-      action: 'REJECT',
-    });
-  };
-
-  /** 확인 모달에서 수락하기 / 거절하기 */
-  const handleConfirmAction = () => {
+  /**
+   * 실제 수락/거절 API는 아직 만들지 않았으니(요청 안 함),
+   * 여기서는 “확인 모달 닫기”까지만 처리해 둠.
+   * (다음 단계에서 PATCH/POST 연동할 때 useMutation으로 붙이면 됨)
+   */
+  const handleConfirmAction = async () => {
     if (!confirmModal) return;
+    if (isDetermining) return;
 
-    const { phase, applicant, action } = confirmModal;
-    const nextStatus: ApplyStatus = action === 'ACCEPT' ? 'ACCEPTED' : 'REJECTED';
+    const accept = confirmModal.action === 'ACCEPT';
 
-    updateRowStatus(phase, applicant.id, nextStatus);
-
-    setConfirmModal(null);
+    await determineMutation.mutateAsync({
+      enrollmentId: confirmModal.applicant.id,
+      body: { accept },
+    });
   };
 
   return (
@@ -113,8 +195,13 @@ export default function ApplyStatusSection({
       <header css={headerRowCss}>
         <ApplyPeriodToggle
           activePhase={activePhase}
-          secondEnabled={secondEnabled}
-          onChange={setActivePhase}
+          secondEnabled={secondReadable}
+          onChange={next => {
+            if (isDetermining) return;
+            if (next === 'first' && !firstReadable) return;
+            if (next === 'second' && !secondReadable) return;
+            setActivePhase(next);
+          }}
         />
 
         <div css={totalWrapCss}>
@@ -123,13 +210,29 @@ export default function ApplyStatusSection({
         </div>
       </header>
 
-      {/* 지원자 표 */}
-      <ApplyStatusTable
-        rows={currentRows}
-        onAccept={handleClickAccept}
-        onReject={handleClickReject}
-        controlsDisabled={controlsDisabled}
-      />
+      {/* 컨텐츠 */}
+      {isReadLoading ? (
+        <div css={emptyCss}>불러오는 중...</div>
+      ) : isReadError ? (
+        <div css={emptyCss}>지원기간 정보를 불러오지 못했어요.</div>
+      ) : readableNone ? (
+        <div css={emptyCss}>아직 지원 현황을 조회할 수 없어요.</div>
+      ) : !phaseReadable ? (
+        <div css={emptyCss}>현재 선택한 기간은 조회할 수 없어요.</div>
+      ) : isLoading ? (
+        <div css={emptyCss}>불러오는 중...</div>
+      ) : isError ? (
+        <div css={emptyCss}>지원 현황을 불러오지 못했어요.</div>
+      ) : (
+        <ApplyStatusTable
+          rows={rows}
+          onAccept={handleClickAccept}
+          onReject={handleClickReject}
+          scheduleEnded={scheduleEnded}
+          isDetermining={isDetermining}
+          pendingEnrollmentId={pendingEnrollmentId}
+        />
+      )}
 
       {/* 수락 / 거절 확인 모달 */}
       {confirmModal && (
@@ -148,9 +251,15 @@ export default function ApplyStatusSection({
             </>
           }
           message=""
-          confirmText={confirmModal.action === 'ACCEPT' ? '수락하기' : '거절하기'}
+          confirmText={
+            isDetermining
+              ? '처리 중...'
+              : confirmModal.action === 'ACCEPT'
+                ? '수락하기'
+                : '거절하기'
+          }
           cancelText="취소"
-          onClose={() => setConfirmModal(null)}
+          onClose={() => (isDetermining ? null : setConfirmModal(null))}
           onConfirm={handleConfirmAction}
           customTitleAlign="center"
         />
@@ -190,4 +299,16 @@ const totalCountCss = css`
   font-weight: 700;
   line-height: 38.4px;
   color: ${colors.primary[600]};
+`;
+
+const emptyCss = css`
+  width: 100%;
+  min-height: 400px;
+  border-radius: 12px;
+  background-color: ${colors.grayscale[200]};
+  border: 1px solid ${colors.grayscale[400]};
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;

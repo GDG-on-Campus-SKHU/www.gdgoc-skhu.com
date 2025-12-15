@@ -18,6 +18,7 @@ type Props = {
   onClose: () => void;
   onSelectMember?: (member: Member) => void;
   selectedMemberIds?: number[];
+  leaderUserId?: number;
 };
 
 export default function MemberSelectModal({
@@ -25,6 +26,7 @@ export default function MemberSelectModal({
   onClose,
   onSelectMember,
   selectedMemberIds = [],
+  leaderUserId,
 }: Props) {
   const [keyword, setKeyword] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
@@ -51,7 +53,14 @@ export default function MemberSelectModal({
   // 검색 API: "검색 버튼/엔터"를 눌렀을 때만 hasSearched = true
   const { data, isFetching, isError } = useProjectGalleryMemberSearch(trimmed, {
     enabled: open && hasSearched && trimmed.length > 0,
+    retry: false,
   });
+
+  const disabledSet = useMemo(() => {
+    const set = new Set<number>(selectedMemberIds);
+    if (typeof leaderUserId === 'number' && leaderUserId > 0) set.add(leaderUserId);
+    return set;
+  }, [selectedMemberIds, leaderUserId]);
 
   // API 응답 → 폼에서 그대로 쓸 수 있는 Member(ProjectMemberBase)로 변환
   const members = useMemo<Member[]>(() => {
@@ -65,6 +74,7 @@ export default function MemberSelectModal({
   }, [data]);
 
   const handleSelect = (member: Member) => {
+    if (disabledSet.has(member.userId)) return;
     onSelectMember?.(member);
   };
 
@@ -75,8 +85,14 @@ export default function MemberSelectModal({
   };
 
   const handleSearch = (value: string) => {
+    const next = value.trim();
     setKeyword(value);
-    setHasSearched(value.trim().length > 0);
+    setHasSearched(next.length > 0);
+
+    // 검색할 때마다 리스트 최상단으로
+    requestAnimationFrame(() => {
+      if (listRef.current) listRef.current.scrollTop = 0;
+    });
   };
 
   // wheel 이벤트를 전역에서 잡고, 조건에 따라 배경 스크롤을 막을지 결정

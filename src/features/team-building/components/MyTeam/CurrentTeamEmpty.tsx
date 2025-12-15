@@ -1,8 +1,58 @@
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
+import { useCurrentTeam } from '@/lib/myTeam.api';
+import { useEffect } from 'react';
 
-export default function CurrentTeamEmpty() {
+type CurrentTeamEmptyProps = {
+  /** MyTeamPage에서 "현재 팀원 구성" 탭 + 팀원일 때만 enabled 주는 용도 */
+  enabled?: boolean;
+  /** 팀이 있는지 여부를 MyTeamPage에게 */
+  onHasMatchedTeamChange?: (hasTeam: boolean) => void;
+};
+
+export default function CurrentTeamEmpty({
+  enabled = true,
+  onHasMatchedTeamChange,
+}: CurrentTeamEmptyProps) {
+  const { data, isLoading, isError } = useCurrentTeam({
+    enabled,
+    retry: false,
+  });
+
+  const hasTeam = !!data;
+
+  useEffect(() => {
+    if (!enabled) return;
+    if (isLoading) return;
+    if (isError) return; // 여기서는 별도 처리
+    onHasMatchedTeamChange?.(hasTeam);
+  }, [enabled, hasTeam, isLoading, isError, onHasMatchedTeamChange]);
+
+  if (!enabled) return null;
+
+  if (isLoading) {
+    return (
+      <section css={sectionWrapCss}>
+        <div css={emptyBoxCss}>
+          <p css={emptyTextCss}>불러오는 중...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (isError) {
+    return (
+      <section css={sectionWrapCss}>
+        <div css={emptyBoxCss}>
+          <p css={emptyTextCss}>팀 정보를 불러오지 못했어요.</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (data) return null;
+
   return (
     <section css={sectionWrapCss}>
       <div css={emptyBoxCss}>
@@ -11,7 +61,6 @@ export default function CurrentTeamEmpty() {
     </section>
   );
 }
-
 const sectionWrapCss = css`
   width: 100%;
   margin-top: 55px;

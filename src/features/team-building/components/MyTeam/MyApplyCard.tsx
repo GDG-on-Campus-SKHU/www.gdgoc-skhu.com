@@ -1,19 +1,39 @@
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
-import type { MemberApplyData, MemberApplyPriority } from '../../types/memberApplyData';
-import MyApplyStatusBadge, { MyApplyStatus } from './ApplyStatusBadge';
+import MyApplyStatusBadge from './ApplyStatusBadge';
+import { EnrollmentPriority, MemberSentApplyCard } from '../../types/applyStatusData';
+import { Part } from '../../types/gallery';
+
+function partToLabel(part: Part) {
+  switch (part) {
+    case 'PM':
+      return '기획';
+    case 'DESIGN':
+      return '디자인';
+    case 'WEB':
+      return '프론트엔드 (웹)';
+    case 'MOBILE':
+      return '모바일';
+    case 'BACKEND':
+      return '백엔드';
+    case 'AI':
+      return 'AI/ML';
+    default:
+      return String(part);
+  }
+}
 
 type AppliedVariantProps = {
   variant: 'applied';
-  data: MemberApplyData;
+  data: MemberSentApplyCard;
   /** "지원 취소" */
-  onCancel?: (card: MemberApplyData) => void;
+  onCancel?: (card: MemberSentApplyCard) => void;
 };
 
 type EmptyVariantProps = {
   variant: 'empty';
-  priority: MemberApplyPriority;
+  priority: EnrollmentPriority;
   /* 결과 발표 전 / 후 */
   emptyType?: 'apply' | 'result';
   onClickApply?: () => void;
@@ -44,7 +64,7 @@ export default function MyApplyCard(props: MyApplyCardProps) {
   }
 
   const { data, onCancel } = props;
-  const isPending = data.status === 'PENDING';
+  const isPending = data.status === 'WAITING';
 
   const handleCancel = () => {
     if (!isPending) return;
@@ -56,7 +76,7 @@ export default function MyApplyCard(props: MyApplyCardProps) {
       {/* 상단: 지망 뱃지 + 상태 뱃지 */}
       <header css={cardHeaderCss}>
         <span css={priorityTagCss}>{data.priority}지망</span>
-        <MyApplyStatusBadge status={data.status as MyApplyStatus} />
+        <MyApplyStatusBadge status={data.status} />
       </header>
 
       {/* 중간: 프로젝트 이름 + 한줄소개 */}
@@ -69,13 +89,13 @@ export default function MyApplyCard(props: MyApplyCardProps) {
       <footer css={cardFooterCss}>
         <div css={footerInfoRowCss}>
           <span css={footerLabelCss}>지원 파트 :</span>
-          <span css={footerTextCss}>{data.partName}</span>
+          <span css={footerTextCss}>{partToLabel(data.enrollmentPart)}</span>
         </div>
         <div css={footerInfoRowCss}>
           <span css={footerLabelCss}>지원자 수 :</span>
           <span css={footerFixedCss}>
             <span css={footerTextCss}>
-              {data.applicantCount} / {data.capacity}
+              {data.applicantCount} / {data.maxMemberCountOfPart}
             </span>
             {''}명 지원
           </span>

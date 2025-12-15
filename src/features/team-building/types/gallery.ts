@@ -25,6 +25,11 @@ export type ProjectMember = {
   part: Part;
 };
 
+export type ProjectDetailMember = ProjectMemberBase & {
+  memberRole: MemberRole;
+  part: Part;
+};
+
 export type ProjectDetail = {
   id: number;
   title: string;
@@ -33,12 +38,10 @@ export type ProjectDetail = {
   status: ServiceStatus;
   longDescription: string;
 
-  leaderId?: number; // 서버가 내려주면 보관만(추후 필요할 때 사용)
+  leader: ProjectDetailMember | null;
+  members: ProjectDetailMember[];
 
-  leader: ProjectMember | null; // members에서 LEADER 찾아서 세팅
-  members: ProjectMember[];
-
-  thumbnailUrl: string | null; // 추후 제거 가능성 → optional
+  thumbnailUrl: string | null;
 };
 
 export type ProjectGalleryMemberSearchItem = {
@@ -76,9 +79,27 @@ export type TeamMember = ProjectMemberBase & {
 export type ProjectGalleryUpsertBody = {
   projectName: string;
   generation: GenerationValue;
+  shortDescription: string;
   serviceStatus: ServiceStatus;
   description: string;
   leader: { userId: number; part: Part };
   members: Array<{ userId: number; part: Part }>;
   thumbnailUrl?: string | null;
 };
+
+export type CreateProjectGalleryResponseDto = {
+  galleryProjectId: number;
+};
+
+// 팀장(내 정보) 조회 응답(도메인) - ProjectPostForm에서 그대로 사용 가능
+export type ProjectGalleryLeaderProfile = ProjectMemberBase;
+
+// (선택) 명시적으로 응답 DTO도 만들고 싶다면:
+export type GetProjectGalleryLeaderProfileResponseDto = {
+  userId: number;
+  name: string;
+  school: string;
+  generationAndPosition: string; // 서버 필드
+};
+
+export type UpdateProjectGalleryResponseDto = CreateProjectGalleryResponseDto;

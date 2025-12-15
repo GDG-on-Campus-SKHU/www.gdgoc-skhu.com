@@ -1,7 +1,9 @@
 import dynamic from 'next/dynamic';
 import { css } from '@emotion/react';
+import type React from 'react';
 
 import { colors } from '../../../../styles/constants';
+import { useUploadImage } from '@/lib/image.api';
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor').then(mod => mod.default), {
   ssr: false,
@@ -12,19 +14,93 @@ const MDPreview = dynamic(() => import('@uiw/react-markdown-preview').then(mod =
 });
 
 type ProjectDescriptionEditorProps = {
-  /** 마크다운 문자열 */
   value: string;
-  /** 편집 중에 값 변경 */
   onChange: (value: string) => void;
-  /** true면 에디터, false면 미리보기 */
   isEditing?: boolean;
 };
+
+function insertAtCursor(
+  current: string,
+  insertText: string,
+  textarea: HTMLTextAreaElement | null,
+  onChange: (next: string) => void
+) {
+  // textarea 접근이 불가하면 그냥 뒤에 붙이기(안전 fallback)
+  if (!textarea) {
+    onChange((current ?? '') + insertText);
+    return;
+  }
+
+  const start = textarea.selectionStart ?? current.length;
+  const end = textarea.selectionEnd ?? current.length;
+
+  const next = current.slice(0, start) + insertText + current.slice(end);
+  onChange(next);
+
+  // 커서 위치를 삽입 텍스트 뒤로 이동
+  const nextPos = start + insertText.length;
+  requestAnimationFrame(() => {
+    textarea.focus();
+    textarea.setSelectionRange(nextPos, nextPos);
+  });
+}
 
 export default function ProjectDescriptionEditor({
   value,
   onChange,
   isEditing = true,
 }: ProjectDescriptionEditorProps) {
+  const uploadMutation = useUploadImage();
+
+  const uploadOneProjectImage = async (file: File): Promise<string> => {
+    const uploaded = await uploadMutation.mutateAsync({
+      file,
+      directory: 'project',
+    });
+    return uploaded.url;
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    const textarea = e.currentTarget;
+
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    if (files.length === 0) return;
+
+    for (const file of files) {
+      try {
+        const url = await uploadOneProjectImage(file);
+        const md = `${url}`;
+        insertAtCursor(value, md, textarea, onChange);
+      } catch (err) {
+        console.error('이미지 업로드 실패:', err);
+      }
+    }
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const textarea = e.currentTarget;
+
+    const items = Array.from(e.clipboardData.items);
+    const imageItems = items.filter(it => it.type.startsWith('image/'));
+    if (imageItems.length === 0) return;
+
+    e.preventDefault();
+
+    for (const item of imageItems) {
+      const file = item.getAsFile();
+      if (!file) continue;
+
+      try {
+        const url = await uploadOneProjectImage(file);
+        const md = `${url}`;
+        insertAtCursor(value, md, textarea, onChange);
+      } catch (err) {
+        console.error('이미지 업로드 실패:', err);
+      }
+    }
+  };
+
   return (
     <div css={editorWrapCss} data-color-mode="light">
       {isEditing ? (
@@ -38,8 +114,14 @@ export default function ProjectDescriptionEditor({
             visibleDragbar={true}
             textareaProps={{
               placeholder: "Github README 작성에 쓰이는 'markdown'을 이용해 작성해보세요.",
+              onDrop: handleDrop,
+              onPaste: handlePaste,
+              onDragOver: e => e.preventDefault(),
             }}
           />
+
+          {/* 원하면 업로드 중 표시도 추가 가능 */}
+          {uploadMutation.isPending && <div css={uploadingCss}>이미지 업로드 중...</div>}
         </div>
       ) : (
         <div css={previewBoxCss}>
@@ -92,4 +174,16 @@ const previewBoxCss = css`
   & code {
     font-family: 'Courier New', monospace;
   }
+`;
+
+const uploadingCss = css`
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: ${colors.grayscale[100]};
+  border: 1px solid ${colors.grayscale[200]};
+  font-size: 14px;
+  color: ${colors.grayscale[700]};
 `;
