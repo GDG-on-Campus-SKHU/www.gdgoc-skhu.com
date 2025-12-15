@@ -1,36 +1,68 @@
+import React from 'react';
 import Link from 'next/link';
+import type { MyPageProject } from '@/lib/mypageProject.api';
+import { useUpdateProjectExhibit } from '@/lib/mypageProject.api';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
-import type { Project, ProjectDetail } from '../../types/myproject';
-import { getMockProjectDetailById } from '../../types/myproject';
 import Toggle from '../Toggle';
 
-type Props = { item: Project };
+type Props = { item: MyPageProject };
 
 export default function MyProjectCard({ item }: Props) {
-  const detail: ProjectDetail | null = getMockProjectDetailById(item.id);
+  const { mutate: updateExhibit, isPending } = useUpdateProjectExhibit();
+  const handleToggleExhibit = (exhibited: boolean) => {
+    updateExhibit(
+      {
+        projectId: item.projectId,
+        exhibited,
+      },
+      {
+        onSuccess: () => {
+          console.log('전시 여부가 변경되었습니다.');
+        },
+        onError: error => {
+          console.error('전시 여부 변경 실패:', error);
+          alert('전시 여부 변경에 실패했습니다.');
+        },
+      }
+    );
+  };
 
-  if (!detail) return null;
+  // 이미지 에러 처리
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    e.currentTarget.src = '/gdgoc_logo.svg';
+  };
 
   return (
     <article css={articleCss}>
-      <Link href={`/project-gallery/${item.id}`}>
+      <Link href={`/project-gallery/${item.projectId}`}>
         <div css={leftSectionCss}>
           <div css={thumbFrameCss}>
-            <img src={item.thumbnailUrl} alt={item.title} css={logoCss} />
+            <img
+              src={item.thumbnailUrl || '/gdgoc_logo.svg'}
+              alt={item.projectName}
+              css={logoCss}
+              onError={handleImageError}
+            />
           </div>
         </div>
       </Link>
+
       <div css={rightSectionCss}>
         <div css={titleRowCss}>
           <div css={titleSectionCss}>
-            <h3 css={titleCss}>{detail.title}</h3>
-            <p css={descCss}>{detail.description}</p>
+            <h3 css={titleCss}>{item.projectName}</h3>
+            <p css={descCss}>{item.description}</p>
           </div>
-          {detail.isLeader && (
+          {item.isLeader && (
             <div css={displayStatusCss}>
-              전시 여부 <Toggle />
+              전시 여부{' '}
+              <Toggle
+                checked={item.exhibited}
+                onChange={handleToggleExhibit}
+                disabled={isPending}
+              />
             </div>
           )}
         </div>
@@ -41,34 +73,36 @@ export default function MyProjectCard({ item }: Props) {
             <span css={labelCss}>팀장</span>
             <div css={valueWrapperCss}>
               <span css={valueCss}>
-                {detail.leader.name}
-                {detail.leader.role && <span css={chipCss}>{detail.leader.role}</span>}
+                {item.leader.name}
+                <span css={chipCss}>{item.leader.part}</span>
               </span>
             </div>
           </div>
 
           {/* 팀원 */}
-          <div css={infoRowCss}>
-            <span css={labelCss}>팀원</span>
-            <div css={memberListCss}>
-              {detail.members.map((member, index) => (
-                <>
-                  <span key={index} css={memberItemCss}>
-                    {member.name}
-                    {member.role && <span css={chipCss}>{member.role}</span>}
-                  </span>
-                  {(index + 1) % 3 === 0 && index !== detail.members.length - 1 && (
-                    <div
-                      css={css`
-                        width: 100%;
-                        height: 0;
-                      `}
-                    />
-                  )}
-                </>
-              ))}
+          {item.members && item.members.length > 0 && (
+            <div css={infoRowCss}>
+              <span css={labelCss}>팀원</span>
+              <div css={memberListCss}>
+                {item.members.map((member, index) => (
+                  <React.Fragment key={member.userId}>
+                    <span css={memberItemCss}>
+                      {member.name}
+                      <span css={chipCss}>{member.part}</span>
+                    </span>
+                    {(index + 1) % 3 === 0 && index !== item.members.length - 1 && (
+                      <div
+                        css={css`
+                          width: 100%;
+                          height: 0;
+                        `}
+                      />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </article>
@@ -92,6 +126,7 @@ const articleCss = css`
 
 const leftSectionCss = css`
   flex-shrink: 0;
+  cursor: pointer;
 `;
 
 const thumbFrameCss = css`
@@ -103,6 +138,7 @@ const thumbFrameCss = css`
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 `;
 
 const logoCss = css`

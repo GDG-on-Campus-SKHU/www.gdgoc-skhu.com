@@ -78,7 +78,7 @@ export default function Step3ResetPw({ email, code, onPrev }: Props) {
         <h2 css={[typography.h2Bold, authStepTitle]}>비밀번호 재설정</h2>
         <p css={[typography.b4, authStepDesc]}>새로운 비밀번호를 설정해주세요.</p>
 
-        <div css={fieldBlockWithGap}>
+        <div css={fieldOverride}>
           <FieldOfAuth
             label="새 비밀번호"
             type="password"
@@ -90,7 +90,7 @@ export default function Step3ResetPw({ email, code, onPrev }: Props) {
           {passwordRuleError && <p css={errorText}>{passwordRuleError}</p>}
         </div>
 
-        <div css={fieldBlock}>
+        <div css={fieldOverride}>
           <FieldOfAuth
             label="새 비밀번호 확인"
             type="password"
@@ -101,8 +101,6 @@ export default function Step3ResetPw({ email, code, onPrev }: Props) {
           />
           {passwordMatchError && <p css={errorText}>{passwordMatchError}</p>}
         </div>
-
-        {error && <p css={errorText}>{error}</p>}
 
         <div css={buttonBox}>
           <div css={leftBtn}>
@@ -132,18 +130,17 @@ export default function Step3ResetPw({ email, code, onPrev }: Props) {
   );
 }
 
-const fieldBlock = css`
-  margin-bottom: 4px;
-`;
-
-const fieldBlockWithGap = css`
-  margin-bottom: 16px;
+const fieldOverride = css`
+  label {
+    margin-bottom: 6px;
+  }
 `;
 
 const errorText = css`
   color: #ea4335;
   font-size: 13px;
   margin-top: -6px;
+  margin-bottom: 12px;
   line-height: 1.4;
 `;
 
@@ -166,10 +163,4 @@ const leftBtn = css`
 
 const rightBtn = css`
   flex: 2;
-`;
-
-const errorText = css`
-  color: red;
-  font-size: 14px;
-  margin-top: 8px;
 `;

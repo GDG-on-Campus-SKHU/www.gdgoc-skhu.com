@@ -25,6 +25,11 @@ export default function Step2Verify({ email, code, setCode, onNext, onPrev }: Pr
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const handleChange = (value: string) => {
+    const next = value.replace(/\D/g, '');
+    if (next.length <= 6) setCode(next);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -54,7 +59,7 @@ export default function Step2Verify({ email, code, setCode, onNext, onPrev }: Pr
       <FieldOfAuth
         placeholder="인증번호 6자리 입력"
         value={code}
-        onChange={e => setCode(e.target.value)}
+        onChange={e => handleChange(e.target.value)}
         error={!!error}
         errorMessage={error}
       />

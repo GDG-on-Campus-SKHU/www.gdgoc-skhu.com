@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useMyProfile } from '@/lib/mypageProfile.api';
 import { css } from '@emotion/react';
 
 import { colors, layoutCss } from '../../../../styles/constants';
@@ -9,6 +10,8 @@ import ProfileList from '../../components/Profile/ProfileList';
 import { useProfileEditor } from '../../hooks/useProfileEditor';
 
 export default function ProfilePage() {
+  const { data: profile, isLoading, error } = useMyProfile();
+
   const {
     isEditing,
     isPreviewMode,
@@ -24,7 +27,40 @@ export default function ProfilePage() {
     handleEditClick,
     handleSave,
     togglePreview,
-  } = useProfileEditor('');
+  } = useProfileEditor(profile);
+
+  // 로딩 상태
+  if (isLoading) {
+    return (
+      <main css={mainCss}>
+        <div css={innerCss}>
+          <div css={loadingCss}>프로필을 불러오는 중...</div>
+        </div>
+      </main>
+    );
+  }
+
+  // 에러 상태
+  if (error) {
+    return (
+      <main css={mainCss}>
+        <div css={innerCss}>
+          <div css={errorCss}>프로필을 불러오는 중 오류가 발생했습니다.</div>
+        </div>
+      </main>
+    );
+  }
+
+  // 데이터 없음
+  if (!profile) {
+    return (
+      <main css={mainCss}>
+        <div css={innerCss}>
+          <div css={errorCss}>프로필 정보가 없습니다.</div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main css={mainCss}>
@@ -33,12 +69,14 @@ export default function ProfilePage() {
           <ProfileHeader
             isEditing={isEditing}
             isPreviewMode={isPreviewMode}
+            userName={profile.name}
             onEditClick={handleEditClick}
           />
 
           <ProfileList
             isEditing={isEditing}
             isPreviewMode={isPreviewMode}
+            profile={profile}
             selectedTechStack={isEditing ? selectedTechStack : savedTechStack}
             links={isEditing ? links : savedLinks}
             onTechStackChange={setSelectedTechStack}
@@ -101,4 +139,22 @@ const secessionCss = css`
   border: none;
   cursor: pointer;
   padding: 0;
+`;
+
+const loadingCss = css`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  font-size: 18px;
+  color: #666;
+`;
+
+const errorCss = css`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  font-size: 18px;
+  color: #e53e3e;
 `;

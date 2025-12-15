@@ -3,7 +3,7 @@ import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants/colors';
 import { typography } from '../../../../styles/constants/text';
-import { primaryBtn, step1Desc } from '../../../../styles/GlobalStyle/AuthStyle';
+import { step1Desc } from '../../../../styles/GlobalStyle/AuthStyle';
 import type { Step } from '../../../team-building/pages/SignUp/index';
 import Button from '../Button';
 import FieldOfSignUp from '../FieldOfSignUp';
@@ -146,14 +146,9 @@ export default function Step2({
           <Button variant="secondary" title="이전" onClick={onPrev} />
         </div>
 
-        <button
-          type="button"
-          css={[primaryBtn({ disabled: isDisabled }), rightBtn]}
-          onClick={onNext}
-          disabled={isDisabled}
-        >
-          다음
-        </button>
+        <div css={rightBtn}>
+          <Button title="다음" onClick={onNext} disabled={isDisabled} />
+        </div>
       </div>
     </section>
   );
@@ -182,7 +177,7 @@ const formBox = css`
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 32px;
+  margin-bottom: 26px;
 `;
 
 const buttonBox = css`

@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { useRouter } from 'next/router';
+import { useAuthStore } from '@/lib/authStore';
+import { useDeleteAccount } from '@/lib/mypageProfile.api';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
@@ -6,13 +9,40 @@ import Button from '../../components/Button';
 import SecessionPopup from '../../components/Profile/SecessionPopup';
 
 export default function SecessionPage() {
+  const router = useRouter();
   const [click, setClick] = useState(false);
   const [visible, setVisible] = useState(false);
+
+  const { mutate: deleteAccount, isPending } = useDeleteAccount();
+  const clearAuth = useAuthStore(state => state.clearAuth);
+
   const toggle = () => setClick(prev => !prev);
-  const visibleToggle = () => setVisible(prev => !prev);
+
+  const onDeleteClick = () => {
+    if (!click || isPending) return;
+
+    deleteAccount(undefined, {
+      onSuccess: () => {
+        // 인증 정보 초기화
+        clearAuth();
+        // 팝업 표시
+        setVisible(true);
+      },
+      onError: error => {
+        console.error('회원 탈퇴 실패:', error);
+        alert('회원 탈퇴에 실패했습니다. 다시 시도해주세요.');
+      },
+    });
+  };
+
+  const handlePopupConfirm = () => {
+    setVisible(false);
+    router.push('/');
+  };
+
   return (
     <main css={mainCss}>
-      {visible && <SecessionPopup />}
+      {visible && <SecessionPopup onConfirm={handlePopupConfirm} />}
       <div
         css={{
           display: 'flex',
@@ -60,8 +90,12 @@ export default function SecessionPage() {
         </p>
       </div>
 
-      <div css={{ width: '190px' }} onClick={() => visibleToggle()}>
-        <Button title="탈퇴하기" disabled={!click} variant="secondary" />
+      <div css={{ width: '190px' }} onClick={onDeleteClick}>
+        <Button
+          title={isPending ? '처리 중...' : '탈퇴하기'}
+          disabled={!click || isPending}
+          variant="secondary"
+        />
       </div>
     </main>
   );

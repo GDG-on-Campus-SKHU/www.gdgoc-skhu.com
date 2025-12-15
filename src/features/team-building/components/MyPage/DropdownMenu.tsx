@@ -3,7 +3,11 @@ import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
 
-export default function DropdownMenu() {
+interface Props {
+  role: string | null;
+}
+
+export default function DropdownMenu({ role }: Props) {
   return (
     <div
       css={css`
@@ -15,7 +19,6 @@ export default function DropdownMenu() {
         border-radius: 4px;
         box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.25);
         min-width: 116px;
-        min-height: 146px;
         z-index: 110;
         padding: 8px;
         display: flex;
@@ -33,14 +36,16 @@ export default function DropdownMenu() {
         }
 
         a {
-          flex: 1;
           padding-left: 8px;
+          height: 36px;
           border-radius: 4px;
           display: flex;
           align-items: center;
+
           &:hover {
             background-color: ${colors.grayscale[200]};
           }
+
           &:active {
             background-color: ${colors.grayscale[300]};
           }
@@ -50,9 +55,13 @@ export default function DropdownMenu() {
       <Link href="/mypage/profile" scroll={false}>
         Profile
       </Link>
-      <Link href="/mypage/myproject" scroll={false}>
-        MyProject
-      </Link>
+
+      {(role === 'ROLE_SKHU_MEMBER' || role === 'ROLE_SKHU_ADMIN') && (
+        <Link href="/mypage/myproject" scroll={false}>
+          My project
+        </Link>
+      )}
+
       <Link href="/mypage/myteam" scroll={false}>
         My team
       </Link>
