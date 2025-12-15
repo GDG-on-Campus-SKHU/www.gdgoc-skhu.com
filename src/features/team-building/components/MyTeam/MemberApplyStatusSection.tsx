@@ -1,99 +1,165 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/react';
 
-import {
-  MemberApplyData,
-  MemberApplyPriority,
-  mockMemberApplyCards,
-} from '../../types/memberApplyData';
 import Modal from '../Modal_Fix';
 import ApplyPeriodToggle, { SupportPhase } from './ApplyPeriodToggle';
 import MyApplyCard from './MyApplyCard';
+import {
+  EnrollmentChoice,
+  EnrollmentPriority,
+  EnrollmentReadability,
+  EnrollmentScheduleType,
+  EnrollmentStatus,
+  MemberSentApplyCard,
+} from '../../types/applyStatusData';
+import { Part } from '../../types/gallery';
+import {
+  useCancelEnrollment,
+  useEnrollmentReadabilities,
+  useSentEnrollments,
+} from '@/lib/myTeam.api';
+import { colors } from '@/styles/constants';
 
 type MemberApplyStatusSectionProps = {
-  /** 1차 지원기간 카드 목록 */
-  firstPhaseCards?: MemberApplyData[];
-  /** 2차 지원기간 카드 목록 (임시 데이터 x) */
-  secondPhaseCards?: MemberApplyData[];
-  /** 2차 지원기간이 열렸는지 여부 */
-  secondEnabled?: boolean;
-  /** 각 지원기간별 결과 발표 여부 */
-  resultAnnouncedByPhase?: Record<SupportPhase, boolean>;
+  /** 탭 전환 시 불필요한 호출 방지용 */
+  enabled?: boolean;
 };
 
-const PRIORITIES: MemberApplyPriority[] = [1, 2, 3];
+const PRIORITIES: EnrollmentPriority[] = [1, 2, 3];
+
+/** SupportPhase -> scheduleType 매핑 */
+function toScheduleType(phase: SupportPhase): EnrollmentScheduleType {
+  return phase === 'first' ? 'FIRST_TEAM_BUILDING' : 'SECOND_TEAM_BUILDING';
+}
+
+/** choice -> priority number */
+function choiceToPriority(choice: EnrollmentChoice): EnrollmentPriority {
+  if (choice === 'FIRST') return 1;
+  if (choice === 'SECOND') return 2;
+  return 3;
+}
+
+function toMemberCardStatus(scheduleEnded: boolean, enrollmentStatus: EnrollmentStatus) {
+  if (!scheduleEnded) return 'WAITING' as const;
+
+  if (enrollmentStatus === 'ACCEPTED') return 'ACCEPTED' as const;
+  if (enrollmentStatus === 'REJECTED') return 'REJECTED' as const;
+  if (enrollmentStatus === 'EXPIRED') return 'REJECTED' as const;
+
+  // 방어(원칙상 종료 후 WAITING이 오면 안 되지만)
+  return 'WAITING' as const;
+}
 
 export default function MemberApplyStatusSection({
-  firstPhaseCards,
-  secondPhaseCards = [],
-  secondEnabled = false,
-  resultAnnouncedByPhase,
+  enabled = true,
 }: MemberApplyStatusSectionProps) {
   const [activePhase, setActivePhase] = useState<SupportPhase>('first');
 
-  const initialFirst = firstPhaseCards ?? mockMemberApplyCards;
-  const initialSecond = secondPhaseCards ?? [];
+  /** 1) 조회 가능 여부 */
+  const {
+    data: readabilities,
+    isLoading: isReadLoading,
+    isError: isReadError,
+  } = useEnrollmentReadabilities({
+    enabled,
+    retry: false,
+  });
 
-  // 각 지원기간별 카드 (취소 시 UI 반영용)
-  const [firstCards, setFirstCards] = useState<MemberApplyData[]>(initialFirst);
-  const [secondCards, setSecondCards] = useState<MemberApplyData[]>(initialSecond);
+  const readableSet = useMemo(() => {
+    const set = new Set<EnrollmentScheduleType>();
+    (readabilities ?? []).forEach((r: EnrollmentReadability) => {
+      if (r.readable) set.add(r.scheduleType);
+    });
+    return set;
+  }, [readabilities]);
 
-  // 부모에서 firstPhaseCards/secondPhaseCards가 바뀌면 로컬 상태도 리셋
+  const firstReadable = readableSet.has('FIRST_TEAM_BUILDING');
+  const secondReadable = readableSet.has('SECOND_TEAM_BUILDING');
+
+  const readableNone = !firstReadable && !secondReadable;
+  const phaseReadable = activePhase === 'first' ? firstReadable : secondReadable;
+
+  // 토글 UI에서 2차 버튼 노출 여부
+  const secondEnabled = secondReadable;
+
+  // 1차가 불가 & 2차가 가능하면 자동으로 2차로 이동
   useEffect(() => {
-    setFirstCards(firstPhaseCards ?? mockMemberApplyCards);
-  }, [firstPhaseCards]);
+    if (!enabled) return;
+    if (isReadLoading) return;
+    if (!firstReadable && secondReadable) setActivePhase('second');
+  }, [enabled, isReadLoading, firstReadable, secondReadable]);
 
-  useEffect(() => {
-    setSecondCards(secondPhaseCards ?? []);
-  }, [secondPhaseCards]);
+  /** 2) 보낸 지원 현황 */
+  const scheduleType = toScheduleType(activePhase);
 
-  // "지원 취소" 확인 모달용 대상 카드
-  const [cancelTarget, setCancelTarget] = useState<MemberApplyData | null>(null);
-  const [showConfirmCancel, setShowConfirmCancel] = useState(false); // 확인 모달
+  const {
+    data: sent,
+    isLoading,
+    isError,
+  } = useSentEnrollments(scheduleType, {
+    enabled: enabled && !readableNone && phaseReadable,
+    retry: false,
+  });
 
-  // 현재 선택된 지원기간에 따른 카드 목록
-  const cardsOfActivePhase = activePhase === 'first' ? firstCards : secondCards;
+  const scheduleEnded = sent?.scheduleEnded ?? false;
+  const isResultAnnounced = scheduleEnded;
 
-  // 추후 phase 필드를 섞어서 넣을 수도 있으니 한 번 더 필터링
-  const currentCards = cardsOfActivePhase.filter(card => card.phase === activePhase);
+  const currentCards = useMemo<MemberSentApplyCard[]>(() => {
+    const list = sent?.enrollments ?? [];
+    return list.map(e => ({
+      enrollmentId: e.enrollmentId,
+      phase: activePhase,
+      priority: choiceToPriority(e.choice),
 
-  // 현재 활성된 지원기간의 결과 발표 여부
-  const isResultAnnounced = resultAnnouncedByPhase?.[activePhase] ?? false;
+      projectName: e.ideaTitle,
+      oneLiner: e.ideaIntroduction,
 
-  /** 지원 취소 버튼 클릭 → 확인 모달 열기 */
-  const handleCancel = (card: MemberApplyData) => {
-    if (card.status !== 'PENDING') return;
+      enrollmentPart: e.enrollmentPart,
+      maxMemberCountOfPart: e.maxMemberCountOfPart,
+      applicantCount: e.applicantCount,
+
+      status: toMemberCardStatus(scheduleEnded, e.enrollmentStatus),
+    }));
+  }, [sent, activePhase, scheduleEnded]);
+
+  const cancelMutation = useCancelEnrollment();
+
+  /** 취소 확인 모달 */
+  const [cancelTarget, setCancelTarget] = useState<MemberSentApplyCard | null>(null);
+  const [showConfirmCancel, setShowConfirmCancel] = useState(false);
+
+  const handleCancel = (card: MemberSentApplyCard) => {
     if (isResultAnnounced) return;
+    if (card.status !== 'WAITING') return;
     setCancelTarget(card);
     setShowConfirmCancel(true);
   };
 
-  /** 확인 모달 닫기 */
   const handleCloseCancelModal = () => {
+    if (cancelMutation.isPending) return;
     setShowConfirmCancel(false);
     setCancelTarget(null);
   };
 
-  /** 확인 모달 - "지원 취소" 버튼 */
-  const handleConfirmCancel = () => {
-    if (cancelTarget) {
-      const { id, phase } = cancelTarget;
-      const setter = phase === 'first' ? setFirstCards : setSecondCards;
+  const handleConfirmCancel = async () => {
+    if (!cancelTarget) return;
+    if (cancelMutation.isPending) return;
 
-      setter(prev => prev.filter(card => card.id !== id));
+    try {
+      await cancelMutation.mutateAsync({ enrollmentId: cancelTarget.enrollmentId });
+      setShowConfirmCancel(false);
+      setCancelTarget(null);
+    } catch {
+      // 에러 UI는 필요하면 모달 하단에 표시하거나 toast로 처리 가능
     }
-
-    setCancelTarget(null);
-    setShowConfirmCancel(false);
   };
 
-  const handleClickEmptyPriority = (priority: MemberApplyPriority) => {
-    if (isResultAnnounced) return; // 결과 발표 후에는 클릭 무시
+  const handleClickEmptyPriority = (priority: EnrollmentPriority) => {
+    if (isResultAnnounced) return;
     console.log(`${priority}지망 아이디어 지원하기 클릭`);
   };
 
-  /** 지망별로 카드 / 빈 카드 렌더링 */
-  const renderPriorityBlock = (priority: MemberApplyPriority) => {
+  const renderPriorityBlock = (priority: EnrollmentPriority) => {
     const item = currentCards.find(card => card.priority === priority);
 
     if (!item) {
@@ -108,7 +174,14 @@ export default function MemberApplyStatusSection({
       );
     }
 
-    return <MyApplyCard key={item.id} variant="applied" data={item} onCancel={handleCancel} />;
+    return (
+      <MyApplyCard
+        key={item.enrollmentId}
+        variant="applied"
+        data={item}
+        onCancel={() => handleCancel(item)}
+      />
+    );
   };
 
   return (
@@ -117,11 +190,31 @@ export default function MemberApplyStatusSection({
         <ApplyPeriodToggle
           activePhase={activePhase}
           secondEnabled={secondEnabled}
-          onChange={setActivePhase}
+          onChange={next => {
+            // readable 체크
+            if (next === 'first' && !firstReadable) return;
+            if (next === 'second' && !secondReadable) return;
+            setActivePhase(next);
+          }}
         />
       </header>
 
-      <div css={cardListCss}>{PRIORITIES.map(priority => renderPriorityBlock(priority))}</div>
+      {/* 상태 처리 */}
+      {isReadLoading ? (
+        <div css={emptyCss}>불러오는 중...</div>
+      ) : isReadError ? (
+        <div css={emptyCss}>지원기간 정보를 불러오지 못했어요.</div>
+      ) : readableNone ? (
+        <div css={emptyCss}>아직 지원 현황을 조회할 수 없어요.</div>
+      ) : !phaseReadable ? (
+        <div css={emptyCss}>현재 선택한 기간은 조회할 수 없어요.</div>
+      ) : isLoading ? (
+        <div css={emptyCss}>불러오는 중...</div>
+      ) : isError ? (
+        <div css={emptyCss}>지원 현황을 불러오지 못했어요.</div>
+      ) : (
+        <div css={cardListCss}>{PRIORITIES.map(p => renderPriorityBlock(p))}</div>
+      )}
 
       {/* 지원 취소 확인 모달 */}
       {showConfirmCancel && cancelTarget && (
@@ -129,7 +222,7 @@ export default function MemberApplyStatusSection({
           type="smallConfirm"
           title={cancelTarget.projectName}
           message="아이디어 지원을 취소할까요?"
-          confirmText="지원 취소"
+          confirmText={cancelMutation.isPending ? '취소 중...' : '지원 취소'}
           cancelText="아니오"
           onConfirm={handleConfirmCancel}
           onClose={handleCloseCancelModal}
@@ -154,4 +247,16 @@ const cardListCss = css`
   display: flex;
   flex-direction: column;
   gap: 35px;
+`;
+
+const emptyCss = css`
+  width: 100%;
+  min-height: 400px;
+  border-radius: 12px;
+  background-color: ${colors.grayscale[200]};
+  border: 1px solid ${colors.grayscale[400]};
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;

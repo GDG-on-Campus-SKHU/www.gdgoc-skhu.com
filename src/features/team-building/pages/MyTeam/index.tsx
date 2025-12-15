@@ -3,52 +3,41 @@ import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
 import Button from '../../components/Button';
-import { SupportPhase } from '../../components/MyTeam/ApplyPeriodToggle';
 import ApplyStatusSection from '../../components/MyTeam/ApplyStatusSection';
 import CurrentTeamEmpty from '../../components/MyTeam/CurrentTeamEmpty';
 import CurrentTeamSection from '../../components/MyTeam/CurrentTeamSection';
 import MemberApplyStatusSection from '../../components/MyTeam/MemberApplyStatusSection';
 import TabBar from '../../components/TabBar';
-import {
-  mockMemberApplyCardsAfterResult,
-  mockMemberApplyCardsBeforeResult,
-} from '../../types/memberApplyData';
+import { useCurrentTeam } from '@/lib/myTeam.api';
 
 type UserRole = 'LEADER' | 'MEMBER';
 type MyTeamTabKey = 'currentMembers' | 'applications';
-type PhaseKey = 'first' | 'second';
-
-type PhaseState = {
-  opened: boolean;
-  resultAnnounced: boolean;
-};
 
 export default function MyTeamPage() {
   const [role] = useState<UserRole>('LEADER'); // 'MEMBER' 로 바꿔가며 테스트
   const [activeTab, setActiveTab] = useState<MyTeamTabKey>('currentMembers');
 
-  // 팀원일 때 매칭된 팀 유무 (기존 isEmpty의 반대 의미)
-  const [hasMatchedTeam] = useState<boolean>(false); // true/false 바꿔가며 테스트
-
-  // 1차/2차 지원기간 상태
-  const [phaseState] = useState<Record<PhaseKey, PhaseState>>({
-    first: { opened: true, resultAnnounced: false },
-    second: { opened: true, resultAnnounced: false },
-  });
-
   const isLeader = role === 'LEADER';
   const isMember = role === 'MEMBER';
+
+  const {
+    data: currentTeam,
+    isLoading: isCurrentTeamLoading,
+    isError: isCurrentTeamError,
+    error: currentTeamError,
+  } = useCurrentTeam({
+    enabled: activeTab === 'currentMembers',
+    retry: false,
+  });
+
+  // fetchCurrentTeam이 404에서 null을 반환하므로, "팀 없음"은 null로 판별
+  const hasMatchedTeam = !!currentTeam;
 
   // 기존 isEmpty 의미: "팀원인데 아직 팀이 없음"
   const isEmpty = isMember && !hasMatchedTeam;
 
-  // ApplyPeriodToggle & 지원현황 섹션에서 쓸 값들
-  const secondEnabled = phaseState.second.opened;
-
-  const resultAnnouncedByPhase: Record<SupportPhase, boolean> = {
-    first: phaseState.first.resultAnnounced,
-    second: phaseState.second.resultAnnounced,
-  };
+  const ideaTitle = currentTeam?.ideaTitle ?? '리빙메이트';
+  const ideaIntro = currentTeam?.ideaIntroduction ?? '아이디어 한줄소개';
 
   return (
     <main css={mainCss}>
@@ -61,8 +50,8 @@ export default function MyTeamPage() {
           {isLeader && (
             <div css={subTitleCss}>
               <div css={projectInfoCss}>
-                <p css={projectNameCss}>리빙메이트</p>
-                <p css={projectOneLinerCss}>아이디어 한줄소개</p>
+                <p css={projectNameCss}>{ideaTitle}</p>
+                <p css={projectOneLinerCss}>{ideaIntro}</p>
               </div>
 
               <div>
@@ -102,8 +91,8 @@ export default function MyTeamPage() {
           <section css={memberIdeaInfoSectionCss}>
             <div css={projectInfoCss}>
               {/* 실제 매칭된 아이디어 정보로 교체 */}
-              <p css={projectNameCss}>리빙메이트</p>
-              <p css={projectOneLinerCss}>아이디어 한줄소개</p>
+              <p css={projectNameCss}>{ideaTitle}</p>
+              <p css={projectOneLinerCss}>{ideaIntro}</p>
             </div>
 
             <div>
@@ -128,38 +117,35 @@ export default function MyTeamPage() {
         {/* 탭 컨텐츠 */}
         <section css={contentSectionCss}>
           {/* 현재 팀원 구성 탭 */}
-          {activeTab === 'currentMembers' &&
-            (isEmpty ? (
-              <CurrentTeamEmpty />
-            ) : (
-              <CurrentTeamSection
-                isLeaderView={isLeader}
-                resultAnnouncedByPhase={resultAnnouncedByPhase}
-                // 2차 수락한 팀원 확인할 경우
-                // visibleJoinPhases={['first', 'second']}
-              />
-            ))}
+          {activeTab === 'currentMembers' && (
+            <>
+              {/* 로딩 */}
+              {isCurrentTeamLoading && null /* 원하면 로딩 UI */}
+
+              {/* 팀원 + 매칭된 팀 없음(404) => Empty */}
+              {!isCurrentTeamLoading && isEmpty && <CurrentTeamEmpty />}
+
+              {/* 매칭된 팀 있음 => Section */}
+              {!isCurrentTeamLoading && hasMatchedTeam && currentTeam && (
+                <CurrentTeamSection
+                  data={currentTeam}
+                  isLeaderView={isLeader || currentTeam.myRole === 'CREATOR'} // 서버 myRole 기준도 반영
+                  resultAnnouncedByPhase={{
+                    first: false,
+                    second: false,
+                  }}
+                />
+              )}
+
+              {!isCurrentTeamLoading && isCurrentTeamError && (
+                <div>팀 정보를 불러오지 못했습니다. {(currentTeamError as any)?.message}</div>
+              )}
+            </>
+          )}
 
           {/* 지원 현황 탭 */}
           {activeTab === 'applications' &&
-            (isLeader ? (
-              <ApplyStatusSection
-                secondEnabled={secondEnabled}
-                resultAnnouncedByPhase={resultAnnouncedByPhase}
-                // 추후 1, 2차 지원 기간 props 사용해 api 연동 예정
-              />
-            ) : (
-              <MemberApplyStatusSection
-                secondEnabled={secondEnabled}
-                resultAnnouncedByPhase={resultAnnouncedByPhase}
-                // 1차 데이터만 만든 상태
-                firstPhaseCards={
-                  phaseState.first.resultAnnounced
-                    ? mockMemberApplyCardsAfterResult
-                    : mockMemberApplyCardsBeforeResult
-                }
-              />
-            ))}
+            (isLeader ? <ApplyStatusSection /> : <MemberApplyStatusSection enabled />)}
         </section>
       </div>
     </main>

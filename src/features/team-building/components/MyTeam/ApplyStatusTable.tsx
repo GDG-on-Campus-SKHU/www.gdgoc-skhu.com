@@ -3,23 +3,27 @@ import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
 import externalIcon from '../../assets/external.svg';
-import type { ApplyApplicant } from '../../types/applyStatusData';
+import type { ApplyStatusRow } from '../../types/applyStatusData';
 import Button from '../Button';
 import ButtonRed from '../ButtonRed';
 
 type ApplyStatusTableProps = {
-  rows: ApplyApplicant[];
-  onAccept: (id: string) => void;
-  onReject: (id: string) => void;
-  /* 2차 기간에 1차 접근 */
-  controlsDisabled?: boolean;
+  rows: ApplyStatusRow[];
+  onAccept: (enrollmentId: number) => void;
+  onReject: (enrollmentId: number) => void;
+  scheduleEnded: boolean;
+
+  isDetermining?: boolean;
+  pendingEnrollmentId?: number | null;
 };
 
 export default function ApplyStatusTable({
   rows,
   onAccept,
   onReject,
-  controlsDisabled = false,
+  scheduleEnded,
+  isDetermining = false,
+  pendingEnrollmentId = null,
 }: ApplyStatusTableProps) {
   return (
     <div css={tableOuterCss}>
@@ -40,7 +44,9 @@ export default function ApplyStatusTable({
               row={row}
               onAccept={onAccept}
               onReject={onReject}
-              controlsDisabled={controlsDisabled}
+              scheduleEnded={scheduleEnded}
+              isDetermining={isDetermining}
+              pending={pendingEnrollmentId === row.id}
             />
           ))}
         </tbody>
@@ -52,22 +58,30 @@ export default function ApplyStatusTable({
 /* --------- ApplyStatusRow --------- */
 
 type ApplyStatusRowProps = {
-  row: ApplyApplicant;
-  onAccept: (id: string) => void;
-  onReject: (id: string) => void;
-  controlsDisabled: boolean;
+  row: ApplyStatusRow;
+  onAccept: (enrollmentId: number) => void;
+  onReject: (enrollmentId: number) => void;
+  scheduleEnded: boolean;
+
+  isDetermining: boolean;
+  pending: boolean;
 };
 
-function ApplyStatusRow({ row, onAccept, onReject, controlsDisabled }: ApplyStatusRowProps) {
-  const handleAccept = () => {
-    if (controlsDisabled) return;
-    onAccept(row.id);
-  };
+function ApplyStatusRow({
+  row,
+  onAccept,
+  onReject,
+  scheduleEnded,
+  isDetermining,
+  pending,
+}: ApplyStatusRowProps) {
+  const enrollmentId = row.id;
 
-  const handleReject = () => {
-    if (controlsDisabled) return;
-    onReject(row.id);
-  };
+  // 버튼 비활성화 규칙
+  const isWaiting = row.status === 'WAITING';
+  const showButtons = row.status === 'WAITING' || row.status === 'EXPIRED';
+  const acceptDisabled = scheduleEnded || !isWaiting || !row.enrollmentAcceptable || isDetermining;
+  const rejectDisabled = scheduleEnded || !isWaiting || isDetermining;
 
   return (
     <tr css={trCss}>
@@ -85,7 +99,7 @@ function ApplyStatusRow({ row, onAccept, onReject, controlsDisabled }: ApplyStat
       </td>
 
       {/* 파트 */}
-      <td css={[cellCss, colPartCss]}>{row.part}</td>
+      <td css={[cellCss, colPartCss]}>{row.partLabel}</td>
 
       {/* 학교 */}
       <td css={[cellCss, colSchoolCss]}>{row.school}</td>
@@ -93,14 +107,14 @@ function ApplyStatusRow({ row, onAccept, onReject, controlsDisabled }: ApplyStat
       {/* 상태 */}
       <td css={[cellCss, colStatusCss, cellStatusAlignCss]}>
         <div css={statusCellInnerCss}>
-          {row.status === 'PENDING' && (
+          {showButtons && (
             <div css={statusBtnGroupCss}>
               <Button
                 type="button"
                 variant="secondary"
-                title="수락"
-                disabled={controlsDisabled}
-                onClick={handleAccept}
+                title={pending ? '처리 중...' : '수락'}
+                disabled={acceptDisabled}
+                onClick={() => !acceptDisabled && onAccept(enrollmentId)}
                 style={{
                   height: '45px',
                   fontSize: '18px',
@@ -110,9 +124,9 @@ function ApplyStatusRow({ row, onAccept, onReject, controlsDisabled }: ApplyStat
               />
               <ButtonRed
                 type="button"
-                title="거절"
-                disabled={controlsDisabled}
-                onClick={handleReject}
+                title={pending ? '처리 중...' : '거절'}
+                disabled={rejectDisabled}
+                onClick={() => !rejectDisabled && onReject(enrollmentId)}
                 style={{
                   height: '45px',
                 }}

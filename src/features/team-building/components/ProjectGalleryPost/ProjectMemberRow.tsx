@@ -65,6 +65,7 @@ export default function ProjectMemberRow({
               type="button"
               variant="secondary"
               title="팀장 위임"
+              disabled={!onDelegateLeader}
               onClick={onDelegateLeader ?? (() => {})}
               style={{
                 height: '50px',

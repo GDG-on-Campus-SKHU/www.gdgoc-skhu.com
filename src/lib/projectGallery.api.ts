@@ -1,15 +1,26 @@
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import {
+  useMutation,
+  UseMutationOptions,
+  useQuery,
+  useQueryClient,
+  UseQueryOptions,
+} from '@tanstack/react-query';
 
 import type {
+  CreateProjectGalleryResponseDto,
   GenerationTab,
   GenerationValue,
   MemberRole,
   Part,
   ProjectDetail,
+  ProjectDetailMember,
+  ProjectGalleryLeaderProfile,
   ProjectGalleryListItem,
   ProjectGalleryMemberSearchItem,
   ProjectGalleryMemberSearchResponse,
+  ProjectGalleryUpsertBody,
   ServiceStatus,
+  UpdateProjectGalleryResponseDto,
 } from '../features/team-building/types/gallery';
 import { api } from './api';
 
@@ -22,6 +33,8 @@ export const projectGalleryKeys = {
   detail: (projectId: number) => [...projectGalleryKeys.all, 'detail', projectId] as const,
   memberSearch: (name: string) =>
     [...projectGalleryKeys.all, 'memberSearch', name || '(empty)'] as const,
+  leaderProfile: () => [...projectGalleryKeys.all, 'leaderProfile'] as const,
+  update: (projectId: number) => [...projectGalleryKeys.all, 'update', projectId] as const,
 };
 
 /* =========================================================
@@ -47,6 +60,15 @@ interface GalleryProjectMemberDto {
   part: Part; // 'PM' | 'DESIGN' | ...
 }
 
+interface GalleryProjectMemberDetailDto {
+  userId: number;
+  memberRole: MemberRole;
+  name: string;
+  school: string;
+  generationAndPosition: string;
+  part: Part;
+}
+
 interface GetGalleryProjectDetailResponse {
   galleryProjectId: number;
   projectName: string;
@@ -54,9 +76,11 @@ interface GetGalleryProjectDetailResponse {
   shortDescription: string;
   serviceStatus: ServiceStatus;
   description: string; // markdown 본문
-  leaderId?: number;
-  members: GalleryProjectMemberDto[];
-  thumbnailUrl?: string | null; // 추후 제거될 수 있음
+
+  leader: GalleryProjectMemberDetailDto; // ✅ 추가/변경
+  members: GalleryProjectMemberDetailDto[]; // ✅ 변경
+
+  thumbnailUrl?: string | null;
 }
 
 interface GalleryMemberSearchDto {
@@ -69,6 +93,29 @@ interface GalleryMemberSearchDto {
 interface GetGalleryMemberSearchResponse {
   members: GalleryMemberSearchDto[];
 }
+
+/** 최소 작성하기 응답 */
+type PostProjectGalleryResponseDto = CreateProjectGalleryResponseDto;
+
+interface GetLeaderProfileResponseDto {
+  userId: number;
+  name: string;
+  school: string;
+  generationAndPosition: string;
+}
+
+function mapLeaderProfileDtoToDomain(
+  dto: GetLeaderProfileResponseDto
+): ProjectGalleryLeaderProfile {
+  return {
+    userId: dto.userId,
+    name: dto.name,
+    school: dto.school,
+    badge: dto.generationAndPosition, // ✅ ProjectMemberBase의 badge로 매핑
+  };
+}
+
+type PatchProjectGalleryResponseDto = UpdateProjectGalleryResponseDto;
 
 /* =========================================================
  * Utils
@@ -93,16 +140,18 @@ function mapSummaryDtoToListItem(dto: GalleryProjectSummaryDto): ProjectGalleryL
   };
 }
 
+function mapDetailMemberDtoToDomain(dto: GalleryProjectMemberDetailDto): ProjectDetailMember {
+  return {
+    userId: dto.userId,
+    name: dto.name,
+    school: dto.school,
+    badge: dto.generationAndPosition,
+    memberRole: dto.memberRole,
+    part: dto.part,
+  };
+}
+
 function mapDetailDtoToDomain(dto: GetGalleryProjectDetailResponse): ProjectDetail {
-  const members = (dto.members ?? []).map(m => ({
-    userId: m.userId,
-    memberRole: m.memberRole,
-    name: m.name,
-    part: m.part,
-  }));
-
-  const leader = members.find(m => m.memberRole === 'LEADER') ?? null;
-
   return {
     id: dto.galleryProjectId,
     title: dto.projectName,
@@ -110,9 +159,10 @@ function mapDetailDtoToDomain(dto: GetGalleryProjectDetailResponse): ProjectDeta
     shortDescription: dto.shortDescription,
     status: dto.serviceStatus,
     longDescription: dto.description,
-    leaderId: dto.leaderId,
-    leader, // 컴포넌트 연결 편리성 위함
-    members,
+
+    leader: dto.leader ? mapDetailMemberDtoToDomain(dto.leader) : null, // ✅ 이제 leader는 dto.leader
+    members: (dto.members ?? []).map(mapDetailMemberDtoToDomain),
+
     thumbnailUrl: dto.thumbnailUrl ?? null,
   };
 }
@@ -214,5 +264,104 @@ export function useProjectGalleryMemberSearch(
     enabled: trimmed.length > 0, // 기본: 입력 있을 때만
     staleTime: 1000 * 30,
     ...options,
+  });
+}
+
+/* =========================================================
+ * API: Create (프로젝트 작성하기)
+ * POST /project-gallery
+ * ======================================================= */
+export async function createProjectGallery(
+  body: ProjectGalleryUpsertBody
+): Promise<CreateProjectGalleryResponseDto> {
+  const res = await api.post<PostProjectGalleryResponseDto>('/project-gallery', body);
+  return res.data;
+}
+
+export function useCreateProjectGallery(
+  options?: UseMutationOptions<CreateProjectGalleryResponseDto, Error, ProjectGalleryUpsertBody>
+) {
+  const qc = useQueryClient();
+  const { onSuccess: userOnSuccess, ...restOptions } = options ?? {};
+
+  return useMutation<CreateProjectGalleryResponseDto, Error, ProjectGalleryUpsertBody>({
+    mutationFn: createProjectGallery,
+
+    onSuccess: (data, variables, context) => {
+      qc.invalidateQueries({ queryKey: projectGalleryKeys.all });
+
+      // 타입 정의가 4-인자(onMutateResult 포함)로 잡혀있는 환경 대응
+      if (userOnSuccess) {
+        // onMutateResult 자리에 undefined를 넣어 4개 인자로 호출
+        (userOnSuccess as any)(data, variables, undefined, context);
+      }
+    },
+
+    ...restOptions,
+  });
+}
+
+/* =========================================================
+ * API: Leader Profile (팀장 영역 자동 세팅용)
+ * GET /project-gallery/members/me  (※ 서버에 맞게 경로만 수정)
+ * ======================================================= */
+export async function fetchProjectGalleryLeaderProfile(): Promise<ProjectGalleryLeaderProfile> {
+  const res = await api.get<GetLeaderProfileResponseDto>('/project-gallery/exhibitor');
+  return mapLeaderProfileDtoToDomain(res.data);
+}
+
+export function useProjectGalleryLeaderProfile(
+  options?: Omit<UseQueryOptions<ProjectGalleryLeaderProfile, Error>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery<ProjectGalleryLeaderProfile, Error>({
+    queryKey: projectGalleryKeys.leaderProfile(),
+    queryFn: fetchProjectGalleryLeaderProfile,
+    staleTime: 1000 * 60 * 5,
+    ...options,
+  });
+}
+
+/* =========================================================
+ * API: Update (프로젝트 수정하기)
+ * ======================================================= */
+
+export async function updateProjectGallery(params: {
+  projectId: number;
+  body: ProjectGalleryUpsertBody;
+}): Promise<UpdateProjectGalleryResponseDto> {
+  const { projectId, body } = params;
+
+  const res = await api.put<PatchProjectGalleryResponseDto>(`/project-gallery/${projectId}`, body);
+  return res.data;
+}
+
+export function useUpdateProjectGallery(
+  options?: UseMutationOptions<
+    CreateProjectGalleryResponseDto,
+    Error,
+    { projectId: number; body: ProjectGalleryUpsertBody }
+  >
+) {
+  const qc = useQueryClient();
+  const { onSuccess: userOnSuccess, ...restOptions } = options ?? {};
+
+  return useMutation<
+    CreateProjectGalleryResponseDto,
+    Error,
+    { projectId: number; body: ProjectGalleryUpsertBody }
+  >({
+    mutationFn: updateProjectGallery,
+
+    onSuccess: (data, variables, context) => {
+      qc.invalidateQueries({ queryKey: projectGalleryKeys.all });
+
+      qc.invalidateQueries({ queryKey: projectGalleryKeys.detail(variables.projectId) });
+
+      if (userOnSuccess) {
+        (userOnSuccess as any)(data, variables, undefined, context);
+      }
+    },
+
+    ...restOptions,
   });
 }

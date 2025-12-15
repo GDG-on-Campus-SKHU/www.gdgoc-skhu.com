@@ -1,11 +1,17 @@
 // 줄이 상당히 길어 추후 분리할 예정
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
-import { ProjectMemberBase } from '../../types/gallery';
+import {
+  GenerationValue,
+  ProjectMemberBase,
+  GenerationTab,
+  ProjectGalleryUpsertBody,
+  Part,
+} from '../../types/gallery';
 import Button from '../Button';
 import Field from '../Field';
 import Modal from '../Modal_Fix';
@@ -14,9 +20,10 @@ import SelectBoxBasic from '../SelectBoxBasic_Fix';
 import MemberSelectModal, { Member } from './MemberSelectModal';
 import ProjectDescriptionEditor from './ProjectDescriptionEditor';
 import ProjectMemberRow from './ProjectMemberRow';
+import { useProjectGalleryLeaderProfile } from '@/lib/projectGallery.api';
 
 // 기수 / 파트 옵션
-const GENERATION_OPTIONS = ['25-26', '24-25', '이전 기수'] as const;
+const GENERATION_TABS: GenerationTab[] = ['25-26', '24-25', '이전 기수'];
 
 const PART_OPTIONS = [
   '기획',
@@ -26,6 +33,8 @@ const PART_OPTIONS = [
   '백엔드',
   'AI/ML',
 ] as const;
+
+type PartLabel = (typeof PART_OPTIONS)[number];
 
 // 폼에서 사용하는 팀원 타입 (파트 정보 포함)
 export type TeamMember = ProjectMemberBase & {
@@ -41,8 +50,8 @@ export type ProjectPostFormValues = {
   oneLiner?: string;
   generation?: string;
   leader?: ProjectMemberBase;
-  leaderPart?: string;
-  serviceStatus?: 'RUNNING' | 'PAUSED';
+  leaderPart?: PartLabel;
+  serviceStatus?: 'IN_SERVICE' | 'NOT_IN_SERVICE';
   description?: string;
   teamMembers?: TeamMember[];
   thumbnailUrl?: string | null;
@@ -55,51 +64,155 @@ type Props = {
   isEditMode?: boolean;
 
   // 작성/수정 페이지에서 실제 API 연결할 때 사용할 포인트
-  onSubmit?: (values: ProjectPostFormValues) => void;
+  onSubmit?: (
+    body: ProjectGalleryUpsertBody
+  ) => Promise<{ galleryProjectId: number }> | { galleryProjectId: number };
+
+  isSubmitting?: boolean;
+  submitError?: Error | null;
 
   // 추후 인증 붙으면 leader를 외부에서 내려주는 방식으로도 쉽게 전환 가능
   defaultLeader?: ProjectMemberBase;
 };
 
+function labelToPart(label: string): Part {
+  switch (label) {
+    case '기획':
+      return 'PM';
+    case '디자인':
+      return 'DESIGN';
+    case '프론트엔드 (웹)':
+      return 'WEB';
+    case '프론트엔드 (모바일)':
+      return 'MOBILE';
+    case '백엔드':
+      return 'BACKEND';
+    case 'AI/ML':
+      return 'AI';
+    default:
+      return label as Part;
+  }
+}
+
+function tabToGenerationValue(tab: GenerationTab): GenerationValue {
+  if (tab === '25-26') return '25-26';
+  if (tab === '24-25') return '24-25';
+  return '23-24';
+}
+
+/** initialValues가 들어왔을 때 state 리셋을 1회만 하도록 하는 키 */
+function getInitKey(v?: ProjectPostFormInitialValues) {
+  return [
+    v?.title ?? '',
+    v?.oneLiner ?? '',
+    v?.generation ?? '',
+    v?.leader?.userId ?? 0,
+    v?.leaderPart ?? '',
+    v?.serviceStatus ?? '',
+    v?.description ?? '',
+    (v?.teamMembers ?? []).map(m => `${m.userId}:${m.part?.[0] ?? ''}`).join('|'),
+    v?.thumbnailUrl ?? '',
+  ].join('::');
+}
+
 export default function ProjectPostForm({
   initialValues,
   isEditMode = false,
   onSubmit,
+  isSubmitting = false,
+  submitError = null,
   defaultLeader,
 }: Props) {
   const router = useRouter();
 
-  // leader는 인증 붙으면 보통 "내 정보"로 세팅
-  // 지금은 initialValues에 leader가 있으면 우선 사용, 없으면 defaultLeader 필요
-  const resolvedLeader = initialValues?.leader ??
-    defaultLeader ?? {
-      userId: 0,
-      name: '임시 유저',
-      badge: '25-26 Member',
-      school: '성공회대학교',
-    };
+  const hasLeader = !!initialValues?.leader?.userId || !!defaultLeader?.userId;
+
+  const { data: myProfile } = useProjectGalleryLeaderProfile({
+    enabled: !hasLeader, // 수정 페이지도 잘 되는지 확인
+    retry: false,
+  });
 
   const [title, setTitle] = useState(initialValues?.title ?? '');
   const [oneLiner, setOneLiner] = useState(initialValues?.oneLiner ?? '');
   const [generation, setGeneration] = useState<string[]>(
     initialValues?.generation ? [initialValues.generation] : []
   );
-  const [leader, setLeader] = useState<ProjectMemberBase>(resolvedLeader);
+  const [leader, setLeader] = useState<ProjectMemberBase>(
+    initialValues?.leader ??
+      defaultLeader ?? {
+        userId: 0,
+        name: '임시 유저',
+        badge: '불러오는 중...',
+        school: '성공회대학교',
+      }
+  );
   const [leaderPart, setLeaderPart] = useState<string[]>(
     initialValues?.leaderPart ? [initialValues.leaderPart] : []
   );
-  const [serviceStatus, setServiceStatus] = useState<'RUNNING' | 'PAUSED'>(
-    initialValues?.serviceStatus ?? 'PAUSED'
+  const [serviceStatus, setServiceStatus] = useState<'IN_SERVICE' | 'NOT_IN_SERVICE'>(
+    initialValues?.serviceStatus ?? 'NOT_IN_SERVICE'
   );
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialValues?.teamMembers ?? []);
   const [description, setDescription] = useState(initialValues?.description ?? '');
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const initKey = useMemo(() => getInitKey(initialValues), [initialValues]);
+  const appliedInitKeyRef = useRef<string>('');
+
+  useEffect(() => {
+    if (!initialValues) return;
+
+    // 같은 initialValues로는 반복 적용 방지
+    if (appliedInitKeyRef.current === initKey) return;
+
+    // 초기값이 "아직 비어있는 상태"면 적용하지 않음(수정페이지에서 detail 로딩 전 {})
+    const hasMeaningfulData =
+      !!initialValues.title ||
+      !!initialValues.oneLiner ||
+      !!initialValues.generation ||
+      !!initialValues.description ||
+      !!initialValues.leader?.userId ||
+      (initialValues.teamMembers?.length ?? 0) > 0;
+
+    if (!hasMeaningfulData) return;
+
+    //  여기서 폼을 initialValues로 리셋
+    setTitle(initialValues.title ?? '');
+    setOneLiner(initialValues.oneLiner ?? '');
+    setGeneration(initialValues.generation ? [initialValues.generation] : []);
+    setLeader(
+      initialValues.leader ??
+        defaultLeader ?? {
+          userId: 0,
+          name: '임시 유저',
+          badge: '불러오는 중...',
+          school: '성공회대학교',
+        }
+    );
+    setLeaderPart(initialValues.leaderPart ? [initialValues.leaderPart] : []);
+    setServiceStatus(initialValues.serviceStatus ?? 'NOT_IN_SERVICE');
+    setTeamMembers(initialValues.teamMembers ?? []);
+    setDescription(initialValues.description ?? '');
+
+    appliedInitKeyRef.current = initKey;
+  }, [initKey, initialValues, defaultLeader]);
 
   const isTitleMax = title.length === TITLE_MAX;
   const isOneLinerMax = oneLiner.length === ONE_LINER_MAX;
+
+  useEffect(() => {
+    if (hasLeader) return;
+    if (!myProfile) return;
+
+    setLeader({
+      userId: (myProfile as any).userId,
+      name: (myProfile as any).name,
+      school: (myProfile as any).school,
+      badge: (myProfile as any).badge ?? (myProfile as any).generationAndPosition ?? '',
+    });
+  }, [myProfile, hasLeader]);
 
   // 팀원 선택(모달) → 폼에 등록
   const handleSelectMember = (member: Member) => {
@@ -153,8 +266,11 @@ export default function ProjectPostForm({
   const isFormValid = useMemo(() => {
     const hasTitle = title.trim().length > 0;
     const hasOneLiner = oneLiner.trim().length > 0;
-    const hasGeneration = generation.length > 0;
-    const hasLeaderPart = leaderPart.length > 0;
+
+    const tab = generation[0] as GenerationTab | undefined;
+    const hasGeneration = tab === '25-26' || tab === '24-25' || tab === '이전 기수';
+
+    const hasLeaderPart = (leaderPart?.[0] ?? '').trim().length > 0;
     const hasDescription = description.trim().length > 0;
 
     const membersAllHavePart =
@@ -171,50 +287,61 @@ export default function ProjectPostForm({
   }, [title, oneLiner, generation, leaderPart, teamMembers, description]);
 
   const handleSubmitClick = () => {
-    if (!isFormValid) return;
+    if (!isFormValid || isSubmitting) return;
     setShowConfirmModal(true);
   };
 
-  const buildValues = (): ProjectPostFormValues => ({
-    title,
-    oneLiner,
-    generation: generation[0] ?? '',
-    leader,
-    leaderPart: leaderPart[0] ?? '',
-    serviceStatus,
-    description,
-    teamMembers,
-    thumbnailUrl: null, // 지금은 null
-  });
+  const buildBody = (): ProjectGalleryUpsertBody => {
+    const tab = (generation[0] ?? '') as GenerationTab;
+    const generationValue = tabToGenerationValue(tab);
 
-  const handleConfirmSubmit = () => {
-    const values = buildValues();
-    onSubmit?.(values); // 작성/수정 페이지에서 여기서 payload 변환 & API 호출
+    return {
+      projectName: title.trim(),
+      generation: generationValue,
+      shortDescription: oneLiner.trim(),
+      serviceStatus,
+      description: description.trim(),
+      leader: { userId: leader.userId, part: labelToPart(leaderPart[0] ?? '') },
+      members: teamMembers.map(m => ({
+        userId: m.userId,
+        part: labelToPart(m.part?.[0] ?? ''),
+      })),
+      thumbnailUrl: null,
+    };
+  };
 
-    setShowConfirmModal(false);
-    setShowSuccessModal(true);
+  const handleConfirmSubmit = async () => {
+    try {
+      const body = buildBody();
+      if (!onSubmit) {
+        setShowConfirmModal(false);
+        return;
+      }
+
+      const res = await onSubmit(body);
+      setShowConfirmModal(false);
+
+      router.push(`/project-gallery/${res.galleryProjectId}`);
+    } catch {
+      setShowConfirmModal(false);
+    }
   };
 
   const handlePreviewClick = () => {
-    const values = buildValues();
-
     router.push({
       pathname: '/project-gallery/preview',
       query: {
-        title: values.title,
-        oneLiner: values.oneLiner,
-        generation: values.generation,
-        leaderPart: values.leaderPart,
-        description: values.description,
-        teamMembers: JSON.stringify(values.teamMembers),
-        serviceStatus: values.serviceStatus,
-
-        // leader도 유지하고 싶으면 같이 넘겨도 됨
-        leader: JSON.stringify(values.leader),
+        title,
+        oneLiner,
+        generation: generation[0] ?? '',
+        leaderPart: leaderPart[0] ?? '',
+        description,
+        teamMembers: JSON.stringify(teamMembers),
+        serviceStatus,
+        leader: JSON.stringify(leader),
       },
     });
   };
-
   return (
     <>
       <form css={formCss} onSubmit={e => e.preventDefault()}>
@@ -262,7 +389,7 @@ export default function ProjectPostForm({
             `}
           >
             <SelectBoxBasic
-              options={GENERATION_OPTIONS as unknown as string[]}
+              options={GENERATION_TABS as unknown as string[]}
               placeholder="기수를 선택해주세요."
               multiple={false}
               searchable={false}
@@ -275,6 +402,7 @@ export default function ProjectPostForm({
         {/* 팀장 */}
         <section css={fieldBlockCss}>
           <span css={labelCss}>팀장</span>
+
           <ProjectMemberRow
             isLeader
             member={leader}
@@ -326,18 +454,20 @@ export default function ProjectPostForm({
           <div css={radioRowCss}>
             <Radio
               name="serviceStatus"
-              value="RUNNING"
+              value="IN_SERVICE"
               label="운영 중"
-              checked={serviceStatus === 'RUNNING'}
-              onChange={() => setServiceStatus('RUNNING')}
+              checked={serviceStatus === 'IN_SERVICE'}
+              onChange={() => setServiceStatus('IN_SERVICE')}
+              disabled={isSubmitting}
             />
 
             <Radio
               name="serviceStatus"
-              value="PAUSED"
+              value="NOT_IN_SERVICE"
               label="미운영 중"
-              checked={serviceStatus === 'PAUSED'}
-              onChange={() => setServiceStatus('PAUSED')}
+              checked={serviceStatus === 'NOT_IN_SERVICE'}
+              onChange={() => setServiceStatus('NOT_IN_SERVICE')}
+              disabled={isSubmitting}
             />
           </div>
         </section>
@@ -348,6 +478,8 @@ export default function ProjectPostForm({
           <ProjectDescriptionEditor value={description} onChange={setDescription} />
         </section>
 
+        {submitError && <div css={errorBoxCss}>{submitError.message}</div>}
+
         {/* 버튼 영역 */}
         <div css={btnRowCss}>
           <Button
@@ -355,6 +487,7 @@ export default function ProjectPostForm({
             variant="secondary"
             title="프로젝트 미리보기"
             onClick={handlePreviewClick}
+            disabled={isSubmitting}
             style={{
               height: '50px',
               fontSize: '18px',
@@ -366,10 +499,10 @@ export default function ProjectPostForm({
           />
           <Button
             type="button"
-            title="프로젝트 전시하기"
-            disabled={!isFormValid}
+            title={isSubmitting ? '전시 중...' : '프로젝트 전시하기'}
+            disabled={!isFormValid || isSubmitting}
             onClick={handleSubmitClick}
-            css={submitBtnCss(isFormValid)}
+            css={submitBtnCss(isFormValid && !isSubmitting)}
           />
         </div>
       </form>
@@ -380,6 +513,7 @@ export default function ProjectPostForm({
         onClose={() => setIsTeamModalOpen(false)}
         onSelectMember={handleSelectMember}
         selectedMemberIds={teamMembers.map(m => m.userId)}
+        leaderUserId={leader.userId}
       />
 
       {/* 전시 확인 모달 */}
@@ -388,22 +522,10 @@ export default function ProjectPostForm({
           type="textConfirm"
           title="해당 프로젝트를 전시하시겠습니까?"
           message=""
-          confirmText="예"
+          confirmText={isSubmitting ? '전시 중...' : '예'}
           cancelText="아니오"
-          onClose={() => setShowConfirmModal(false)}
+          onClose={() => (isSubmitting ? null : setShowConfirmModal(false))}
           onConfirm={handleConfirmSubmit}
-          customTitleAlign="center"
-        />
-      )}
-
-      {/* 전시 완료 모달 */}
-      {showSuccessModal && (
-        <Modal
-          type="textOnly"
-          title="전시가 완료되었습니다."
-          message=""
-          buttonText="확인"
-          onClose={() => setShowSuccessModal(false)}
           customTitleAlign="center"
         />
       )}
@@ -499,4 +621,12 @@ const submitBtnCss = (isValid: boolean) => css`
       background-color: ${colors.primary[700]};
     }
   `}
+`;
+
+const errorBoxCss = css`
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: ${colors.grayscale[100]};
+  color: ${colors.point?.red ?? colors.grayscale[800]};
 `;
