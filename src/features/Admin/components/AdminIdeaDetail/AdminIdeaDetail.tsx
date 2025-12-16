@@ -1,19 +1,23 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
-// 1. deleteAdminIdea API 추가 Import
 import {
   AdminIdeaDetail as AdminIdeaDetailType,
-  deleteAdminIdea,
   getAdminProjectIdeaDetail,
 } from '@/lib/adminIdea.api';
 import styled from 'styled-components';
 
+// 컴포넌트 임포트
 import MyTeamCount from '../../../team-building/components/MyTeam/MyTeamCount';
 import MyTeamMemberCard from '../../../team-building/components/MyTeam/MyTeamMember';
 import MyTeamStatusCard from '../../../team-building/components/MyTeam/MyTeamStatus';
+// 스타일 임포트 (Sidebar, Nav 등 불필요한 스타일 제거)
 import {
   CancelButtonText,
-  ContentContainer,
+  ContentContainer, // AdminLayout의 Content 내부에서 시작
+  CountNum,
+  CountStat,
+  CountUnit,
+  DeleteButtonText,
   Description,
   DescriptionBox,
   DescriptionSection,
@@ -48,11 +52,13 @@ import {
   Title,
   TitleSection,
   TitleText,
-  CountStat,
-  CountNum,
-  CountUnit,
 } from '../../styles/AdminIdeaDetail';
+// 유틸 및 API 임포트
+import { sanitizeDescription } from '../../utils/sanitizeDescription';
 
+// --- Types & Constants ---
+
+// UI에서 사용하는 Role Key (Mockup 기준)
 const TEAM_ROLES = [
   { key: 'planning', label: '기획', apiKey: 'PM' },
   { key: 'design', label: '디자인', apiKey: 'DESIGN' },
@@ -67,6 +73,8 @@ const TEAM_GROUPS: Array<Array<(typeof TEAM_ROLES)[number]['key']>> = [
   ['frontendWeb', 'frontendMobile', 'backend'],
 ];
 
+// --- Styled Components ---
+
 const SectionTitle = styled.h3`
   font-size: 20px;
   font-weight: 700;
@@ -75,17 +83,107 @@ const SectionTitle = styled.h3`
   align-items: center;
 `;
 
-/* ======================================================
- * Component
- * ====================================================== */
+const ActionRow = styled.div`
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  width: 100%;
+  margin: 160px 0 0;
+`;
+
+const ActionButton = styled.button<{ $primary?: boolean; $danger?: boolean }>`
+  width: 300px;
+  height: 50px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 10px 8px;
+  border: 1px solid
+    ${({ $primary, $danger }) => {
+      if ($primary) return '#4285f4';
+      if ($danger) return '#f44242';
+      return '#d7dadd';
+    }};
+  background: #ffffff;
+  color: ${({ $primary, $danger }) => {
+    if ($primary) return '#4285f4';
+    if ($danger) return '#f44242';
+    return '#040405';
+  }};
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+
+  &:hover {
+    background: ${({ $primary, $danger }) => {
+      if ($primary) return 'rgba(66, 133, 244, 0.08)';
+      if ($danger) return 'rgba(244, 66, 66, 0.08)';
+      return 'rgba(0, 0, 0, 0.02)';
+    }};
+  }
+`;
+
+const SubjectRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 100px;
+  margin: 40px 0 20px 0;
+`;
+
+const TeamCompositionSection = styled.div`
+  display: flex;
+  width: 1080px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  margin-top: 20px;
+`;
+
+const TeamGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 16px;
+  row-gap: 60px;
+  width: 100%;
+`;
+
+const TeamPartColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+`;
+
+const TeamPartHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const TeamPartTitle = styled.span`
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 32px;
+`;
+
+const TeamPartBody = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
 
 export default function AdminIdeaDetail() {
   const router = useRouter();
   const { id, projectId } = router.query;
 
+  // API 데이터 상태
   const [ideaData, setIdeaData] = useState<AdminIdeaDetailType | null>(null);
+
+  // 모달 상태
   const [modalState, setModalState] = useState<'closed' | 'confirm' | 'success'>('closed');
 
+  // 1. API 데이터 호출
   useEffect(() => {
     if (!id || !projectId) return;
 
@@ -93,15 +191,21 @@ export default function AdminIdeaDetail() {
       projectId: Number(projectId),
       ideaId: Number(id),
     })
-      .then(res => setIdeaData(res.data))
-      .catch(err => console.error(err));
+      .then(res => {
+        setIdeaData(res.data);
+      })
+      .catch(err => {
+        console.error('Failed to fetch idea detail:', err);
+      });
   }, [id, projectId]);
 
+  // 2. 데이터 가공
   const teamParts = useMemo(() => {
     if (!ideaData) return [];
 
     return TEAM_ROLES.map(roleDef => {
       const roster = ideaData.rosters.find(r => r.part === roleDef.apiKey);
+
       const capacity = roster?.maxMemberCount ?? 0;
       const current = roster?.currentMemberCount ?? 0;
       const members =
@@ -138,44 +242,23 @@ export default function AdminIdeaDetail() {
     [ideaData]
   );
 
-  const handleEditClick = () => {
-    router.push({
-      pathname: '/AdminIdeaEdit',
-      query: { projectId, id },
-    });
-  };
-
-  // 2. 삭제 핸들러 수정: 실제 API 호출
-  const handleDeleteConfirm = async () => {
-    if (!id) return;
-
-    try {
-      // API 호출
-      await deleteAdminIdea(Number(id));
-      // 성공 시 모달 상태 변경
-      setModalState('success');
-    } catch (error) {
-      console.error('Failed to delete idea:', error);
-      alert('아이디어 삭제에 실패했습니다.');
-      setModalState('closed');
-    }
+  // 모달 관련 핸들러
+  const handleDeleteConfirm = () => {
+    setModalState('success');
   };
 
   const handleCloseModal = () => setModalState('closed');
 
   const handleSuccessClose = () => {
     setModalState('closed');
-    // 삭제 후 아이디어 목록으로 이동 (projectId 유지)
-    router.push({
-      pathname: '/AdminIdeaIdea',
-      query: { projectId },
-    });
+    router.push('/AdminIdeaProject');
   };
 
   if (!ideaData) {
     return <ContentContainer>Loading...</ContentContainer>;
   }
 
+  // ★ 중요: Page, Sidebar, Content 태그를 제거하고 ContentContainer만 반환합니다.
   return (
     <ContentContainer>
       <Heading>
@@ -187,6 +270,7 @@ export default function AdminIdeaDetail() {
         <ResponsiveWrapper>
           <TitleSection>
             <TitleText>{ideaData.title}</TitleText>
+
             <IntroRow>
               <IntroText>{ideaData.introduction}</IntroText>
               <MentorContainer>
@@ -211,11 +295,13 @@ export default function AdminIdeaDetail() {
                   {group.map(roleKey => {
                     const roleLabel = TEAM_ROLES.find(r => r.key === roleKey)?.label;
                     const stat = statsMap[roleKey] ?? { current: 0, total: 0 };
+
                     return (
                       <MemberCount key={roleKey}>
                         <RoleName>{roleLabel}</RoleName>
                         <CountStat>
                           <CountNum>
+                            {' '}
                             {stat.current} / {stat.total}
                           </CountNum>
                           <CountUnit>명</CountUnit>
@@ -230,7 +316,11 @@ export default function AdminIdeaDetail() {
 
           <DescriptionSection>
             <SectionTitle>아이디어 설명</SectionTitle>
-            <DescriptionBox dangerouslySetInnerHTML={{ __html: safeDescription }} />
+            <DescriptionBox
+              dangerouslySetInnerHTML={{
+                __html: safeDescription,
+              }}
+            />
           </DescriptionSection>
         </ResponsiveWrapper>
 
@@ -260,6 +350,9 @@ export default function AdminIdeaDetail() {
                         variant={member.isLeader ? 'leader' : 'managedMember'}
                         name={member.name}
                         width="100%"
+                        onClickRemove={
+                          member.isLeader ? undefined : () => console.log('Remove member logic')
+                        }
                       />
                     ))}
                 </TeamPartBody>
@@ -270,7 +363,7 @@ export default function AdminIdeaDetail() {
       </PreviewCanvas>
 
       <ActionRow>
-        <ActionButton $primary type="button" onClick={handleEditClick}>
+        <ActionButton $primary type="button">
           아이디어 수정하기
         </ActionButton>
         <ActionButton $danger type="button" onClick={() => setModalState('confirm')}>
