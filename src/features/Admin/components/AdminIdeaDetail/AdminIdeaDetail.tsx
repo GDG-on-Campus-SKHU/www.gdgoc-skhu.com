@@ -54,9 +54,6 @@ import {
  * Constants
  * ====================================================== */
 
-/**
- * 백엔드 part → 화면 표시용 라벨 매핑
- */
 const TEAM_ROLE_LABEL_MAP: Record<AdminIdeaRoster['part'], string> = {
   PM: '기획',
   DESIGN: '디자인',
@@ -66,9 +63,6 @@ const TEAM_ROLE_LABEL_MAP: Record<AdminIdeaRoster['part'], string> = {
   BACKEND: '백엔드',
 };
 
-/**
- * 화면 배치용 파트 그룹
- */
 const TEAM_GROUPS: Array<Array<AdminIdeaRoster['part']>> = [
   ['PM', 'DESIGN', 'AI'],
   ['WEB', 'MOBILE', 'BACKEND'],
@@ -87,7 +81,7 @@ export default function AdminIdeaDetail() {
     useState<'closed' | 'confirm' | 'success'>('closed');
 
   /* =========================
-   * Fetch idea detail
+   * Fetch detail
    * ========================= */
   useEffect(() => {
     if (!id || !projectId) return;
@@ -107,20 +101,12 @@ export default function AdminIdeaDetail() {
     fetchDetail();
   }, [id, projectId]);
 
-  /* =========================
-   * Derived values
-   * ========================= */
-
   const safeDescription = useMemo(
     () => sanitizeDescription(idea?.description ?? ''),
     [idea?.description]
   );
 
   if (!idea) return null;
-
-  /* =========================
-   * Render
-   * ========================= */
 
   return (
     <Content>
@@ -149,6 +135,9 @@ export default function AdminIdeaDetail() {
             <SubjectLabel>아이디어 주제</SubjectLabel>
             <SubjectValue>{idea.topic}</SubjectValue>
 
+            {/* =========================
+               모집 인원 (기존)
+            ========================= */}
             <MembersSection>
               <Heading>
                 <Title>모집 인원</Title>
@@ -158,9 +147,7 @@ export default function AdminIdeaDetail() {
                 {TEAM_GROUPS.map(group => (
                   <MemberRow key={group.join('-')}>
                     {group.map(part => {
-                      const roster = idea.rosters.find(
-                        (r: AdminIdeaRoster) => r.part === part
-                      );
+                      const roster = idea.rosters.find(r => r.part === part);
                       if (!roster) return null;
 
                       return (
@@ -179,6 +166,45 @@ export default function AdminIdeaDetail() {
                 ))}
               </MemberCard>
             </MembersSection>
+
+            {/* =========================
+   현재 팀원 구성 (수정)
+========================= */}
+<MembersSection>
+  <Heading>
+    <Title>현재 팀원 구성</Title>
+  </Heading>
+
+  {idea.rosters
+    .filter(roster => roster.members.length > 0)
+    .map(roster => (
+      <div
+        key={roster.part}
+        style={{
+          border: '1px solid #E5E7EB',
+          borderRadius: '8px',
+          padding: '16px 20px',
+          marginBottom: '12px',
+        }}
+      >
+        <RoleName style={{ marginBottom: '8px' }}>
+          {TEAM_ROLE_LABEL_MAP[roster.part]}
+        </RoleName>
+
+        {roster.members.map(member => (
+          <IntroText
+            key={member.userId}
+            style={{ marginLeft: '8px' }}
+          >
+            • {member.memberName}
+            {member.memberRole === 'CREATOR' && ' (작성자)'}
+          </IntroText>
+        ))}
+      </div>
+    ))}
+</MembersSection>
+
+
 
             <DescriptionSection>
               <Heading>

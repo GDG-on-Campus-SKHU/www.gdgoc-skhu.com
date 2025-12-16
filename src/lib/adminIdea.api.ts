@@ -23,8 +23,8 @@ export interface AdminPageInfo {
 export interface AdminProject {
   projectId: number;
   projectName: string;
-  startAt: string;          // ISO String
-  endAt: string | null;     // 종료일이 없을 수 있음
+  startAt: string;      // ISO String
+  endAt: string | null; // 종료일이 없을 수 있음
 }
 
 /**
@@ -72,7 +72,7 @@ export interface AdminIdea {
   maxMemberCount: number;
   deleted: boolean;
 
-  authorName?: string; // 추후 백엔드 추가 예정
+  authorName?: string;
 }
 
 /**
@@ -111,16 +111,24 @@ export const getAdminProjectIdeas = (params: {
  * ====================================================== */
 
 /**
+ * 아이디어 팀원 정보
+ * (실제 백엔드 응답 기준)
+ */
+export interface AdminIdeaMember {
+  userId: number;
+  memberName: string;
+  memberRole: 'CREATOR' | 'MEMBER';
+  confirmed: boolean;
+}
+
+/**
  * 팀 파트별 모집 현황
  */
 export interface AdminIdeaRoster {
-  part: string; // PM | DESIGN | WEB | BACKEND | ...
+  part: 'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI';
   currentMemberCount: number;
   maxMemberCount: number;
-  members: {
-    memberId: number;
-    name: string;
-  }[];
+  members: AdminIdeaMember[];
 }
 
 /**
@@ -137,7 +145,7 @@ export interface AdminIdeaDetail {
 
   creator: {
     creatorName: string;
-    part: string;
+    part: 'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI';
     school: string;
   };
 
