@@ -4,7 +4,6 @@ import { css } from '@emotion/react';
 import { colors } from '../../../../styles/constants';
 import crownIcon from '../../assets/crown.svg';
 import externalIcon from '../../assets/external.svg';
-import DeleteIcon from '../../assets/memberDelete.svg';
 
 export type MyTeamMemberVariant = 'leader' | 'managedMember' | 'member';
 
@@ -56,7 +55,7 @@ export default function MyTeamMemberCard({
             onClickRemove?.();
           }}
         >
-          <Image src={DeleteIcon} alt="팀원 삭제" width={18} height={18} />
+          <Image src="/memberDelete.svg" alt="팀원 삭제" width={18} height={18} />
         </button>
       )}
     </div>
@@ -137,9 +136,15 @@ const removeBtnCss = css`
 
   width: 40px;
   height: 40px;
+  padding: 6px;
   border-radius: 8px;
   border: 1px solid ${colors.grayscale[400]};
   background-color: ${colors.white};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
   cursor: pointer;
   transition:
     background-color 0.2s ease,

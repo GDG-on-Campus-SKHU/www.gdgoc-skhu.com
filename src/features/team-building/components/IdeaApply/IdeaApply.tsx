@@ -1,10 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import axios from 'axios';
 import styled from 'styled-components';
 
+import { applyToIdea, fetchIdeaDetail } from '../../api/ideas';
 import Button from '../Button';
 import Radio from '../Radio';
+import { Idea, resolveTotalMembers, useIdeaStore } from '../store/IdeaStore';
 
 const MOBILE_BREAKPOINT = '900px';
 
@@ -92,13 +95,11 @@ const IdeaTitle = styled.h2`
 const IdeaSubtitle = styled.p`
   margin: 12px 0 0;
   color: var(--grayscale-500, #979ca5);
-
-  /* body/b3/b3 */
   font-family: Pretendard;
   font-size: 18px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 28.8px */
+  line-height: 160%;
 `;
 
 const MentorContainer = styled.div`
@@ -130,23 +131,20 @@ const FormSection = styled.section`
 const SectionTitle = styled.h3`
   color: var(--grayscale-1000, #040405);
   align-self: stretch;
-  /* body/b2/b2-bold */
   font-family: Pretendard;
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
-  line-height: 160%; /* 32px */
+  line-height: 160%;
 `;
 
 const SectionHint = styled.span`
   color: var(--grayscale-700, #626873);
-
-  /* body/b3/b3 */
   font-family: Pretendard;
   font-size: 18px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 28.8px */
+  line-height: 160%;
 `;
 
 const DesiredRankingAndPartSection = styled(FormSection)`
@@ -206,7 +204,6 @@ const ModalInfo = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-
   width: 100%;
 `;
 const ModalCard = styled.div`
@@ -228,44 +225,37 @@ const ModalCard = styled.div`
 const ModalTitle = styled.h3`
   color: var(--grayscale-1000, #040405);
   text-align: center;
-
-  /* header/h2-bold */
   font-family: Pretendard;
   font-size: 36px;
   font-style: normal;
   font-weight: 700;
-  line-height: 160%; /* 57.6px */
+  line-height: 160%;
 `;
 
 const ModalTitleComplete = styled.h3`
   color: var(--grayscale-1000, #040405);
   text-align: center;
   margin: 0 0 20px;
-
-  /* header/h2-bold */
   font-family: Pretendard;
   font-size: 24px;
   font-style: normal;
   font-weight: 700;
-  line-height: 160%; /* 57.6px */
+  line-height: 160%;
 `;
 
 const ModalMessage = styled.p`
   color: var(--grayscale-600, #7e8590);
   text-align: center;
-
-  /* body/b2/b2 */
   font-family: Pretendard;
   font-size: 20px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 32px */
+  line-height: 160%;
 `;
 
 const ModalActions = styled.div`
   display: flex;
   justify-content: center;
-
   width: 100%;
 `;
 const ModalButtonContainer = styled.div`
@@ -294,30 +284,63 @@ const ModalButton = styled(Button)`
   margin-top: 20px;
   background: var(--primary-600-main, #4285f4);
   color: var(--grayscale-100, #f9f9fa);
-
-  /* body/b3/b3 */
   font-family: Pretendard;
   font-size: 18px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 28.8px */
+  line-height: 160%;
 `;
-import { Idea, resolveTotalMembers, useIdeaStore } from '../store/IdeaStore';
 
-const PART_OPTIONS: Array<{ key: keyof Idea['team']; label: string }> = [
-  { key: 'planning', label: '기획' },
-  { key: 'design', label: '디자인' },
-  { key: 'frontendWeb', label: '프론트엔드(웹)' },
-  { key: 'frontendMobile', label: '프론트엔드(모바일)' },
-  { key: 'backend', label: '백엔드' },
-  { key: 'aiMl', label: 'AI/ML' },
+// 파트 옵션 및 API 파트 코드 매핑
+const PART_OPTIONS: Array<{ key: keyof Idea['team']; label: string; apiCode: string }> = [
+  { key: 'planning', label: '기획', apiCode: 'PM' },
+  { key: 'design', label: '디자인', apiCode: 'DESIGN' },
+  { key: 'frontendWeb', label: '프론트엔드(웹)', apiCode: 'WEB' },
+  { key: 'frontendMobile', label: '프론트엔드(모바일)', apiCode: 'MOBILE' },
+  { key: 'backend', label: '백엔드', apiCode: 'BACKEND' },
+  { key: 'aiMl', label: 'AI/ML', apiCode: 'AI' },
 ];
 
 const PRIORITY_OPTIONS = ['1지망', '2지망', '3지망'] as const;
 
 type PriorityOption = (typeof PRIORITY_OPTIONS)[number];
+
+// 지망 라벨을 숫자로 변환
+const priorityToNumber = (priority: PriorityOption): number => {
+  switch (priority) {
+    case '1지망':
+      return 1;
+    case '2지망':
+      return 2;
+    case '3지망':
+      return 3;
+    default:
+      return 1;
+  }
+};
+
 type IdeaApplyPageProps = {
   ideaId?: number | null;
+};
+
+// API 응답 타입
+type IdeaApiResponse = {
+  ideaId: number;
+  title: string;
+  introduction: string;
+  description: string;
+  topic: string;
+  topicId: number;
+  creator: {
+    creatorName: string;
+    part: string;
+    school: string;
+  };
+  compositions: Array<{
+    part: string;
+    maxCount: number;
+    currentCount: number;
+  }>;
 };
 
 const ZERO_TEAM: Idea['team'] = {
@@ -328,7 +351,9 @@ const ZERO_TEAM: Idea['team'] = {
   backend: 0,
   aiMl: 0,
 };
+
 const PRIORITY_STORAGE_KEY = 'team-building:priority-selection';
+const DEFAULT_PROJECT_ID = 2;
 
 const createEmptyPriorityState = (): Record<PriorityOption, number | null> => ({
   '1지망': null,
@@ -336,21 +361,53 @@ const createEmptyPriorityState = (): Record<PriorityOption, number | null> => ({
   '3지망': null,
 });
 
-const resolveInitialPart = (idea?: Idea) => {
-  const team = idea?.team ?? ZERO_TEAM;
-  const filled = idea?.filledTeam ?? ZERO_TEAM;
-  const target = PART_OPTIONS.find(option => {
-    const limit = team[option.key] ?? 0;
-    const current = filled[option.key] ?? 0;
-    if (limit <= 0) return false;
-    return current < limit;
+// API 파트 코드를 team key로 매핑
+const partCodeToKey: Record<string, keyof Idea['team']> = {
+  PM: 'planning',
+  DESIGN: 'design',
+  WEB: 'frontendWeb',
+  MOBILE: 'frontendMobile',
+  BACKEND: 'backend',
+  AI: 'aiMl',
+};
+
+// API 응답을 Idea 타입으로 변환
+const normalizeApiIdea = (apiIdea: IdeaApiResponse): Idea => {
+  const compositions = apiIdea.compositions || [];
+
+  const team: Idea['team'] = { ...ZERO_TEAM };
+  const filledTeam: Idea['team'] = { ...ZERO_TEAM };
+
+  compositions.forEach(comp => {
+    const key = partCodeToKey[comp.part];
+    if (key) {
+      team[key] = comp.maxCount || 0;
+      filledTeam[key] = comp.currentCount || 0;
+    }
   });
-  return target ? target.key : 'planning';
+
+  const totalMembers = compositions.reduce((sum, comp) => sum + (comp.maxCount || 0), 0);
+  const currentMembers = compositions.reduce((sum, comp) => sum + (comp.currentCount || 0), 0);
+
+  return {
+    id: apiIdea.ideaId,
+    topic: apiIdea.topic || '',
+    title: apiIdea.title || '',
+    intro: apiIdea.introduction || '',
+    description: apiIdea.description || '',
+    preferredPart: apiIdea.creator?.part || '',
+    team,
+    filledTeam,
+    totalMembers: totalMembers || 1,
+    currentMembers: currentMembers || 0,
+    status: currentMembers >= totalMembers ? '모집 마감' : '모집 중',
+  };
 };
 
 export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
   const router = useRouter();
   const { id } = router.query;
+
   const resolvedIdeaId = useMemo(() => {
     if (typeof ideaId === 'number' || ideaId === null) return ideaId;
     if (Array.isArray(id)) {
@@ -364,31 +421,58 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
     return null;
   }, [id, ideaId]);
 
+  // 로컬 스토어 (폴백용)
   const hasHydratedIdeas = useIdeaStore(state => state.hasHydrated);
   const hydrateIdeas = useIdeaStore(state => state.hydrateFromStorage);
-  const addApplicant = useIdeaStore(state => state.addApplicant);
-
-  const idea = useIdeaStore(state =>
+  const localIdea = useIdeaStore(state =>
     resolvedIdeaId !== null ? state.getIdeaById(resolvedIdeaId) : undefined
   );
+
+  // API에서 가져온 아이디어
+  const [apiIdea, setApiIdea] = useState<Idea | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 최종 사용할 아이디어 (API 우선, 없으면 로컬)
+  const idea = apiIdea || localIdea;
+
   const [priority, setPriority] = useState<PriorityOption>('1지망');
   const [priorityLocks, setPriorityLocks] = useState<Record<PriorityOption, number | null>>(() =>
     createEmptyPriorityState()
   );
-  const [part, setPart] = useState<keyof Idea['team']>(() => resolveInitialPart(idea));
+  const [part, setPart] = useState<keyof Idea['team']>('planning');
+
   const allPrioritiesTaken = useMemo(
     () => PRIORITY_OPTIONS.every(option => priorityLocks[option] !== null),
     [priorityLocks]
   );
+
   const [modalState, setModalState] = useState<'closed' | 'confirm' | 'success'>('closed');
 
-  const preferredKey = useMemo(() => {
-    if (!idea) return null;
-    const match = PART_OPTIONS.find(
-      option => option.label === idea.preferredPart || option.key === idea.preferredPart
-    );
-    return match?.key ?? null;
-  }, [idea]);
+  // API에서 아이디어 상세 정보 가져오기
+  const loadIdeaDetail = useCallback(async () => {
+    if (resolvedIdeaId === null) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetchIdeaDetail(DEFAULT_PROJECT_ID, resolvedIdeaId);
+      const data = response.data as IdeaApiResponse;
+      const normalized = normalizeApiIdea(data);
+      setApiIdea(normalized);
+    } catch (error) {
+      console.warn('아이디어 상세 조회 실패, 로컬 데이터 사용:', error);
+      // API 실패 시 로컬 스토어 데이터 사용
+    } finally {
+      setIsLoading(false);
+    }
+  }, [resolvedIdeaId]);
+
+  useEffect(() => {
+    loadIdeaDetail();
+  }, [loadIdeaDetail]);
 
   const partOptions = useMemo(() => {
     if (!idea) {
@@ -403,22 +487,25 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
     );
     const totalAtCapacity = totalLimit > 0 && totalFilled >= totalLimit;
     return PART_OPTIONS.map(option => {
-      const count = team[option.key] ?? 0; // 모집 인원 설정 (0이면 모집 안 함)
-      const taken = filled[option.key] ?? 0; // 현재 지원 인원
-      const ownerSlot = preferredKey && preferredKey === option.key ? 1 : 0; // 작성자 1명
-      const takenWithOwner = taken + ownerSlot;
-      const partAtCapacity = count > 0 && takenWithOwner >= count;
+      const count = team[option.key] ?? 0;
+      const taken = filled[option.key] ?? 0;
+      const partAtCapacity = count > 0 && taken >= count;
       return {
         ...option,
         disabled: totalAtCapacity || count <= 0 || partAtCapacity,
       };
     });
-  }, [idea, preferredKey]);
+  }, [idea]);
 
   const selectedPartLabel = useMemo(() => {
     const match = partOptions.find(option => option.key === part);
     return match?.label ?? '선택한 파트';
   }, [part, partOptions]);
+
+  const selectedPartApiCode = useMemo(() => {
+    const match = PART_OPTIONS.find(option => option.key === part);
+    return match?.apiCode ?? 'PM';
+  }, [part]);
 
   const priorityOptions = useMemo(
     () =>
@@ -450,6 +537,7 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
     };
   }, [isModalOpen]);
 
+  // 로컬 스토리지에서 지망 상태 불러오기
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -467,7 +555,6 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
       });
       setPriorityLocks(resolved);
     } catch {
-      // ignore malformed storage data
       setPriorityLocks(createEmptyPriorityState());
     }
   }, []);
@@ -528,8 +615,10 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
     setModalState('confirm');
   };
 
-  const handleConfirmSubmit = () => {
+  // API 지원 요청
+  const handleConfirmSubmit = async () => {
     if (!idea) return;
+    if (isSubmitting) return;
 
     const totalLimit = resolveTotalMembers(idea.totalMembers, idea.team);
     if (idea.currentMembers >= totalLimit) {
@@ -548,37 +637,88 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
       setModalState('closed');
       return;
     }
-    const accepted = addApplicant(idea.id, part);
-    if (!accepted) {
-      alert('이미 모집이 완료된 파트입니다.');
+
+    setIsSubmitting(true);
+
+    try {
+      // API 지원 요청
+      const payload = {
+        part: selectedPartApiCode,
+        priority: priorityToNumber(priority),
+      };
+
+      console.log('=== 아이디어 지원 요청 ===');
+      console.log('ideaId:', idea.id);
+      console.log('payload:', payload);
+
+      await applyToIdea(idea.id, payload);
+
+      // 지원 성공 시 로컬 스토리지에 지망 상태 저장
+      if (typeof window !== 'undefined') {
+        const nextLocks = { ...priorityLocks, [priority]: idea.id };
+        window.localStorage.setItem(PRIORITY_STORAGE_KEY, JSON.stringify(nextLocks));
+        setPriorityLocks(nextLocks);
+      }
+
+      setModalState('success');
+    } catch (error) {
+      console.error('아이디어 지원 실패:', error);
+
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const errorData = error.response?.data;
+
+        let message = '지원에 실패했습니다.';
+
+        if (status === 400) {
+          const errorMessage = typeof errorData === 'string' ? errorData : errorData?.message || '';
+          if (errorMessage.includes('이미') || errorMessage.includes('already')) {
+            message = '이미 해당 아이디어에 지원하셨습니다.';
+          } else {
+            message = errorMessage || '입력 정보를 확인해주세요.';
+          }
+        } else if (status === 401) {
+          message = '지원 권한이 없습니다. 다시 로그인해주세요.';
+        } else if (status === 404) {
+          message = '아이디어를 찾을 수 없습니다.';
+        } else if (status === 500) {
+          message = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+        }
+
+        alert(message);
+      } else {
+        alert('지원 중 오류가 발생했습니다.');
+      }
+
       setModalState('closed');
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-    if (typeof window !== 'undefined') {
-      const nextLocks = { ...priorityLocks, [priority]: idea.id };
-      window.localStorage.setItem(PRIORITY_STORAGE_KEY, JSON.stringify(nextLocks));
-      setPriorityLocks(nextLocks);
-    }
-    setModalState('success');
   };
 
+  // 로딩 중
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <ApplyCanvas>
+          <EmptyState>아이디어를 불러오는 중이에요...</EmptyState>
+        </ApplyCanvas>
+      </PageContainer>
+    );
+  }
+
+  // 아이디어를 찾을 수 없음
   if (!idea) {
     return (
       <PageContainer>
         <ApplyCanvas>
           <EmptyState>
-            {hasHydratedIdeas ? (
-              <>
-                지원하려는 아이디어를 찾을 수 없어요.
-                <br />
-                목록에서 다시 선택해 주세요.
-                <Link href="/WelcomeOpen" passHref>
-                  <BackLink>목록으로 돌아가기</BackLink>
-                </Link>
-              </>
-            ) : (
-              '아이디어를 불러오는 중이에요...'
-            )}
+            지원하려는 아이디어를 찾을 수 없어요.
+            <br />
+            목록에서 다시 선택해 주세요.
+            <Link href="/WelcomeOpen" passHref>
+              <BackLink>목록으로 돌아가기</BackLink>
+            </Link>
           </EmptyState>
         </ApplyCanvas>
       </PageContainer>
@@ -596,11 +736,10 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
             <ApplyInfoRow>
               <IdeaInfo>
                 <TitleContainer>
-                  {' '}
                   <IdeaTitle>{idea.title}</IdeaTitle>
                   <MentorContainer>
                     <MentorPart>
-                      성공회대 디자인 <Mentor as="span">주현지</Mentor>
+                      {idea.preferredPart} <Mentor as="span">{idea.intro}</Mentor>
                     </MentorPart>
                   </MentorContainer>
                 </TitleContainer>
@@ -655,7 +794,7 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
             <ButtonContainer>
               <Button
                 type="submit"
-                disabled={allPrioritiesTaken}
+                disabled={allPrioritiesTaken || isSubmitting}
                 css={{
                   display: 'flex',
                   width: '300px',
@@ -672,10 +811,11 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
                   lineHeight: '160%',
                 }}
               >
-                아이디어 지원하기
+                {isSubmitting ? '지원 중...' : '아이디어 지원하기'}
               </Button>
             </ButtonContainer>
           </form>
+
           {modalState !== 'closed' && (
             <ModalOverlay>
               {modalState === 'confirm' && (
@@ -686,15 +826,15 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
                     <ModalActions>
                       <ModalButtonContainer>
                         <ModalButton
-                          title="지원하기"
-                          disabled={false}
+                          title={isSubmitting ? '지원 중...' : '지원하기'}
+                          disabled={isSubmitting}
                           onClick={handleConfirmSubmit}
                           css={{ width: '100%' }}
                         />
                         <ModalButton
                           title="취소"
                           variant="secondary"
-                          disabled={false}
+                          disabled={isSubmitting}
                           onClick={() => setModalState('closed')}
                           css={{ width: '100%' }}
                         />
