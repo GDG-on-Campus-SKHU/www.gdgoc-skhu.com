@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 
 import Modal from '../../components/Modal_Fix';
 import ProjectDetailView from '../../components/ProjectDetail/ProjectDetailView';
-import type { GenerationValue, Part, ServiceStatus } from '../../types/gallery';
+import type { GenerationValue, Part, ProjectMemberBase, ServiceStatus } from '../../types/gallery';
 
 type PreviewQuery = {
   title?: string | string[];
@@ -11,28 +11,56 @@ type PreviewQuery = {
   description?: string | string[];
   leaderPart?: string | string[];
   generation?: string | string[];
-  serviceStatus?: 'RUNNING' | 'PAUSED' | string | string[];
+  serviceStatus: ServiceStatus;
   teamMembers?: string | string[];
+
+  leader?: string | string[];
 };
 
 // string 변환 함수 (타입 안전성)
-const asString = (value: string | string[] | undefined): string =>
-  Array.isArray(value) ? value[0] : (value ?? '');
+const asString = (value: unknown): string => {
+  if (Array.isArray(value)) return String(value[0] ?? '');
+  if (typeof value === 'string') return value;
+  return '';
+};
 
 type RawTeamMember = {
   name: string;
   part?: string[];
 };
 
-const parseTeamMembers = (value: string | string[] | undefined): RawTeamMember[] => {
-  if (typeof value !== 'string') return [];
+/** JSON.parse 안전 유틸 (preview query에서 공통으로 재사용 가능) */
+function safeParseJson<T>(value: unknown, fallback: T): T {
+  const raw = asString(value);
+  if (!raw) return fallback;
   try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
+    return JSON.parse(raw) as T;
   } catch {
-    return [];
+    return fallback;
   }
-};
+}
+
+function parseTeamMembers(value: unknown): RawTeamMember[] {
+  const parsed = safeParseJson<unknown>(value, []);
+  return Array.isArray(parsed) ? (parsed as RawTeamMember[]) : [];
+}
+
+function parseLeader(value: unknown): ProjectMemberBase | null {
+  const parsed = safeParseJson<unknown>(value, null);
+
+  if (!parsed || typeof parsed !== 'object') return null;
+  const obj = parsed as Partial<ProjectMemberBase>;
+
+  if (typeof obj.userId !== 'number') return null;
+  if (typeof obj.name !== 'string') return null;
+
+  return {
+    userId: obj.userId,
+    name: obj.name,
+    school: typeof obj.school === 'string' ? obj.school : '',
+    badge: typeof obj.badge === 'string' ? obj.badge : '',
+  };
+}
 
 /** 따로 분리하여 정리할 예정 */
 function parseGeneration(value: string): GenerationValue {
@@ -61,10 +89,6 @@ function mapUiPartToEnum(ui: string): Part | undefined {
   }
 }
 
-function mapUiServiceStatusToEnum(raw: string): ServiceStatus {
-  return raw === 'RUNNING' ? 'IN_SERVICE' : 'NOT_IN_SERVICE';
-}
-
 export default function ProjectPreviewPage() {
   const router = useRouter();
   const query = router.query as PreviewQuery;
@@ -78,20 +102,19 @@ export default function ProjectPreviewPage() {
     return parseGeneration(raw);
   }, [query.generation]);
 
-  const status = useMemo<ServiceStatus>(() => {
-    const raw = asString(query.serviceStatus);
-    return mapUiServiceStatusToEnum(raw);
-  }, [query.serviceStatus]);
+  const status = query.serviceStatus;
 
   const teamMembers = useMemo(() => parseTeamMembers(query.teamMembers), [query.teamMembers]);
 
   const leader = useMemo(() => {
-    const leaderPartUi = asString(query.leaderPart);
+    const leaderFromQuery = parseLeader((router.query as any)?.leader);
+    const leaderPartUi = asString((router.query as any)?.leaderPart);
+
     return {
-      name: '주현지', // 추후 로그인 유저 정보로 대체 (없어서 임시)
+      name: leaderFromQuery?.name ?? '내 이름',
       role: mapUiPartToEnum(leaderPartUi),
     };
-  }, [query.leaderPart]);
+  }, [router.query]);
 
   const members = useMemo(() => {
     return teamMembers.map(m => ({
