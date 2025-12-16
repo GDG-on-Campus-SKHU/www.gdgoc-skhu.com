@@ -1,6 +1,8 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
+import { ButtonBase } from '../../styles/IdeaForm';
+import Button from '../Button';
 import { createEmptyTeamCounts, Idea } from '../store/IdeaStore';
 import { sanitizeDescription } from '../utils/sanitizeDescription';
 
@@ -218,12 +220,187 @@ const ResponsiveWrapper = styled.div`
   }
 `;
 
+export const DeleteButton = styled(ButtonBase)<{ disabled?: boolean }>`
+  display: flex;
+  width: 300px;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid var(--point-red, #ea4335);
+  background: #fff;
+`;
+
+export const DeletebuttonText = styled.span`
+  color: var(--point-red, #ea4335);
+
+  /* body/b3/b3 */
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%; /* 28.8px */
+`;
+export const EditButton = styled(ButtonBase)<{ disabled?: boolean }>`
+  border-radius: 8px;
+  border: 1px solid var(--primary-600-main, #4285f4);
+  background: #fff;
+  display: flex;
+  width: 300px;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+
+  ${({ disabled }) =>
+    disabled &&
+    css`
+      border-color: #e0e2e5;
+      color: #c3c6cb;
+      cursor: not-allowed;
+      background: #f3f4f6;
+    `}
+`;
+export const ButtonGroup = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 120px;
+  padding-bottom: 40px;
+  max-width: 616px;
+  width: 100%;
+  margin: 0 auto;
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+`;
+
+const ModalInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+`;
+
+const ModalCard = styled.div`
+  display: flex;
+  width: 500px;
+  padding: 40px 20px 20px 20px;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 30px 0 rgba(0, 0, 0, 0.2);
+`;
+
+const ModalTitle = styled.h3`
+  overflow: hidden;
+  color: var(--grayscale-1000, #040405);
+  text-align: center;
+  text-overflow: ellipsis;
+
+  /* body/b1/b1-bold */
+  font-family: Pretendard;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%; /* 38.4px */
+`;
+
+const ModalTitleComplete = styled.h3`
+  color: var(--grayscale-1000, #040405);
+  text-align: center;
+
+  /* body/b1/b1-bold */
+  font-family: Pretendard;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%; /* 38.4px */
+`;
+
+const ModalMessage = styled.p`
+  color: var(--grayscale-600, #7e8590);
+  text-align: center;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+  margin: 0;
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  justify-content: center;
+  width: 100%;
+`;
+
+const ModalButtonContainer = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  align-self: stretch;
+`;
+
+const ModalOKCard = styled.div`
+  display: flex;
+  width: 500px;
+  padding: 40px 20px 20px 20px;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 30px 0 rgba(0, 0, 0, 0.2);
+`;
+
+const ModalButton = styled(Button)`
+  display: flex;
+  width: 222px;
+  height: 50px;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+  border-radius: 12px;
+  margin-top: 20px;
+  background: var(--primary-600-main, #4285f4);
+  color: var(--grayscale-100, #f9f9fa);
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+`;
+
+const ModalOKButton = styled(Button)`
+  border-radius: 8px;
+  background: var(--primary-600-main, #4285f4);
+  display: flex;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+`;
+
 interface IdeaCompleteProps {
   idea: Idea;
   onGoList: () => void;
 }
 
-export default function IdeaComplete({ idea }: IdeaCompleteProps) {
+export default function IdeaComplete({ idea, onGoList }: IdeaCompleteProps) {
   const [resolvedTitle, setResolvedTitle] = React.useState<string>(idea.title || '');
   const [resolvedIntro, setResolvedIntro] = React.useState<string>(idea.intro || '');
   const [rawDescription, setRawDescription] = React.useState<string>(idea.description || '');
@@ -280,6 +457,24 @@ export default function IdeaComplete({ idea }: IdeaCompleteProps) {
     [rawDescription]
   );
 
+  const [modalState, setModalState] = React.useState<
+    'closed' | 'editConfirm' | 'deleteConfirm' | 'deleteSuccess'
+  >('closed');
+
+  const handleOpenEditModal = () => setModalState('editConfirm');
+  const handleOpenDeleteModal = () => setModalState('deleteConfirm');
+  const handleCloseModal = () => setModalState('closed');
+  const handleConfirmEdit = () => {
+    setModalState('closed');
+  };
+  const handleConfirmDelete = () => {
+    setModalState('deleteSuccess');
+  };
+  const handleDeleteSuccessClose = () => {
+    setModalState('closed');
+    onGoList();
+  };
+
   return (
     <PageContainer>
       <PreviewCanvas>
@@ -330,8 +525,63 @@ export default function IdeaComplete({ idea }: IdeaCompleteProps) {
               }}
             />
           </DescriptionSection>
+
+          <ButtonGroup>
+            <EditButton type="button" onClick={handleOpenEditModal}>
+              수정하기
+            </EditButton>
+            <DeleteButton type="button" onClick={handleOpenDeleteModal}>
+              <DeletebuttonText>삭제하기</DeletebuttonText>
+            </DeleteButton>
+          </ButtonGroup>
         </ResponsiveWrapper>
       </PreviewCanvas>
+      {modalState !== 'closed' && (
+        <ModalOverlay>
+          {modalState === 'deleteSuccess' ? (
+            <ModalCard style={{ height: '188px', paddingTop: 0 }}>
+              <ModalOKCard>
+                <ModalTitleComplete>아이디어가 삭제되었습니다.</ModalTitleComplete>
+                <ModalActions>
+                  <ModalOKButton
+                    title="확인"
+                    onClick={handleDeleteSuccessClose}
+                    css={{ width: '100%' }}
+                  />
+                </ModalActions>
+              </ModalOKCard>
+            </ModalCard>
+          ) : (
+            <ModalCard>
+              <ModalInfo>
+                <ModalTitle>{resolvedTitle || '아이디어 제목'}</ModalTitle>
+                <ModalMessage>
+                  {modalState === 'editConfirm'
+                    ? '아이디어를 수정하시겠습니까?'
+                    : '아이디어를 삭제하시겠습니까?'}
+                </ModalMessage>
+                <ModalActions>
+                  <ModalButtonContainer>
+                    <ModalButton
+                      title={modalState === 'editConfirm' ? '수정하기' : '삭제하기'}
+                      onClick={
+                        modalState === 'editConfirm' ? handleConfirmEdit : handleConfirmDelete
+                      }
+                      css={{ width: '100%' }}
+                    />
+                    <ModalButton
+                      title="취소"
+                      variant="secondary"
+                      onClick={handleCloseModal}
+                      css={{ width: '100%' }}
+                    />
+                  </ModalButtonContainer>
+                </ModalActions>
+              </ModalInfo>
+            </ModalCard>
+          )}
+        </ModalOverlay>
+      )}
     </PageContainer>
   );
 }

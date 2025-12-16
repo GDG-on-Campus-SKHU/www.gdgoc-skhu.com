@@ -20,6 +20,7 @@ export default function App({ Component, pageProps, router }: AppProps) {
   const CURRENT_URL = BASE_URL + router.route;
   const [queryClient] = useState(() => new QueryClient());
   const hideFooter = HIDE_FOOTER_PAGES.includes(router.pathname);
+  const hideNav = router.pathname.toLowerCase().startsWith('/admin');
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -29,7 +30,7 @@ export default function App({ Component, pageProps, router }: AppProps) {
       </Head>
 
       <GlobalStyle />
-      <Nav />
+      {!hideNav && <Nav />}
       <Scene />
 
       <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
