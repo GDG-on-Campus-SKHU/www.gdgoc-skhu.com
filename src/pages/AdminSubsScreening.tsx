@@ -1,4 +1,5 @@
 import dynamic from 'next/dynamic';
+
 import AdminLayout from '../features/Admin/layout/AdminLayout';
 
 const AdminSubsScreening = dynamic(

@@ -2,42 +2,32 @@ import { useEffect, useMemo, useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
+import { useCreatePost } from '@/lib/adminActivity.api';
 import styled from 'styled-components';
 
 import SelectBoxBasic from '../../../team-building/components/SelectBoxBasic';
-import {
-  DeleteButtonText,
-  ModalActions,
-  ModalButtonContainer,
-  ModalCard,
-  ModalInfo,
-  ModalOverlay,
-  ModalTitle,
-  MyDeleteButton,
-} from '../../styles/AdminIdeaDeleted';
 
-type VideoItem = {
-  id: number;
-  title: string;
-  owner: string;
-  generation: string;
-};
-
-const DEFAULT_VIDEOS: VideoItem[] = [
-  { id: 1, title: '👀 24-25 Tech Talk 다시보기', owner: '윤준석', generation: '24-25' },
-  { id: 2, title: '👀 23-24 Tech Talk 다시보기', owner: '이솔', generation: '23-24' },
-];
 const GenOptions = ['25-26', '24-25', '23-24', '22-23', '기타'];
-const AdminActivityCategoryCreate: NextPage = () => {
+
+const AdminActivityVideoCreate: NextPage = () => {
   const router = useRouter();
   const [videoTitle, setVideoTitle] = useState('');
   const [presenterName, setPresenterName] = useState('');
   const [generation, setGeneration] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [fetchedTitle, setFetchedTitle] = useState('');
-  const [status] = useState<'public' | 'private'>('private');
-  const [videos] = useState<VideoItem[]>([]);
-  const [showModal, setShowModal] = useState(false);
+  const [categoryId, setCategoryId] = useState<number | null>(null);
+
+  const { mutate: createPost, isPending } = useCreatePost();
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    const { categoryId: idParam } = router.query;
+
+    if (idParam) {
+      setCategoryId(Number(idParam));
+    }
+  }, [router.isReady, router.query]);
 
   const titleCount = `${videoTitle.length}/20`;
   const presenterCount = `${presenterName.length}/5`;
@@ -96,16 +86,39 @@ const AdminActivityCategoryCreate: NextPage = () => {
   }, [thumbnailUrl, videoUrl]);
 
   const handleSave = () => {
-    const payload = {
+    const videoData = {
       title: videoTitle,
-      presenter: presenterName,
+      owner: presenterName,
       generation,
-      url: videoUrl,
-      status,
-      videos,
+      url: videoUrl.trim(),
+      thumbnailUrl,
     };
-    console.log('Saving category', payload);
-    setShowModal(true);
+
+    if (categoryId) {
+      createPost(
+        {
+          categoryId,
+          data: {
+            title: videoTitle,
+            speaker: presenterName,
+            generation,
+            videoUrl: videoUrl.trim(),
+          },
+        },
+        {
+          onSuccess: () => {
+            console.log('영상 등록에 성공했습니다.');
+          },
+          onError: error => {
+            console.error(error);
+            console.log('영상 등록에 실패했습니다.');
+          },
+        }
+      );
+    } else {
+      window.sessionStorage.setItem('newActivityVideo', JSON.stringify(videoData));
+      router.back();
+    }
   };
 
   return (
@@ -195,6 +208,7 @@ const AdminActivityCategoryCreate: NextPage = () => {
                 $isUrlError={hasKoreanInUrl}
               />
             </Field>
+
             {thumbnailUrl && (
               <PreviewForm>
                 <PreviewLabel>영상 미리보기</PreviewLabel>
@@ -209,6 +223,7 @@ const AdminActivityCategoryCreate: NextPage = () => {
               </PreviewForm>
             )}
           </FormSection>
+
           <Actions>
             <PrimaryButton
               type="button"
@@ -217,7 +232,8 @@ const AdminActivityCategoryCreate: NextPage = () => {
                 !presenterName.trim() ||
                 !generation.trim() ||
                 !videoUrl.trim() ||
-                !thumbnailUrl
+                !thumbnailUrl ||
+                (categoryId ? isPending : false)
               }
               onClick={handleSave}
             >
@@ -227,55 +243,21 @@ const AdminActivityCategoryCreate: NextPage = () => {
                   !presenterName.trim() ||
                   !generation.trim() ||
                   !videoUrl.trim() ||
-                  !thumbnailUrl
+                  !thumbnailUrl ||
+                  (categoryId ? isPending : false)
                 }
               >
-                저장하기
+                {categoryId && isPending ? '저장 중...' : '저장하기'}
               </PrimaryButtonText>
             </PrimaryButton>
           </Actions>
         </ContentContainer>
       </Content>
-
-      {showModal && (
-        <ModalOverlay onClick={() => setShowModal(false)}>
-          <ModalCard onClick={e => e.stopPropagation()}>
-            <ModalInfo>
-              <ModalTitle>게시물 등록이 완료되었습니다.</ModalTitle>
-            </ModalInfo>
-            <ModalActions>
-              <ModalButtonContainer>
-                <MyDeleteButton
-                  type="button"
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      window.sessionStorage.setItem(
-                        'newActivityVideo',
-                        JSON.stringify({
-                          title: videoTitle,
-                          owner: presenterName,
-                          generation,
-                          url: videoUrl.trim(),
-                          thumbnailUrl,
-                        })
-                      );
-                    }
-                    setShowModal(false);
-                    router.push('/AdminActivityCategoryCreate');
-                  }}
-                >
-                  <DeleteButtonText>확인</DeleteButtonText>
-                </MyDeleteButton>
-              </ModalButtonContainer>
-            </ModalActions>
-          </ModalCard>
-        </ModalOverlay>
-      )}
     </Page>
   );
 };
 
-export default AdminActivityCategoryCreate;
+export default AdminActivityVideoCreate;
 
 const Page = styled.div`
   display: grid;
@@ -283,7 +265,6 @@ const Page = styled.div`
   min-height: 100vh;
   background: #ffffff;
   width: 100%;
-  height:;
 `;
 
 const Sidebar = styled.div`
@@ -394,6 +375,7 @@ const MenuItemActive = styled.div`
   line-height: 160%;
   cursor: pointer;
 `;
+
 const ArrowIcon = styled.img`
   width: 16px;
   height: 16px;
@@ -427,24 +409,20 @@ const Header = styled.header`
 
 const Title = styled.h1`
   color: #000;
-
-  /* header/h2-bold */
   font-family: Pretendard;
   font-size: 36px;
   font-style: normal;
   font-weight: 700;
-  line-height: 160%; /* 57.6px */
+  line-height: 160%;
 `;
 
 const Subtitle = styled.p`
   color: var(--grayscale-700, #626873);
-
-  /* body/b2/b2 */
   font-family: Pretendard;
   font-size: 20px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 32px */
+  line-height: 160%;
 `;
 
 const FormSection = styled.div`
@@ -471,13 +449,11 @@ const FieldHeader = styled.div`
 
 const TitleFieldLabel = styled.span`
   color: var(--grayscale-1000, #040405);
-
-  /* body/b2/b2-bold */
   font-family: Pretendard;
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
-  line-height: 160%; /* 32px */
+  line-height: 160%;
 `;
 
 const Counter = styled.span<{ $hasValue: boolean; $isMaxLength?: boolean; $isUrlError?: boolean }>`
@@ -532,6 +508,7 @@ const PrimaryButton = styled.button`
   padding: 10px 8px;
   justify-content: center;
   align-items: center;
+  border: none;
   background: ${({ disabled }) =>
     disabled ? 'var(--grayscale-300, #e0e2e5)' : 'var(--primary-600-main, #4285F4)'};
   cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
@@ -544,13 +521,11 @@ const PrimaryButton = styled.button`
 
 const PrimaryButtonText = styled.div<{ $disabled: boolean }>`
   color: ${({ $disabled }) => ($disabled ? 'var(--grayscale-400, #c3c6cb)' : '#ffffff')};
-
-  /* body/b3/b3 */
   font-family: Pretendard;
   font-size: 18px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 28.8px */
+  line-height: 160%;
 `;
 
 const StyledSelectBox = styled(SelectBoxBasic)<{ $hasValue: boolean }>`
@@ -574,7 +549,6 @@ const StyledSelectBox = styled(SelectBoxBasic)<{ $hasValue: boolean }>`
     svg {
       width: 24px;
       height: 24px;
-
       background: url('/dropdownarrow.svg') center/contain no-repeat;
       color: transparent;
       stroke: none;
@@ -587,7 +561,7 @@ const StyledSelectBox = styled(SelectBoxBasic)<{ $hasValue: boolean }>`
       font-size: 16px;
       font-style: normal;
       font-weight: 500;
-      line-height: 160%; /* 25.6px */
+      line-height: 160%;
     }
   }
 `;
@@ -601,13 +575,12 @@ const PreviewLabel = styled.div`
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
-  line-height: 160%; /* 32px */
+  line-height: 160%;
 `;
 
 const PreviewBox = styled.div`
   width: 488px;
   height: 268px;
-
   border-radius: 8px;
   background: #fff;
   display: flex;
@@ -632,13 +605,11 @@ const PreviewTitle = styled.div`
   overflow: hidden;
   color: var(--grayscale-1000, #040405);
   text-overflow: ellipsis;
-
-  /* body/b3/b3 */
   font-family: Pretendard;
   font-size: 18px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 28.8px */
+  line-height: 160%;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
@@ -647,36 +618,30 @@ const PreviewTitle = styled.div`
 
 const PublisherFieldLabel = styled.span`
   color: var(--grayscale-1000, #040405);
-
-  /* body/b2/b2-bold */
   font-family: Pretendard;
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
-  line-height: 160%; /* 32px */
+  line-height: 160%;
 `;
 
 const GenerationFieldLabel = styled.span`
   color: var(--grayscale-1000, #040405);
-
-  /* body/b2/b2-bold */
   font-family: Pretendard;
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
-  line-height: 160%; /* 32px */
+  line-height: 160%;
   align-self: stretch;
 `;
 
 const UrlFieldLabel = styled.span`
   color: var(--grayscale-1000, #040405);
-
-  /* body/b2/b2-bold */
   font-family: Pretendard;
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
-  line-height: 160%; /* 32px */
+  line-height: 160%;
 `;
 
 const PreviewForm = styled.div`
@@ -685,4 +650,30 @@ const PreviewForm = styled.div`
   align-items: flex-start;
   gap: 8px;
   align-self: stretch;
+`;
+
+const SecondaryButton = styled.button`
+  border-radius: 8px;
+  border: 1px solid var(--primary-600-main, #4285f4);
+  background: #fff;
+  display: flex;
+  width: 300px;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+
+  &:hover {
+    background: #f0f7ff;
+  }
+`;
+
+const SecondaryButtonText = styled.div`
+  color: var(--primary-600-main, #4285f4);
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
 `;

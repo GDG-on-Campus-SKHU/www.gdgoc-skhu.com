@@ -53,13 +53,6 @@ interface GetGalleryProjectsResponse {
   galleryProjectSummaryResponseDtoList: GalleryProjectSummaryDto[];
 }
 
-interface GalleryProjectMemberDto {
-  userId: number;
-  memberRole: MemberRole; // 'LEADER' | 'MEMBER'
-  name: string;
-  part: Part; // 'PM' | 'DESIGN' | ...
-}
-
 interface GalleryProjectMemberDetailDto {
   userId: number;
   memberRole: MemberRole;
