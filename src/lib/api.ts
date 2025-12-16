@@ -62,10 +62,7 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const { accessToken } = useAuthStore.getState();
 
   const token =
-    accessToken ||
-    (typeof window !== 'undefined'
-      ? sessionStorage.getItem('accessToken')
-      : null);
+    accessToken || (typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null);
 
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -123,8 +120,8 @@ api.interceptors.response.use(
           withCredentials: true, // Refresh Token 쿠키 전송을 위해 필수
           headers: {
             // 명시적으로 Authorization 헤더 제거 (혹시 전역 설정이 있을 경우 대비)
-            Authorization: '', 
-          }
+            Authorization: '',
+          },
         }
       );
 
@@ -137,7 +134,7 @@ api.interceptors.response.use(
         name,
         role,
       });
-      
+
       // 세션 스토리지도 업데이트 (새로고침 대비용이라면)
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('accessToken', accessToken);

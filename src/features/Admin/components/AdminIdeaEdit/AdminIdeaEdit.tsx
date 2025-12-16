@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-
 // --- Constants & Utils Imports ---
 import {
   INTRO_MAX_LENGTH,
@@ -12,12 +11,10 @@ import {
   TEAM_ROLES,
   TeamRole,
 } from '@/features/team-building/components/IdeaForm/IdeaFormUtils'; // 경로 프로젝트에 맞게 수정 필요
-
 // --- Components Imports ---
 import Radio from '@/features/team-building/components/Radio';
 import ReQuill from '@/features/team-building/components/ReQuill';
 import useQuillImages from '@/features/team-building/hooks/useQuillImages';
-
 // --- Styles Imports (Team Building) ---
 import {
   FieldCounter,
@@ -41,6 +38,13 @@ import {
   TeamTitle,
   TextAreaWrapper,
 } from '@/features/team-building/styles/IdeaForm';
+// --- API Imports ---
+import {
+  AdminIdeaCompositionRequest,
+  AdminIdeaUpdateRequest,
+  getAdminProjectIdeaDetail,
+  updateAdminIdea,
+} from '@/lib/adminIdea.api';
 
 // --- Styles Imports (Admin Idea Edit) ---
 // 사이드바 관련 스타일은 제거하고 콘텐츠 영역 스타일만 남김
@@ -62,14 +66,6 @@ import {
   TitleCNTR,
 } from '../../styles/AdminIdeaEdit';
 
-// --- API Imports ---
-import {
-  getAdminProjectIdeaDetail,
-  updateAdminIdea,
-  AdminIdeaCompositionRequest,
-  AdminIdeaUpdateRequest,
-} from '@/lib/adminIdea.api';
-
 const DEFAULT_TEAM: Record<TeamRole, number> = {
   planning: 0,
   design: 0,
@@ -82,10 +78,7 @@ const DEFAULT_TEAM: Record<TeamRole, number> = {
 // --- MAPPING HELPERS ---
 
 // UI Role Key -> API Part Enum
-const ROLE_UI_TO_API: Record<
-  TeamRole,
-  'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI'
-> = {
+const ROLE_UI_TO_API: Record<TeamRole, 'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI'> = {
   planning: 'PM',
   design: 'DESIGN',
   frontendWeb: 'WEB',
@@ -95,10 +88,7 @@ const ROLE_UI_TO_API: Record<
 };
 
 // API Part Enum -> UI Role Key
-const ROLE_API_TO_UI: Record<
-  'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI',
-  TeamRole
-> = {
+const ROLE_API_TO_UI: Record<'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI', TeamRole> = {
   PM: 'planning',
   DESIGN: 'design',
   WEB: 'frontendWeb',
@@ -109,11 +99,11 @@ const ROLE_API_TO_UI: Record<
 
 // Korean Label -> API Part Enum (For Creator Part)
 const KOREAN_PART_TO_API: Record<string, 'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI'> = {
-  '기획': 'PM',
-  '디자인': 'DESIGN',
+  기획: 'PM',
+  디자인: 'DESIGN',
   '프론트엔드 (웹)': 'WEB',
   '프론트엔드 (모바일)': 'MOBILE',
-  '백엔드': 'BACKEND',
+  백엔드: 'BACKEND',
   'AI/ML': 'AI',
 };
 
@@ -192,7 +182,7 @@ export default function AdminIdeaEdit() {
         : name === 'intro'
           ? value.slice(0, INTRO_MAX_LENGTH)
           : value;
-    
+
     setForm(prev => ({ ...prev, [name]: limited }));
   };
 
@@ -258,12 +248,11 @@ export default function AdminIdeaEdit() {
       });
 
       alert('변경 사항이 적용되었습니다.');
-      
+
       router.push({
         pathname: '/AdminIdeaDetail', // 실제 상세페이지 라우트명 확인
         query: { projectId, id },
       });
-
     } catch (error) {
       console.error('Failed to update idea:', error);
       alert('아이디어 수정에 실패했습니다.');
@@ -291,10 +280,7 @@ export default function AdminIdeaEdit() {
           <TitleCNTR>
             <FieldHeader>
               <FieldLabel htmlFor="title">아이디어 제목</FieldLabel>
-              <FieldCounter
-                $hasValue={!!form.title}
-                $isOver={form.title.length > TITLE_MAX_LENGTH}
-              >
+              <FieldCounter $hasValue={!!form.title} $isOver={form.title.length > TITLE_MAX_LENGTH}>
                 {titleCount}
               </FieldCounter>
             </FieldHeader>
@@ -311,10 +297,7 @@ export default function AdminIdeaEdit() {
           <FieldCNTR>
             <FieldHeader>
               <FieldLabel htmlFor="intro">아이디어 한 줄 소개</FieldLabel>
-              <FieldCounter
-                $hasValue={!!form.intro}
-                $isOver={form.intro.length > INTRO_MAX_LENGTH}
-              >
+              <FieldCounter $hasValue={!!form.intro} $isOver={form.intro.length > INTRO_MAX_LENGTH}>
                 {introCount}
               </FieldCounter>
             </FieldHeader>

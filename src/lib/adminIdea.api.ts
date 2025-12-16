@@ -90,17 +90,14 @@ export const getAdminProjectIdeas = (params: {
   sortBy?: 'id';
   order?: 'ASC' | 'DESC';
 }) =>
-  api.get<AdminIdeaListResponse>(
-    `/admin/projects/${params.projectId}/ideas`,
-    {
-      params: {
-        page: params.page,
-        size: params.size,
-        sortBy: params.sortBy ?? 'id',
-        order: params.order ?? 'ASC',
-      },
-    }
-  );
+  api.get<AdminIdeaListResponse>(`/admin/projects/${params.projectId}/ideas`, {
+    params: {
+      page: params.page,
+      size: params.size,
+      sortBy: params.sortBy ?? 'id',
+      order: params.order ?? 'ASC',
+    },
+  });
 
 /* ======================================================
  * Idea (Admin - Detail)
@@ -150,13 +147,8 @@ export interface AdminIdeaDetail {
 /**
  * 특정 아이디어 상세 조회 (관리자)
  */
-export const getAdminProjectIdeaDetail = (params: {
-  projectId: number;
-  ideaId: number;
-}) =>
-  api.get<AdminIdeaDetail>(
-    `/admin/projects/${params.projectId}/ideas/${params.ideaId}`
-  );
+export const getAdminProjectIdeaDetail = (params: { projectId: number; ideaId: number }) =>
+  api.get<AdminIdeaDetail>(`/admin/projects/${params.projectId}/ideas/${params.ideaId}`);
 
 /* ======================================================
  * Idea (Admin - Restore)
@@ -180,8 +172,7 @@ export const restoreAdminIdea = (ideaId: number) =>
  *
  * ⚠️ DB에서 실제 삭제되며 복구 불가
  */
-export const deleteAdminIdea = (ideaId: number) =>
-  api.delete<void>(`/admin/ideas/${ideaId}`);
+export const deleteAdminIdea = (ideaId: number) => api.delete<void>(`/admin/ideas/${ideaId}`);
 
 /* ======================================================
  * Idea (Admin - Remove Member)
@@ -192,13 +183,8 @@ export const deleteAdminIdea = (ideaId: number) =>
  *
  * ⚠️ 팀장(CREATOR)은 제거 불가
  */
-export const removeAdminIdeaMember = (params: {
-  ideaId: number;
-  memberId: number;
-}) =>
-  api.delete<void>(
-    `/admin/ideas/${params.ideaId}/members/${params.memberId}`
-  );
+export const removeAdminIdeaMember = (params: { ideaId: number; memberId: number }) =>
+  api.delete<void>(`/admin/ideas/${params.ideaId}/members/${params.memberId}`);
 
 /* ======================================================
  * Idea (Admin - Update)
@@ -229,8 +215,5 @@ export interface AdminIdeaUpdateRequest {
 /**
  * 관리자 아이디어 수정
  */
-export const updateAdminIdea = (params: {
-  ideaId: number;
-  data: AdminIdeaUpdateRequest;
-}) =>
+export const updateAdminIdea = (params: { ideaId: number; data: AdminIdeaUpdateRequest }) =>
   api.put<void>(`/admin/ideas/${params.ideaId}`, params.data);

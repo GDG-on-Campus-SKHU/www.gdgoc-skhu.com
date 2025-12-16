@@ -15,7 +15,6 @@ import {
   EnrollmentStatus,
   MemberSentApplyCard,
 } from '../../types/applyStatusData';
-import { Part } from '../../types/gallery';
 import Modal from '../Modal_Fix';
 import ApplyPeriodToggle, { SupportPhase } from './ApplyPeriodToggle';
 import MyApplyCard from './MyApplyCard';

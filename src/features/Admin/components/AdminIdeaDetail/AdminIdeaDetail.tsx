@@ -1,11 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
+// 1. deleteAdminIdea API 추가 Import
+import {
+  AdminIdeaDetail as AdminIdeaDetailType,
+  deleteAdminIdea,
+  getAdminProjectIdeaDetail,
+} from '@/lib/adminIdea.api';
 import styled from 'styled-components';
 
 import MyTeamCount from '../../../team-building/components/MyTeam/MyTeamCount';
 import MyTeamMemberCard from '../../../team-building/components/MyTeam/MyTeamMember';
 import MyTeamStatusCard from '../../../team-building/components/MyTeam/MyTeamStatus';
-
 import {
   CancelButtonText,
   ContentContainer,
@@ -48,14 +53,7 @@ import {
   TitleSection,
   TitleText,
 } from '../../styles/AdminIdeaDetail';
-
 import { sanitizeDescription } from '../../utils/sanitizeDescription';
-// 1. deleteAdminIdea API 추가 Import
-import {
-  AdminIdeaDetail as AdminIdeaDetailType,
-  getAdminProjectIdeaDetail,
-  deleteAdminIdea, 
-} from '@/lib/adminIdea.api';
 
 const TEAM_ROLES = [
   { key: 'planning', label: '기획', apiKey: 'PM' },
@@ -178,7 +176,7 @@ export default function AdminIdeaDetail() {
 
   useEffect(() => {
     if (!id || !projectId) return;
-    
+
     getAdminProjectIdeaDetail({
       projectId: Number(projectId),
       ideaId: Number(id),
@@ -194,7 +192,8 @@ export default function AdminIdeaDetail() {
       const roster = ideaData.rosters.find(r => r.part === roleDef.apiKey);
       const capacity = roster?.maxMemberCount ?? 0;
       const current = roster?.currentMemberCount ?? 0;
-      const members = roster?.members.map(m => ({
+      const members =
+        roster?.members.map(m => ({
           id: String(m.userId),
           name: m.memberName,
           isLeader: m.memberRole === 'CREATOR',
@@ -237,7 +236,7 @@ export default function AdminIdeaDetail() {
   // 2. 삭제 핸들러 수정: 실제 API 호출
   const handleDeleteConfirm = async () => {
     if (!id) return;
-    
+
     try {
       // API 호출
       await deleteAdminIdea(Number(id));
@@ -304,7 +303,9 @@ export default function AdminIdeaDetail() {
                       <MemberCount key={roleKey}>
                         <RoleName>{roleLabel}</RoleName>
                         <CountStat>
-                          <CountNum>{stat.current} / {stat.total}</CountNum>
+                          <CountNum>
+                            {stat.current} / {stat.total}
+                          </CountNum>
                           <CountUnit>명</CountUnit>
                         </CountStat>
                       </MemberCount>
@@ -320,7 +321,7 @@ export default function AdminIdeaDetail() {
             <DescriptionBox dangerouslySetInnerHTML={{ __html: safeDescription }} />
           </DescriptionSection>
         </ResponsiveWrapper>
-        
+
         <TeamCompositionSection>
           <SectionTitle>현재 팀원 구성</SectionTitle>
           <TeamGrid>

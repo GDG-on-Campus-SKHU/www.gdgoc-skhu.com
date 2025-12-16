@@ -12,6 +12,15 @@ import type {
   ProjectGalleryUpsertBody,
 } from '../../types/gallery';
 
+// 폼에서 사용하는 한글 파트 타입 정의
+type FormLeaderPart =
+  | '기획'
+  | '디자인'
+  | '프론트엔드 (웹)'
+  | '프론트엔드 (모바일)'
+  | '백엔드'
+  | 'AI/ML';
+
 export default function ProjectGalleryPostPage() {
   const router = useRouter();
   const { query, isReady } = router;
@@ -44,9 +53,10 @@ export default function ProjectGalleryPostPage() {
         ? (genRaw as '25-26' | '24-25' | '이전 기수')
         : undefined;
 
+    // [Fix] API 타입(Part)이 아닌, 폼이 요구하는 한글 타입(FormLeaderPart)으로 단언
     const leaderPart =
       typeof query.leaderPart === 'string' && query.leaderPart.length > 0
-        ? query.leaderPart
+        ? (query.leaderPart as FormLeaderPart)
         : undefined;
 
     let serviceStatus: 'IN_SERVICE' | 'NOT_IN_SERVICE' | undefined;
@@ -55,8 +65,7 @@ export default function ProjectGalleryPostPage() {
       serviceStatus = statusRaw;
     }
 
-    // ⚠️ teamMembers 파싱은 ProjectPostFormInitialValues 타입에 맞춰야 함
-    // (다음에 ProjectPostForm 보여주면 정확히 맞춰서 수정해줄게)
+    // teamMembers 파싱
     let teamMembers: any[] | undefined;
     if (typeof query.teamMembers === 'string') {
       try {
@@ -65,7 +74,7 @@ export default function ProjectGalleryPostPage() {
           teamMembers = parsed;
         }
       } catch {
-        // 실패 시 undefined 유지
+        // ignore error
       }
     }
 

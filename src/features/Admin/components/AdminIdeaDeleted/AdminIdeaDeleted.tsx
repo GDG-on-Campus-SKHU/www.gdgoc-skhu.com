@@ -1,5 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
+import {
+  AdminIdeaDetail as AdminIdeaDetailType,
+  deleteAdminIdea,
+  getAdminProjectIdeaDetail,
+  restoreAdminIdea,
+} from '@/lib/adminIdea.api';
 import styled from 'styled-components';
 
 import {
@@ -49,14 +55,7 @@ import {
   TitleSection,
   TitleText,
 } from '../../styles/AdminIdeaDeleted'; // 스타일 파일 경로는 프로젝트에 맞게 확인 필요
-
 import { sanitizeDescription } from '../../utils/sanitizeDescription';
-import {
-  AdminIdeaDetail as AdminIdeaDetailType,
-  getAdminProjectIdeaDetail,
-  restoreAdminIdea,
-  deleteAdminIdea,
-} from '@/lib/adminIdea.api';
 
 // --- Constants & Types ---
 
@@ -163,7 +162,7 @@ export default function AdminIdeaDeleted() {
     if (!ideaData) return {};
 
     const map: Record<string, { current: number; total: number }> = {};
-    
+
     // 기본 0으로 초기화
     TEAM_ROLES.forEach(r => {
       map[r.key] = { current: 0, total: 0 };
@@ -221,8 +220,8 @@ export default function AdminIdeaDeleted() {
     setModalType('closed');
     // 목록으로 이동 (쿼리 유지)
     router.push({
-        pathname: '/AdminIdeaIdea', // 목록 페이지 경로 확인 필요
-        query: { projectId }
+      pathname: '/AdminIdeaIdea', // 목록 페이지 경로 확인 필요
+      query: { projectId },
     });
   };
 
@@ -286,7 +285,7 @@ export default function AdminIdeaDeleted() {
                   {group.map(roleKey => {
                     const roleLabel = TEAM_ROLES.find(r => r.key === roleKey)?.label;
                     const stat = statsMap[roleKey] ?? { current: 0, total: 0 };
-                    
+
                     return (
                       <MemberCount key={roleKey}>
                         <RoleName>{roleLabel}</RoleName>
@@ -328,14 +327,15 @@ export default function AdminIdeaDeleted() {
       {/* ===== MODAL ===== */}
       {modalType !== 'closed' && (
         <ModalOverlay>
-            
           {/* 복구 확인 모달 */}
           {modalType === 'restore_confirm' && (
             <ModalCard>
               <ModalInfo>
                 <ModalTitle>{ideaData.title}</ModalTitle>
                 <ModalMessage>아이디어를 복구할까요?</ModalMessage>
-                <ModalMessage>이 작업은 아이디어를 '모집 중' 상태로 되돌립니다.</ModalMessage>
+                <ModalMessage>
+                  이 작업은 아이디어를 &apos;모집 중&apos; 상태로 되돌립니다.
+                </ModalMessage>
               </ModalInfo>
               <ModalActions>
                 <ModalButtonContainer>
@@ -358,7 +358,7 @@ export default function AdminIdeaDeleted() {
                 <ModalTitle>{ideaData.title}</ModalTitle>
                 <ModalMessage>아이디어를 완전히 삭제할까요?</ModalMessage>
                 <ModalMessage style={{ color: '#f44242' }}>
-                    이 작업은 되돌릴 수 없으며 DB에서 영구 삭제됩니다.
+                  이 작업은 되돌릴 수 없으며 DB에서 영구 삭제됩니다.
                 </ModalMessage>
               </ModalInfo>
               <ModalActions>
@@ -388,8 +388,8 @@ export default function AdminIdeaDeleted() {
             </ModalSuccessCard>
           )}
 
-           {/* 삭제 성공 모달 */}
-           {modalType === 'delete_success' && (
+          {/* 삭제 성공 모달 */}
+          {modalType === 'delete_success' && (
             <ModalSuccessCard $compact>
               <ModalSuccessCardTitle>아이디어가 영구적으로 삭제되었습니다.</ModalSuccessCardTitle>
               <ModalActions>
@@ -401,7 +401,6 @@ export default function AdminIdeaDeleted() {
               </ModalActions>
             </ModalSuccessCard>
           )}
-
         </ModalOverlay>
       )}
     </ContentContainer>

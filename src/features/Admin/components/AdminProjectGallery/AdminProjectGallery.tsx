@@ -81,20 +81,15 @@ export default function AdminProjectGallery({
   const isControlled = typeof onPageChange === 'function';
   const resolvedTotalPages = Math.max(
     1,
-    isControlled
-      ? totalPages ?? 1
-      : Math.ceil(rows.length / ITEMS_PER_PAGE)
+    isControlled ? (totalPages ?? 1) : Math.ceil(rows.length / ITEMS_PER_PAGE)
   );
 
   const page = Math.min(
-    Math.max(isControlled ? currentPage ?? 1 : internalPage, 1),
+    Math.max(isControlled ? (currentPage ?? 1) : internalPage, 1),
     resolvedTotalPages
   );
 
-  const displayedRows = rows.slice(
-    (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE
-  );
+  const displayedRows = rows.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   const changePage = (p: number) => {
     const next = Math.min(Math.max(p, 1), resolvedTotalPages);
@@ -106,9 +101,7 @@ export default function AdminProjectGallery({
     <ContentContainer>
       <Heading>
         <Title>프로젝트 갤러리 관리</Title>
-        <Description>
-          프로젝트 갤러리에 전시된 글을 관리하고 수정할 수 있습니다.
-        </Description>
+        <Description>프로젝트 갤러리에 전시된 글을 관리하고 수정할 수 있습니다.</Description>
       </Heading>
 
       <SearchBar>
@@ -130,23 +123,45 @@ export default function AdminProjectGallery({
 
       <TableCard>
         <TableHeader>
-          <IdColumn><IDHeaderCell>ID</IDHeaderCell></IdColumn>
-          <NameColumn><NameHeaderCell>프로젝트명</NameHeaderCell></NameColumn>
-          <GenerationColumn><GenerationHeaderCell>기수</GenerationHeaderCell></GenerationColumn>
-          <DisplayColumn><DisplayHeaderCell>전시여부</DisplayHeaderCell></DisplayColumn>
-          <DateColumn><DateHeaderCell>등록날짜</DateHeaderCell></DateColumn>
+          <IdColumn>
+            <IDHeaderCell>ID</IDHeaderCell>
+          </IdColumn>
+          <NameColumn>
+            <NameHeaderCell>프로젝트명</NameHeaderCell>
+          </NameColumn>
+          <GenerationColumn>
+            <GenerationHeaderCell>기수</GenerationHeaderCell>
+          </GenerationColumn>
+          <DisplayColumn>
+            <DisplayHeaderCell>전시여부</DisplayHeaderCell>
+          </DisplayColumn>
+          <DateColumn>
+            <DateHeaderCell>등록날짜</DateHeaderCell>
+          </DateColumn>
           <ActionColumn />
         </TableHeader>
 
         <TableBody>
           {displayedRows.map(row => (
             <TableRow key={row.id}>
-              <IdColumn><IDBodyCell>{row.id}</IDBodyCell></IdColumn>
-              <NameColumn><NameBodyCell>{row.name}</NameBodyCell></NameColumn>
-              <GenerationColumn><GenerationBodyCell>{row.generation}</GenerationBodyCell></GenerationColumn>
-              <DisplayColumn><DisplayBodyCell>{row.displayStatus}</DisplayBodyCell></DisplayColumn>
-              <DateColumn><DateBodyCell>{row.createdAt}</DateBodyCell></DateColumn>
-              <ActionColumn><ActionButton>수정하기</ActionButton></ActionColumn>
+              <IdColumn>
+                <IDBodyCell>{row.id}</IDBodyCell>
+              </IdColumn>
+              <NameColumn>
+                <NameBodyCell>{row.name}</NameBodyCell>
+              </NameColumn>
+              <GenerationColumn>
+                <GenerationBodyCell>{row.generation}</GenerationBodyCell>
+              </GenerationColumn>
+              <DisplayColumn>
+                <DisplayBodyCell>{row.displayStatus}</DisplayBodyCell>
+              </DisplayColumn>
+              <DateColumn>
+                <DateBodyCell>{row.createdAt}</DateBodyCell>
+              </DateColumn>
+              <ActionColumn>
+                <ActionButton>수정하기</ActionButton>
+              </ActionColumn>
             </TableRow>
           ))}
         </TableBody>
@@ -159,11 +174,7 @@ export default function AdminProjectGallery({
 
         <PageNumberGroup>
           {Array.from({ length: resolvedTotalPages }, (_, i) => (
-            <PageInsertNum
-              key={i + 1}
-              $active={page === i + 1}
-              onClick={() => changePage(i + 1)}
-            >
+            <PageInsertNum key={i + 1} $active={page === i + 1} onClick={() => changePage(i + 1)}>
               {i + 1}
             </PageInsertNum>
           ))}
