@@ -1,4 +1,3 @@
-/** 프로젝트 상세보기 ui 폼 */
 import Image from 'next/image';
 import { css } from '@emotion/react';
 

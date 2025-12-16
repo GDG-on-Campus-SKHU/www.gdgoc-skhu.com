@@ -14,10 +14,6 @@ import MyTeamStatusCard from '../../../team-building/components/MyTeam/MyTeamSta
 import {
   CancelButtonText,
   ContentContainer,
-  CountNum,
-  CountStat,
-  CountUnit,
-  DeleteButtonText,
   Description,
   DescriptionBox,
   DescriptionSection,
@@ -52,8 +48,10 @@ import {
   Title,
   TitleSection,
   TitleText,
+  CountStat,
+  CountNum,
+  CountUnit,
 } from '../../styles/AdminIdeaDetail';
-import { sanitizeDescription } from '../../utils/sanitizeDescription';
 
 const TEAM_ROLES = [
   { key: 'planning', label: '기획', apiKey: 'PM' },
@@ -77,95 +75,9 @@ const SectionTitle = styled.h3`
   align-items: center;
 `;
 
-const ActionRow = styled.div`
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  width: 100%;
-  margin: 160px 0 0;
-`;
-
-const ActionButton = styled.button<{ $primary?: boolean; $danger?: boolean }>`
-  width: 300px;
-  height: 50px;
-  border-radius: 8px;
-  font-size: 18px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 10px 8px;
-  border: 1px solid
-    ${({ $primary, $danger }) => {
-      if ($primary) return '#4285f4';
-      if ($danger) return '#f44242';
-      return '#d7dadd';
-    }};
-  background: #ffffff;
-  color: ${({ $primary, $danger }) => {
-    if ($primary) return '#4285f4';
-    if ($danger) return '#f44242';
-    return '#040405';
-  }};
-  transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease;
-
-  &:hover {
-    background: ${({ $primary, $danger }) => {
-      if ($primary) return 'rgba(66, 133, 244, 0.08)';
-      if ($danger) return 'rgba(244, 66, 66, 0.08)';
-      return 'rgba(0, 0, 0, 0.02)';
-    }};
-  }
-`;
-
-const SubjectRow = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 100px;
-  margin: 40px 0 20px 0;
-`;
-
-const TeamCompositionSection = styled.div`
-  display: flex;
-  width: 1080px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 20px;
-  margin-top: 20px;
-`;
-
-const TeamGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  column-gap: 16px;
-  row-gap: 60px;
-  width: 100%;
-`;
-
-const TeamPartColumn = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-`;
-
-const TeamPartHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const TeamPartTitle = styled.span`
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 32px;
-`;
-
-const TeamPartBody = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`;
+/* ======================================================
+ * Component
+ * ====================================================== */
 
 export default function AdminIdeaDetail() {
   const router = useRouter();

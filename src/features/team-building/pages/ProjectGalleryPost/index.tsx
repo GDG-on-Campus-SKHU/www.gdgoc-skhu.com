@@ -5,6 +5,7 @@ import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
 import ProjectPostForm, {
+  PART_OPTIONS,
   ProjectPostFormInitialValues,
 } from '../../components/ProjectGalleryPost/ProjectPostForm';
 import type {
