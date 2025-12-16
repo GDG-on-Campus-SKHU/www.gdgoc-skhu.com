@@ -2,15 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
+import { useProjectGalleryLeaderProfile } from '@/lib/projectGallery.api';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
 import {
-  GenerationValue,
-  ProjectMemberBase,
   GenerationTab,
-  ProjectGalleryUpsertBody,
+  GenerationValue,
   Part,
+  ProjectGalleryUpsertBody,
+  ProjectMemberBase,
 } from '../../types/gallery';
 import Button from '../Button';
 import Field from '../Field';
@@ -20,7 +21,6 @@ import SelectBoxBasic from '../SelectBoxBasic_Fix';
 import MemberSelectModal, { Member } from './MemberSelectModal';
 import ProjectDescriptionEditor from './ProjectDescriptionEditor';
 import ProjectMemberRow from './ProjectMemberRow';
-import { useProjectGalleryLeaderProfile } from '@/lib/projectGallery.api';
 
 // 기수 / 파트 옵션
 const GENERATION_TABS: GenerationTab[] = ['25-26', '24-25', '이전 기수'];

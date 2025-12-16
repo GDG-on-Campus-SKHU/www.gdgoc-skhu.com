@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { css } from '@emotion/react';
 
-import { CurrentTeamRoster, CurrentTeamMember, CurrentTeamData } from '../../types/currentTeamData';
+import { CurrentTeamData, CurrentTeamMember, CurrentTeamRoster } from '../../types/currentTeamData';
 import Modal from '../Modal_Fix';
 import { SupportPhase } from './ApplyPeriodToggle';
 import MyTeamCount from './MyTeamCount';

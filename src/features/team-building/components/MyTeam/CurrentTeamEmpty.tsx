@@ -1,8 +1,8 @@
+import { useEffect } from 'react';
+import { useCurrentTeam } from '@/lib/myTeam.api';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
-import { useCurrentTeam } from '@/lib/myTeam.api';
-import { useEffect } from 'react';
 
 type CurrentTeamEmptyProps = {
   /** MyTeamPage에서 "현재 팀원 구성" 탭 + 팀원일 때만 enabled 주는 용도 */

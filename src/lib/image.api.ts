@@ -1,11 +1,11 @@
-import { useMutation, UseMutationOptions } from '@tanstack/react-query';
-import { api } from './api';
-
 import type {
   ImageDirectory,
   UploadedImage,
   UploadImageResponseDto,
 } from '@/features/team-building/types/imageUploadData';
+import { useMutation, UseMutationOptions } from '@tanstack/react-query';
+
+import { api } from './api';
 
 /* =========================================================
  * Mutation Keys

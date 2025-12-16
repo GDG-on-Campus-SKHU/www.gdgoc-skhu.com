@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
-import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/router';
+
 import { useAuthStore } from '../../../lib/authStore';
 
 const AdminDashboard = dynamic(

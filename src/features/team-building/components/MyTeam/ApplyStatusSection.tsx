@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
+import {
+  useDetermineEnrollment,
+  useEnrollmentReadabilities,
+  useReceivedEnrollments,
+} from '@/lib/myTeam.api';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
@@ -12,11 +17,6 @@ import {
 import Modal from '../Modal_Fix';
 import ApplyPeriodToggle, { SupportPhase } from './ApplyPeriodToggle';
 import ApplyStatusTable from './ApplyStatusTable';
-import {
-  useDetermineEnrollment,
-  useEnrollmentReadabilities,
-  useReceivedEnrollments,
-} from '@/lib/myTeam.api';
 
 type PendingAction = 'ACCEPT' | 'REJECT';
 
