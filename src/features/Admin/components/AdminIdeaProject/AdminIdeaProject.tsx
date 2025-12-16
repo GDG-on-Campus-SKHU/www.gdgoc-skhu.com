@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
+import { getAdminProjects } from '../../../../lib/adminIdea.api';
 import {
   ArrowIcon,
   ContentContainer,
@@ -25,8 +26,6 @@ import {
   TableRow,
   Title,
 } from '../../styles/AdminIdeaProject';
-
-import { getAdminProjects } from '../../../../lib/adminIdea.api';
 
 type ProjectRow = {
   id: number;
@@ -60,12 +59,8 @@ export default function AdminIdeaProject() {
           projects.map(project => ({
             id: project.projectId,
             name: project.projectName,
-            startDate: project.startAt
-              ? project.startAt.slice(0, 10).replaceAll('-', '.')
-              : '—',
-            endDate: project.endAt
-              ? project.endAt.slice(0, 10).replaceAll('-', '.')
-              : '—',
+            startDate: project.startAt ? project.startAt.slice(0, 10).replaceAll('-', '.') : '—',
+            endDate: project.endAt ? project.endAt.slice(0, 10).replaceAll('-', '.') : '—',
           }))
         );
 
@@ -82,9 +77,7 @@ export default function AdminIdeaProject() {
     <ContentContainer>
       <Heading>
         <Title>아이디어 관리</Title>
-        <Description>
-          역대 프로젝트에 게시된 아이디어 리스트를 관리할 수 있습니다.
-        </Description>
+        <Description>역대 프로젝트에 게시된 아이디어 리스트를 관리할 수 있습니다.</Description>
       </Heading>
 
       <TableCard>
@@ -114,9 +107,7 @@ export default function AdminIdeaProject() {
               }
             >
               <PJItemName>
-                <PJNameItemCell title={row.name}>
-                  {row.name}
-                </PJNameItemCell>
+                <PJNameItemCell title={row.name}>{row.name}</PJNameItemCell>
               </PJItemName>
               <PJItemStart>
                 <DateItemCell>{row.startDate}</DateItemCell>
@@ -130,29 +121,19 @@ export default function AdminIdeaProject() {
       </TableCard>
 
       <Pagination>
-        <PageButton
-          $isArrow
-          onClick={() => setPage(p => Math.max(1, p - 1))}
-        >
+        <PageButton $isArrow onClick={() => setPage(p => Math.max(1, p - 1))}>
           <ArrowIcon $direction="left" />
         </PageButton>
 
         <PageNumberGroup>
           {Array.from({ length: totalPages }, (_, i) => (
-            <PageInsertNum
-              key={i + 1}
-              $active={page === i + 1}
-              onClick={() => setPage(i + 1)}
-            >
+            <PageInsertNum key={i + 1} $active={page === i + 1} onClick={() => setPage(i + 1)}>
               {i + 1}
             </PageInsertNum>
           ))}
         </PageNumberGroup>
 
-        <PageButton
-          $isArrow
-          onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-        >
+        <PageButton $isArrow onClick={() => setPage(p => Math.min(totalPages, p + 1))}>
           <ArrowIcon $direction="right" />
         </PageButton>
       </Pagination>

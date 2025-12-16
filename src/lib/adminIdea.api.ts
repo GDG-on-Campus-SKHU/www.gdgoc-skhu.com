@@ -23,8 +23,8 @@ export interface AdminPageInfo {
 export interface AdminProject {
   projectId: number;
   projectName: string;
-  startAt: string;          // ISO String
-  endAt: string | null;     // 종료일이 없을 수 있음
+  startAt: string; // ISO String
+  endAt: string | null; // 종료일이 없을 수 있음
 }
 
 /**
@@ -94,17 +94,14 @@ export const getAdminProjectIdeas = (params: {
   sortBy?: 'id';
   order?: 'ASC' | 'DESC';
 }) =>
-  api.get<AdminIdeaListResponse>(
-    `/admin/projects/${params.projectId}/ideas`,
-    {
-      params: {
-        page: params.page,
-        size: params.size,
-        sortBy: params.sortBy ?? 'id',
-        order: params.order ?? 'ASC',
-      },
-    }
-  );
+  api.get<AdminIdeaListResponse>(`/admin/projects/${params.projectId}/ideas`, {
+    params: {
+      page: params.page,
+      size: params.size,
+      sortBy: params.sortBy ?? 'id',
+      order: params.order ?? 'ASC',
+    },
+  });
 
 /* ======================================================
  * Idea (Admin - Detail)
@@ -117,10 +114,10 @@ export interface AdminIdeaRoster {
   part: string; // PM | DESIGN | WEB | BACKEND | ...
   currentMemberCount: number;
   maxMemberCount: number;
-  members: {
+  members: Array<{
     memberId: number;
     name: string;
-  }[];
+  }>;
 }
 
 /**
@@ -147,10 +144,5 @@ export interface AdminIdeaDetail {
 /**
  * 특정 아이디어 상세 조회 (관리자)
  */
-export const getAdminProjectIdeaDetail = (params: {
-  projectId: number;
-  ideaId: number;
-}) =>
-  api.get<AdminIdeaDetail>(
-    `/admin/projects/${params.projectId}/ideas/${params.ideaId}`
-  );
+export const getAdminProjectIdeaDetail = (params: { projectId: number; ideaId: number }) =>
+  api.get<AdminIdeaDetail>(`/admin/projects/${params.projectId}/ideas/${params.ideaId}`);

@@ -1,9 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
+import {
+  AdminIdeaDetail as AdminIdeaDetailType,
+  AdminIdeaRoster,
+  getAdminProjectIdeaDetail,
+} from '@/lib/adminIdea.api';
 
 import {
   Content,
   ContentContainer,
+  CountNum,
+  CountStat,
+  CountUnit,
   Description,
   DescriptionBox,
   DescriptionSection,
@@ -38,17 +46,8 @@ import {
   Title,
   TitleSection,
   TitleText,
-  CountStat,
-  CountNum,
-  CountUnit,
 } from '../../styles/AdminIdeaDetail';
-
 import { sanitizeDescription } from '../../utils/sanitizeDescription';
-import {
-  AdminIdeaDetail as AdminIdeaDetailType,
-  AdminIdeaRoster,
-  getAdminProjectIdeaDetail,
-} from '@/lib/adminIdea.api';
 
 /* ======================================================
  * Constants
@@ -83,8 +82,7 @@ export default function AdminIdeaDetail() {
   const { id, projectId } = router.query;
 
   const [idea, setIdea] = useState<AdminIdeaDetailType | null>(null);
-  const [modalState, setModalState] =
-    useState<'closed' | 'confirm' | 'success'>('closed');
+  const [modalState, setModalState] = useState<'closed' | 'confirm' | 'success'>('closed');
 
   /* =========================
    * Fetch idea detail
@@ -158,9 +156,7 @@ export default function AdminIdeaDetail() {
                 {TEAM_GROUPS.map(group => (
                   <MemberRow key={group.join('-')}>
                     {group.map(part => {
-                      const roster = idea.rosters.find(
-                        (r: AdminIdeaRoster) => r.part === part
-                      );
+                      const roster = idea.rosters.find((r: AdminIdeaRoster) => r.part === part);
                       if (!roster) return null;
 
                       return (
@@ -185,9 +181,7 @@ export default function AdminIdeaDetail() {
                 <Title>아이디어 설명</Title>
               </Heading>
 
-              <DescriptionBox
-                dangerouslySetInnerHTML={{ __html: safeDescription }}
-              />
+              <DescriptionBox dangerouslySetInnerHTML={{ __html: safeDescription }} />
             </DescriptionSection>
           </ResponsiveWrapper>
         </PreviewCanvas>
@@ -211,9 +205,7 @@ export default function AdminIdeaDetail() {
                 <MyDeleteButton onClick={() => setModalState('success')}>
                   <MySuccessButtonText>삭제하기</MySuccessButtonText>
                 </MyDeleteButton>
-                <MyCancelButton onClick={() => setModalState('closed')}>
-                  취소
-                </MyCancelButton>
+                <MyCancelButton onClick={() => setModalState('closed')}>취소</MyCancelButton>
               </ModalButtonContainer>
             </ModalCard>
           </ModalOverlay>
@@ -222,9 +214,7 @@ export default function AdminIdeaDetail() {
         {modalState === 'success' && (
           <ModalOverlay>
             <ModalSuccessCard>
-              <ModalSuccessCardTitle>
-                아이디어가 삭제되었습니다.
-              </ModalSuccessCardTitle>
+              <ModalSuccessCardTitle>아이디어가 삭제되었습니다.</ModalSuccessCardTitle>
               <MyConfirmButton
                 onClick={() =>
                   router.push({

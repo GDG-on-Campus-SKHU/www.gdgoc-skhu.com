@@ -651,29 +651,3 @@ const PreviewForm = styled.div`
   gap: 8px;
   align-self: stretch;
 `;
-
-const SecondaryButton = styled.button`
-  border-radius: 8px;
-  border: 1px solid var(--primary-600-main, #4285f4);
-  background: #fff;
-  display: flex;
-  width: 300px;
-  height: 50px;
-  padding: 10px 8px;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-
-  &:hover {
-    background: #f0f7ff;
-  }
-`;
-
-const SecondaryButtonText = styled.div`
-  color: var(--primary-600-main, #4285f4);
-  font-family: Pretendard;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 160%;
-`;

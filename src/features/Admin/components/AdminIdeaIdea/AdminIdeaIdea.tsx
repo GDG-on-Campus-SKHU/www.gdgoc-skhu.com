@@ -1,11 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-
-import {
-  getAdminProjectIdeas,
-  getAdminProjects,
-  AdminProject,
-} from '@/lib/adminIdea.api';
+import { AdminProject, getAdminProjectIdeas, getAdminProjects } from '@/lib/adminIdea.api';
 
 import {
   ArrowIcon,
@@ -78,9 +73,7 @@ export default function AdminIdeaIdea() {
           size: 50,
         });
 
-        const found = res.data.projects.find(
-          p => p.projectId === Number(projectId)
-        );
+        const found = res.data.projects.find(p => p.projectId === Number(projectId));
 
         setProject(found ?? null);
       } catch (e) {
@@ -145,20 +138,14 @@ export default function AdminIdeaIdea() {
       <ContentContainer>
         <Heading>
           <Title>아이디어 관리</Title>
-          <Description>
-            선택한 프로젝트에 등록된 아이디어 목록입니다.
-          </Description>
+          <Description>선택한 프로젝트에 등록된 아이디어 목록입니다.</Description>
         </Heading>
 
         <ContentBody>
           <InfoRow>
-            <NameInfoRow>
-              {project ? project.projectName : '프로젝트명'}
-            </NameInfoRow>
+            <NameInfoRow>{project ? project.projectName : '프로젝트명'}</NameInfoRow>
             <DateInfoRow>
-              {project
-                ? `${formatDate(project.startAt)} ~ ${formatDate(project.endAt)}`
-                : '— ~ —'}
+              {project ? `${formatDate(project.startAt)} ~ ${formatDate(project.endAt)}` : '— ~ —'}
             </DateInfoRow>
           </InfoRow>
 
@@ -190,14 +177,10 @@ export default function AdminIdeaIdea() {
                     <IDBodyCell>{row.id}</IDBodyCell>
                   </IdBodyCTNR>
                   <NameBodyCTNR>
-                    <NameBodyCell title={row.title}>
-                      {row.title}
-                    </NameBodyCell>
+                    <NameBodyCell title={row.title}>{row.title}</NameBodyCell>
                   </NameBodyCTNR>
                   <WriterBodyCTNR>
-                    <WriterBodyCell $muted>
-                      {row.author}
-                    </WriterBodyCell>
+                    <WriterBodyCell $muted>{row.author}</WriterBodyCell>
                   </WriterBodyCTNR>
                   <StatusBodyCTNR>
                     <StatusBodyCell>{row.status}</StatusBodyCell>
@@ -220,11 +203,7 @@ export default function AdminIdeaIdea() {
               {Array.from({ length: totalPages }, (_, i) => {
                 const p = i + 1;
                 return (
-                  <PageInsertNum
-                    key={p}
-                    $active={p === page}
-                    onClick={() => setPage(p)}
-                  >
+                  <PageInsertNum key={p} $active={p === page} onClick={() => setPage(p)}>
                     {p}
                   </PageInsertNum>
                 );
