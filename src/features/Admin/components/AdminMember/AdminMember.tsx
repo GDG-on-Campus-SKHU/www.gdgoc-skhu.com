@@ -7,6 +7,7 @@ import SelectBoxBasic from '../../../team-building/components/SelectBoxBasic';
 import { ArrowIcon, PageButton, PageInsertNum } from '../../styles/AdminIdeaProject';
 
 import { fetchUserSummaryList } from '@/lib/adminMember.api';
+import { useRouter } from 'next/router';
 
 type SearchField = 'userName' | 'generation' | 'school' | 'part' | 'position';
 const SEARCH_FIELD_VALUES = ['name', 'generation', 'school', 'part', 'position'] as const;
@@ -32,6 +33,8 @@ const SEARCH_OPTIONS: Array<{ value: SearchField; label: string }> = [
 ];
 
 const AdminMember: NextPage = () => {
+  const router = useRouter();
+
   const [members, setMembers] = useState<Member[]>([]);
   const [searchField, setSearchField] = useState<SearchField>('userName');
   const [inputKeyword, setInputKeyword] = useState('');
@@ -81,10 +84,6 @@ const AdminMember: NextPage = () => {
     [currentPage, totalPages]
   );
 
-  useEffect(() => {
-    setCurrentPage(prev => Math.min(prev, totalPages));
-  }, [totalPages]);
-
   const paginatedMembers = useMemo(() => {
     const startIndex = (safeCurrentPage - 1) * TABLE_VISIBLE_ROWS;
     return filteredMembers.slice(startIndex, startIndex + TABLE_VISIBLE_ROWS);
@@ -105,6 +104,10 @@ const AdminMember: NextPage = () => {
     setSubmittedKeyword(inputKeyword.trim());
     setCurrentPage(1);
   };
+
+  const handleUserDetail = (userId: number) => {
+    router.push(`/admin-member/${userId}`);
+  }
 
   return (
     <Container>
@@ -196,7 +199,7 @@ const AdminMember: NextPage = () => {
 
             <TableBody>
               {paginatedMembers.map(member => (
-                <TableRow key={member.id}>
+                <TableRow key={member.id} onClick={() =>handleUserDetail(member.id)}>
                   <BodyName>
                     {' '}
                     <BodyNameCell>{member.userName}</BodyNameCell>

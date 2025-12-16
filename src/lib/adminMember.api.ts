@@ -25,20 +25,25 @@ interface UserSummaryItemDto {
     approvalStatus: string;
 }
 
-interface UserInfoDto {
-    name: string;
-    email: string;
-    phoneNum: string;
-    approveAt: string;
-    bannedAt: string;
-    deletedAt: string;
-    unbannedAt: string;
-    status: string;
-    generations: Generation[];
-    school: string;
-    part: string;
-    banReason: string;
+export interface UserInfoDto {
+  name: string;
+  email: string | null;
+  phoneNum: string | null;
+  approveAt: string;
+
+  status: UserStatus;
+
+  bannedAt: string | null;
+  unbannedAt: string | null;
+  deletedAt: string | null;
+
+  banReason: string | null;
+
+  generations: Generation[];
+  school: string;
+  part: string;
 }
+
 
 interface GetMyProfileResponse {
   userId: number;
@@ -58,6 +63,8 @@ interface BanReason {
 /* =========================================================
  * Domain Types
  * ======================================================= */
+export type UserStatus = 'ACTIVE' | 'BANNED' | 'DELETED';
+
 export interface UserSummary {
     id: number;
     userName: string;
@@ -68,17 +75,24 @@ export interface UserSummary {
 }
 
 export interface UserInfo {
-    id: number;
-    name: string;
-    part: string;
-    email: string;
-    phoneNum: string;
-    approveAt: string;
-    status: string;
-    generations: Generation[];
-    bannedAt: string;
-    banReason: string;
+  name: string;
+  school: string;
+  part: string;
+  email: string;
+  phoneNum: string;
+  approveAt: string;
+
+  status: UserStatus;
+
+  bannedAt?: string;
+  unbannedAt?: string;
+  deletedAt?: string;
+
+  banReason?: string;
+
+  generations: Generation[];
 }
+
 
 export interface UpdateUserInfoData {
     generations: Generation[];
@@ -102,20 +116,27 @@ function mapUserSummaryToDomain(dto: UserSummaryItemDto): UserSummary {
   };
 }
 
-function mapUserInfoToDomain(dto: UserInfoDto, userId: number): UserInfo {
-    return {
-        id: userId,
-        name: dto.name,
-        part: dto.part,
-        email: dto.email,
-        phoneNum: dto.phoneNum,
-        approveAt: dto.approveAt,
-        status: dto.status,
-        generations: dto.generations,
-        bannedAt: dto.bannedAt,
-        banReason: dto.banReason,
-    };
+function mapUserInfoToDomain(dto: UserInfoDto): UserInfo {
+  return {
+    name: dto.name,
+    school: dto.school,
+    part: dto.part,
+    email: dto.email ?? '',
+    phoneNum: dto.phoneNum ?? '',
+    approveAt: dto.approveAt,
+
+    status: dto.status,
+
+    bannedAt: dto.bannedAt ?? undefined,
+    unbannedAt: dto.unbannedAt ?? undefined,
+    deletedAt: dto.deletedAt ?? undefined,
+
+    banReason: dto.banReason ?? undefined,
+
+    generations: dto.generations,
+  };
 }
+
 
 function mapProfileDtoToDomain(dto: GetMyProfileResponse): MyProfile {
   return {
@@ -144,7 +165,7 @@ export async function fetchUserSummaryList() : Promise<UserSummary[]> {
  * ======================================================= */
 export async function fetchUserInfo(userId: number): Promise<UserInfo> {
     const res = await api.get<UserInfoDto>(`/admin/approved/${userId}`);
-    return mapUserInfoToDomain(res.data, userId);
+    return mapUserInfoToDomain(res.data);
 }
 
 /* =========================================================
