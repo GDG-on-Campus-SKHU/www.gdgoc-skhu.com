@@ -26,9 +26,8 @@ export default function ProjectDetailPage() {
   if (isError || !data) return null; // 원하면 에러 UI
 
   // meta 컴포넌트가 기대하는 형태로 가공
-  const leaderMember = data.members.find(m => m.memberRole === 'LEADER');
-  const leader = leaderMember
-    ? { name: leaderMember.name, role: leaderMember.part }
+  const leader = data.leader
+    ? { name: data.leader.name, role: data.leader.part }
     : { name: '-', role: undefined };
 
   const members = data.members

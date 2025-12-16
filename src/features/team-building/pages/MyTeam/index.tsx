@@ -10,15 +10,10 @@ import MemberApplyStatusSection from '../../components/MyTeam/MemberApplyStatusS
 import TabBar from '../../components/TabBar';
 import { useCurrentTeam } from '@/lib/myTeam.api';
 
-type UserRole = 'LEADER' | 'MEMBER';
 type MyTeamTabKey = 'currentMembers' | 'applications';
 
 export default function MyTeamPage() {
-  const [role] = useState<UserRole>('LEADER'); // 'MEMBER' 로 바꿔가며 테스트
   const [activeTab, setActiveTab] = useState<MyTeamTabKey>('currentMembers');
-
-  const isLeader = role === 'LEADER';
-  const isMember = role === 'MEMBER';
 
   const {
     data: currentTeam,
@@ -26,18 +21,26 @@ export default function MyTeamPage() {
     isError: isCurrentTeamError,
     error: currentTeamError,
   } = useCurrentTeam({
-    enabled: activeTab === 'currentMembers',
+    enabled: true,
     retry: false,
   });
 
   // fetchCurrentTeam이 404에서 null을 반환하므로, "팀 없음"은 null로 판별
   const hasMatchedTeam = !!currentTeam;
 
-  // 기존 isEmpty 의미: "팀원인데 아직 팀이 없음"
-  const isEmpty = isMember && !hasMatchedTeam;
+  // 팀이 있을 때만 역할 판단 가능
+  const myRole = currentTeam?.myRole; // 'CREATOR' | 'MEMBER' (서버 기준)
+  const isCreator = myRole === 'CREATOR';
+  const isMember = myRole === 'MEMBER';
 
-  const ideaTitle = currentTeam?.ideaTitle ?? '리빙메이트';
-  const ideaIntro = currentTeam?.ideaIntroduction ?? '아이디어 한줄소개';
+  const ideaTitle = currentTeam?.ideaTitle ?? '';
+  const ideaIntro = currentTeam?.ideaIntroduction ?? '';
+
+  // 상단 프로젝트 정보 영역 표시 조건 (원하면 조절)
+  const showCreatorHeader = hasMatchedTeam && isCreator;
+
+  // 팀원 전용 아이디어 정보 영역(TabBar 아래) 표시 조건
+  const showMemberIdeaInfo = hasMatchedTeam && isMember && activeTab === 'currentMembers';
 
   return (
     <main css={mainCss}>
@@ -47,7 +50,7 @@ export default function MyTeamPage() {
           <h1 css={pageTitleCss}>
             마이페이지<span css={pageTitle1Css}> | My team</span>
           </h1>
-          {isLeader && (
+          {showCreatorHeader && (
             <div css={subTitleCss}>
               <div css={projectInfoCss}>
                 <p css={projectNameCss}>{ideaTitle}</p>
@@ -87,7 +90,7 @@ export default function MyTeamPage() {
         </section>
 
         {/* --- 팀원 전용: TabBar 아래 + 현재 팀원 구성 탭 + 매칭된 팀 있을 때만 --- */}
-        {!isLeader && !isEmpty && activeTab === 'currentMembers' && (
+        {showMemberIdeaInfo && (
           <section css={memberIdeaInfoSectionCss}>
             <div css={projectInfoCss}>
               {/* 실제 매칭된 아이디어 정보로 교체 */}
@@ -123,17 +126,13 @@ export default function MyTeamPage() {
               {isCurrentTeamLoading && null /* 원하면 로딩 UI */}
 
               {/* 팀원 + 매칭된 팀 없음(404) => Empty */}
-              {!isCurrentTeamLoading && isEmpty && <CurrentTeamEmpty />}
+              {!isCurrentTeamLoading && !hasMatchedTeam && <CurrentTeamEmpty />}
 
               {/* 매칭된 팀 있음 => Section */}
               {!isCurrentTeamLoading && hasMatchedTeam && currentTeam && (
                 <CurrentTeamSection
                   data={currentTeam}
-                  isLeaderView={isLeader || currentTeam.myRole === 'CREATOR'} // 서버 myRole 기준도 반영
-                  resultAnnouncedByPhase={{
-                    first: false,
-                    second: false,
-                  }}
+                  isLeaderView={isCreator} // 서버 myRole 기준도 반영
                 />
               )}
 
@@ -145,7 +144,7 @@ export default function MyTeamPage() {
 
           {/* 지원 현황 탭 */}
           {activeTab === 'applications' &&
-            (isLeader ? <ApplyStatusSection /> : <MemberApplyStatusSection enabled />)}
+            (isCreator ? <ApplyStatusSection /> : <MemberApplyStatusSection enabled />)}
         </section>
       </div>
     </main>

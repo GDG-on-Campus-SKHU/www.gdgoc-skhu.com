@@ -3,56 +3,41 @@ import { css } from '@emotion/react';
 
 import { CurrentTeamRoster, CurrentTeamMember, CurrentTeamData } from '../../types/currentTeamData';
 import Modal from '../Modal_Fix';
-import { SupportPhase } from './ApplyPeriodToggle';
 import MyTeamCount from './MyTeamCount';
 import MyTeamMemberCard, { MyTeamMemberVariant } from './MyTeamMember';
 import MyTeamStatusCard from './MyTeamStatus';
+import { partToLabel } from './ApplyStatusSection';
+import { useRemoveTeamMember } from '@/lib/myTeam.api';
 
 type PartColumnProps = {
   roster: CurrentTeamRoster;
   isLeaderView: boolean;
-  resultAnnouncedByPhase: Record<SupportPhase, boolean>;
   onOpenRemoveModal?: (payload: RemoveMember) => void;
 };
 
-/** 삭제 팀원 정보(모달용) */
 type RemoveMember = {
   part: CurrentTeamRoster['part'];
-  userId: number;
+  userId: number; // memberId (팀원의 userId)
   memberName: string;
+  confirmed: boolean;
 };
 
-/** 한 멤버가 삭제 가능한지 여부 계산 */
-function canRemoveMember(
-  member: CurrentTeamMember,
-  isLeaderView: boolean,
-  _resultAnnouncedByPhase: Record<SupportPhase, boolean>
-): boolean {
-  // 1) 팀원이 아니면 삭제 X
-  if (!isLeaderView) return false;
-
-  // 2) 리더는 삭제 불가
-  if (member.memberRole === 'CREATOR') return false;
-
+function canRemoveMember(member: CurrentTeamMember, isLeaderView: boolean): boolean {
+  if (!isLeaderView) return false; // 팀장만
+  if (member.memberRole === 'CREATOR') return false; // 팀장 본인은 삭제 불가
+  if (member.confirmed) return false; // 확정(true)이면 삭제 불가
   return true;
 }
 
-/** 각 파트 컬럼 */
-function PartColumn({
-  roster,
-  isLeaderView,
-  resultAnnouncedByPhase,
-  onOpenRemoveModal,
-}: PartColumnProps) {
+function PartColumn({ roster, isLeaderView, onOpenRemoveModal }: PartColumnProps) {
   const { part, currentMemberCount, maxMemberCount, members } = roster;
 
   const isRecruiting = maxMemberCount > 0;
 
   return (
     <div css={partColumnCss}>
-      {/* 제목 + 인원 뱃지 */}
       <div css={partHeaderCss}>
-        <span css={partNameCss}>{part}</span>
+        <span css={partNameCss}>{partToLabel(part)}</span>
         <MyTeamCount
           current={currentMemberCount}
           capacity={maxMemberCount}
@@ -60,24 +45,20 @@ function PartColumn({
         />
       </div>
 
-      {/* 멤버 카드/빈 카드 */}
       <div css={partBodyCss}>
         {members.length > 0 ? (
           members.map(member => {
             let variant: MyTeamMemberVariant = 'member';
-
-            // API 기준: CREATOR = 팀장
             if (member.memberRole === 'CREATOR') variant = 'leader';
-            else if (isLeaderView) variant = 'managedMember';
+            else if (isLeaderView && !member.confirmed) variant = 'managedMember';
 
-            const removable = canRemoveMember(member, isLeaderView, resultAnnouncedByPhase);
+            const removable = canRemoveMember(member, isLeaderView);
 
             return (
               <MyTeamMemberCard
                 key={member.userId}
                 variant={variant}
                 name={member.memberName}
-                // 삭제 버튼은 UI만 연결(실제 삭제는 추후)
                 onClickRemove={
                   removable && onOpenRemoveModal
                     ? () =>
@@ -85,6 +66,7 @@ function PartColumn({
                           part,
                           userId: member.userId,
                           memberName: member.memberName,
+                          confirmed: member.confirmed,
                         })
                     : undefined
                 }
@@ -102,33 +84,35 @@ function PartColumn({
 type CurrentTeamSectionProps = {
   data: CurrentTeamData;
   isLeaderView: boolean;
-  resultAnnouncedByPhase: Record<SupportPhase, boolean>;
-  // visibleJoinPhases?: JoinPhase[];
 };
 
-/** 현재 팀원 구성 */
-export default function CurrentTeamSection({
-  data,
-  isLeaderView,
-  resultAnnouncedByPhase,
-  // visibleJoinPhases = ['first'],
-}: CurrentTeamSectionProps) {
+export default function CurrentTeamSection({ data, isLeaderView }: CurrentTeamSectionProps) {
   const [removeMember, setRemoveMember] = useState<RemoveMember | null>(null);
 
-  // 버튼 클릭 -> 모달 오픈
+  const removeMutation = useRemoveTeamMember();
+
   const handleRemoveModal = (payload: RemoveMember) => {
     setRemoveMember(payload);
   };
 
-  // 모달에서 실제 삭제
-  const handleConfirmRemove = () => {
-    if (!removeMember) return;
-
+  const handleCloseModal = () => {
+    if (removeMutation.isPending) return;
     setRemoveMember(null);
   };
 
-  const handleCloseModal = () => {
-    setRemoveMember(null);
+  const handleConfirmRemove = async () => {
+    if (!removeMember) return;
+    if (removeMutation.isPending) return;
+
+    try {
+      await removeMutation.mutateAsync({
+        ideaId: data.ideaId,
+        memberId: removeMember.userId,
+      });
+      setRemoveMember(null);
+    } catch (e: any) {
+      alert(e?.response?.data?.message ?? '팀원 삭제에 실패했습니다.');
+    }
   };
 
   return (
@@ -139,19 +123,17 @@ export default function CurrentTeamSection({
             key={roster.part}
             roster={roster}
             isLeaderView={isLeaderView}
-            resultAnnouncedByPhase={resultAnnouncedByPhase}
             onOpenRemoveModal={handleRemoveModal}
           />
         ))}
       </div>
 
-      {/* 팀원 삭제 확인 모달 */}
       {removeMember && (
         <Modal
           type="titleConfirm"
           title={removeMember.memberName}
           message="팀원 목록에서 삭제할까요?"
-          confirmText="삭제하기"
+          confirmText={removeMutation.isPending ? '삭제 중...' : '삭제하기'}
           cancelText="취소"
           onConfirm={handleConfirmRemove}
           onClose={handleCloseModal}
