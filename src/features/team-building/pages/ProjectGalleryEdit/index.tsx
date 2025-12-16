@@ -1,23 +1,21 @@
 import { useMemo } from 'react';
 import { useRouter } from 'next/router';
+import {
+  useProjectGalleryDetail,
+  useProjectGalleryLeaderProfile,
+  useUpdateProjectGallery,
+} from '@/lib/projectGallery.api';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
 import ProjectPostForm, {
   type ProjectPostFormInitialValues,
 } from '../../components/ProjectGalleryPost/ProjectPostForm';
-
-import {
-  useProjectGalleryDetail,
-  useProjectGalleryLeaderProfile,
-  useUpdateProjectGallery,
-} from '@/lib/projectGallery.api';
-
 import type {
-  ProjectGalleryUpsertBody,
-  Part,
-  GenerationValue,
   GenerationTab,
+  GenerationValue,
+  Part,
+  ProjectGalleryUpsertBody,
   ProjectMemberBase,
 } from '../../types/gallery';
 

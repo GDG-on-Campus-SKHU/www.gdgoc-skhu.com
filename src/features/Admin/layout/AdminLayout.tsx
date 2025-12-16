@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 
+import { Content } from '../styles/AdminDashboard';
 import {
   Brand,
   BrandContainer,
@@ -17,7 +18,6 @@ import {
   ProfileTitle,
   Sidebar,
 } from '../styles/AdminProjectGallery';
-import { Content } from '../styles/AdminDashboard';
 
 type NavItem = {
   label: string;
@@ -61,8 +61,7 @@ export default function AdminLayout({ children }: Props) {
 
         <Nav>
           {NAV_ITEMS.map(item => {
-            const isActive =
-              pathname === item.path || pathname.startsWith(item.path);
+            const isActive = pathname === item.path || pathname.startsWith(item.path);
 
             return (
               <NavButton
