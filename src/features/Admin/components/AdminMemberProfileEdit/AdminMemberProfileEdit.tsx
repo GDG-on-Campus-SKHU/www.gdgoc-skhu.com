@@ -1,82 +1,193 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
 import styled from 'styled-components';
 
-import ReQuill from '../../../team-building/components/ReQuill';
 import SelectBoxBasic from '../../../team-building/components/SelectBoxBasic';
+import { useRouter } from 'next/router';
+import { TechStack, UpdateProfileData } from '@/lib/mypageProfile.api';
+import { Generation, UserLink } from '@/lib/mypageProfile.api';
+import { fetchUserProfile, updateUserProfile } from '@/lib/adminMember.api';
+import { useTechStackOptions, useUserLinkOptions } from '@/lib/mypageProfile.api';
+import { css } from '@emotion/react';
+import { colors } from '@/styles/constants'
+import AdminMemberProfile from '../AdminMemberProfile/AdminMemberProfile';
+import MDEditor from '@uiw/react-md-editor';
+import { api } from '@/lib/api';
 
-type LinkItem = {
-  id: number;
-  type: string;
-  value: string;
+type MemberProfile = {
+  userId: number;
+  name: string;
+  school: string;
+  generations: Generation[];
+  part: string;
+  techStacks: TechStack[];
+  userLinks: UserLink[];
+  introduction: string;
 };
-
-const SCHOOL_OPTIONS = ['성공회대학교', '한성대학교', '고려대학교'];
-const PART_OPTIONS = ['PM', 'BE', 'FE', 'Design', 'AI/ML'];
-const ROLE_OPTIONS = ['25-26 Member', '24-25 Core', '23-24 Member', 'Guest'];
-const TECH_STACK_OPTIONS = [
-  'React',
-  'Next.js',
-  'TypeScript',
-  'Nest.js',
-  'Spring',
-  'Swift',
-  'Kotlin',
-  'Figma',
-  'Illustrator',
-  'Photoshop',
-];
-const LINK_TYPE_OPTIONS = ['GitHub', 'Behance', 'Notion', 'Portfolio', 'LinkedIn', '기타'];
-
-const quillModules = {
-  toolbar: {
-    container: [
-      [{ header: [1, 2, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ list: 'ordered' }, { list: 'bullet' }],
-      ['link', 'image'],
-      ['clean'],
-    ],
-  },
-};
-
-const quillFormats = [
-  'header',
-  'bold',
-  'italic',
-  'underline',
-  'strike',
-  'list',
-  'bullet',
-  'link',
-  'image',
-];
 
 const AdminMemberProfileEdit: NextPage = () => {
-  const [school] = useState(SCHOOL_OPTIONS[0]);
-  const [part] = useState(PART_OPTIONS[1]);
-  const [roles] = useState<string[]>([ROLE_OPTIONS[0], ROLE_OPTIONS[1], ROLE_OPTIONS[2]]);
-  const [techStacks, setTechStacks] = useState<string[]>([]);
-  const [links, setLinks] = useState<LinkItem[]>([{ id: 1, type: 'GitHub', value: '' }]);
-  const [introduction, setIntroduction] = useState('');
+  const router = useRouter();
+  const userIdParam = router.query.userId;
+  const parsedUserId = typeof userIdParam === 'string' ? Number(userIdParam) : null;
 
-  const addLink = () => {
-    const nextId = Math.max(0, ...links.map(link => link.id)) + 1;
-    setLinks(prev => [...prev, { id: nextId, type: LINK_TYPE_OPTIONS[0], value: '' }]);
+  const [member, setMember] = useState<MemberProfile | null>(null);
+  const [mode, setMode] = useState<'edit' | 'preview'>('edit');
+  const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
+
+  const { data: techStackOptions = [] } = useTechStackOptions();
+  const { data: userLinkOptions = [] } = useUserLinkOptions();
+
+  useEffect(() => {
+    if (!parsedUserId) return;
+
+    const fetchData = async () => {
+      const member = await fetchUserProfile(parsedUserId);
+
+      setMember({
+        ...member,
+        userLinks:
+          member.userLinks.length > 0
+            ? member.userLinks
+            : [
+                {
+                  linkType: 'GitHub',
+                  url: '',
+                  iconUrl: '/github.svg',
+                },
+              ],
+      });
+    };
+
+    fetchData();
+  }, [parsedUserId]);
+
+  const sortedGenerations = useMemo(() => {
+    if (!member) return [];
+    return [...member.generations].sort((a, b) => (a.isMain === b.isMain ? 0 : a.isMain ? -1 : 1));
+  }, [member]);
+
+  if (!member) {
+    return <div>로딩 중...</div>;
+  }
+
+  if (mode === 'preview') {
+    return <AdminMemberProfile memberProps={member} onBack={() => setMode('edit')} />;
+  }
+
+  const validLinks = member.userLinks.filter(link => link.url.trim() !== '');
+  const hasValidLinks = validLinks.length > 0;
+
+  const handleImageError = (linkId: number) => {
+    setFailedImages(prev => new Set(prev).add(linkId));
   };
 
-  const handleLinkTypeChange = (id: number, selected: string[]) => {
-    setLinks(prev =>
-      prev.map(link => (link.id === id ? { ...link, type: selected[0] ?? link.type } : link))
+  const buildUpdateProfilePayload = (member: MemberProfile): UpdateProfileData => {
+    return {
+      techStacks: member.techStacks.map(stack => ({
+        techStackType: stack.techStackType,
+      })),
+
+      userLinks: member.userLinks
+        .filter(link => link.url.trim() !== '')
+        .map(link => ({
+          linkType: link.linkType,
+          url: link.url,
+        })),
+
+      introduction: member.introduction,
+    };
+  };
+
+  const handleSaveProfile = async () => {
+    if (!parsedUserId || !member) return;
+
+    try {
+      const payload = buildUpdateProfilePayload(member);
+
+      const updatedProfile = await updateUserProfile(parsedUserId, payload);
+
+      setMember(updatedProfile);
+
+      router.push(`/admin-member/${parsedUserId}/profile`);
+    } catch (e) {
+      console.error(e);
+      alert('프로필 저장에 실패했습니다.');
+    }
+  };
+
+  // ---------------------
+  // 1. 드래그 앤 드롭 처리
+  // ---------------------
+  const handleDrop = async (e: React.DragEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+
+    const files = Array.from(e.dataTransfer.files);
+    const imageFile = files.find(file => file.type.startsWith('image/'));
+    if (!imageFile) return;
+
+    try {
+      const url = await uploadImageToServer(imageFile);
+      insertImageMarkdown(url);
+    } catch (err) {
+      console.error('이미지 업로드 실패:', err);
+    }
+  };
+
+  // ---------------------
+  // 2. 이미지 업로드 API
+  // ---------------------
+  async function uploadImageToServer(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append('imageFile', file);
+    formData.append('directory', 'test'); // ← FormData에 함께 넣기
+
+    const response = await api.post('/image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data.url; // ← S3 URL 반환
+  }
+
+  // ---------------------
+  // 3. 마크다운에 이미지 삽입
+  // ---------------------
+  function insertImageMarkdown(url: string) {
+    const markdown = `\n![image](${url})\n`;
+
+    setMember(prev =>
+      prev
+        ? {
+            ...prev,
+            introduction: (prev.introduction ?? '') + markdown,
+          }
+        : prev
     );
-  };
+  }
 
-  const handleLinkValueChange = (id: number, value: string) => {
-    setLinks(prev => prev.map(link => (link.id === id ? { ...link, value } : link)));
-  };
 
-  const quillKey = useMemo(() => `member-edit-${roles.join('-')}-${part}`, [roles, part]);
+  // ---------------------
+  // 4. 붙여넣기 처리
+  // ---------------------
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = Array.from(e.clipboardData.items);
+
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (!file) continue;
+
+        try {
+          const url = await uploadImageToServer(file);
+          insertImageMarkdown(url);
+        } catch (err) {
+          console.error('이미지 업로드 실패:', err);
+        }
+      }
+    }
+  };
 
   return (
     <Container>
@@ -113,21 +224,23 @@ const AdminMemberProfileEdit: NextPage = () => {
         </Header>
 
         <ContentWrapper>
-          <MemberName>주현지</MemberName>
+          <MemberName>{member.name}</MemberName>
 
           <FormSection>
             <FieldRow>
               <FieldLabel>학교</FieldLabel>
-              <FieldValue>{school}</FieldValue>
+              <FieldValue>{member.school}</FieldValue>
             </FieldRow>
 
             <FieldRoleRow>
               <FieldLabel>역할</FieldLabel>
               <RoleContent>
                 <Chips>
-                  {roles.map((role, index) => (
-                    <Chip key={role} $active={index === 0}>
-                      <ChipText>{role}</ChipText>
+                  {sortedGenerations.map(gen => (
+                    <Chip key={gen.id ?? `${gen.generation}-${gen.position}`} $active={gen.isMain}>
+                      <ChipText $active={gen.isMain}>
+                        {gen.generation} {gen.position}
+                      </ChipText>
                     </Chip>
                   ))}
                 </Chips>
@@ -137,78 +250,193 @@ const AdminMemberProfileEdit: NextPage = () => {
 
             <FieldRow>
               <FieldLabel>파트</FieldLabel>
-              <FieldValue>{part}</FieldValue>
+              <FieldValue>{member.part}</FieldValue>
             </FieldRow>
 
             <VerticalField>
               <FieldLabel>기술스택</FieldLabel>
               <SelectBoxWrapper>
                 <SelectBoxBasic
-                  options={TECH_STACK_OPTIONS}
+                  options={techStackOptions.map(opt => opt.displayName)}
                   placeholder="보유하고 있는 기술 스택을 선택해주세요."
                   multiple
                   searchable
-                  value={techStacks}
-                  onChange={selected => setTechStacks(selected)}
+                  value={member.techStacks.map(s => s.techStackType)}
+                  onChange={selected =>
+                    setMember(prev =>
+                      prev
+                        ? {
+                            ...prev,
+                            techStacks: selected.map(displayName => {
+                              const option = techStackOptions.find(
+                                o => o.displayName === displayName
+                              );
+
+                              return {
+                                techStackType: option?.code ?? displayName,
+                                iconUrl: option?.iconUrl ?? '',
+                              };
+                            }),
+                          }
+                        : prev
+                    )
+                  }
                 />
               </SelectBoxWrapper>
+              <TechStackList>
+                {member.techStacks.map((stack, idx) => (
+                  <TechStackIcon key={`${stack.techStackType}-${idx}`}>
+                    <img src={stack.iconUrl} alt={stack.techStackType} width={36} height={36} />
+                  </TechStackIcon>
+                ))}
+              </TechStackList>
             </VerticalField>
 
             <VerticalLinkField>
               <FieldLabel>링크</FieldLabel>
+
               <LinksBlock>
-                {links.map(link => (
-                  <LinkRow key={link.id}>
-                    <LinkSelectWrapper>
-                      <SelectBoxBasic
-                        options={LINK_TYPE_OPTIONS}
-                        placeholder="타입 선택"
-                        value={[link.type]}
-                        onChange={selected => handleLinkTypeChange(link.id, selected)}
-                      />
-                    </LinkSelectWrapper>
+                {member.userLinks.map((link, idx) => (
+                  <LinkRow key={`${link.linkType}-${idx}`}>
+                    <SelectBoxBasic
+                      options={userLinkOptions.map(opt => opt.name)}
+                      placeholder="타입 선택"
+                      value={[
+                        userLinkOptions.find(o => o.type === link.linkType)?.name ?? link.linkType,
+                      ]}
+                      onChange={selected =>
+                        setMember(prev =>
+                          prev
+                            ? {
+                                ...prev,
+                                userLinks: prev.userLinks.map((l, i) => {
+                                  if (i !== idx) return l;
+
+                                  const option = userLinkOptions.find(o => o.name === selected[0]);
+
+                                  return {
+                                    ...l,
+                                    linkType: option?.type ?? l.linkType,
+                                    iconUrl: option?.iconUrl ?? l.iconUrl,
+                                  };
+                                }),
+                              }
+                            : prev
+                        )
+                      }
+                    />
+
                     <LinkInput
-                      placeholder="PlaceHolder"
-                      value={link.value}
-                      onChange={e => handleLinkValueChange(link.id, e.target.value)}
+                      placeholder="링크를 입력해주세요."
+                      value={link.url}
+                      onChange={e =>
+                        setMember(prev =>
+                          prev
+                            ? {
+                                ...prev,
+                                userLinks: prev.userLinks.map((l, i) =>
+                                  i === idx ? { ...l, url: e.target.value } : l
+                                ),
+                              }
+                            : prev
+                        )
+                      }
                     />
                   </LinkRow>
                 ))}
-                <LinkAddButton type="button" onClick={addLink}>
-                  <LinkAddButtonText>+</LinkAddButtonText>
+
+                <LinkAddButton
+                  type="button"
+                  onClick={() =>
+                    setMember(prev =>
+                      prev
+                        ? {
+                            ...prev,
+                            userLinks: [
+                              ...prev.userLinks,
+                              {
+                                linkType: userLinkOptions[0]?.type ?? 'github',
+                                url: '',
+                                iconUrl: userLinkOptions[0]?.iconUrl ?? '',
+                              },
+                            ],
+                          }
+                        : prev
+                    )
+                  }
+                >
+                  +
                 </LinkAddButton>
               </LinksBlock>
+
+              {hasValidLinks && (
+                <div css={previewContainerCss}>
+                  {validLinks.map((link, idx) => {
+                    const linkOption = userLinkOptions.find(opt => opt.type === link.linkType);
+                    const hasImageError = failedImages.has(idx);
+
+                    return (
+                      <a
+                        key={`${link.linkType}-${idx}`}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        css={hasImageError ? linkIconWithBorderCss : linkIconSimpleCss}
+                        title={linkOption?.name || link.linkType}
+                      >
+                        <img
+                          src={
+                            hasImageError
+                              ? '/icon/link.svg'
+                              : link.iconUrl ||
+                                linkOption?.iconUrl ||
+                                `/icon/${link.linkType.toLowerCase()}.svg`
+                          }
+                          alt={linkOption?.name || link.linkType}
+                          onError={() => handleImageError(idx)}
+                        />
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
             </VerticalLinkField>
 
             <VerticalField>
               <FieldLabel>자기소개</FieldLabel>
-              <QuillContainer>
-                <ReQuill
-                  key={quillKey}
-                  value={introduction}
-                  onChange={setIntroduction}
-                  placeholder={`Github README 작성에 쓰이는 'markdown'을 이용해 작성해보세요.`}
-                  modules={quillModules}
-                  formats={quillFormats}
-                  height={280}
+              <div css={editorContainerCss} data-color-mode="light">
+                <MDEditor
+                  value={member?.introduction}
+                  onChange={val =>
+                    setMember(prev => (prev ? { ...prev, introduction: val || '' } : prev))
+                  }
+                  height={400}
+                  preview="live"
+                  hideToolbar={false}
+                  visibleDragbar={true}
+                  textareaProps={{
+                    onDrop: handleDrop,
+                    onPaste: handlePaste,
+                    placeholder: "Github README 생성에 쓰이는 'markdown'을 이용해 작성해보세요.",
+                  }}
                 />
-              </QuillContainer>
+              </div>
             </VerticalField>
           </FormSection>
         </ContentWrapper>
 
         <ActionRow>
-          <SecondaryButton type="button">
+          <SecondaryButton type="button" onClick={() => setMode('preview')}>
             <SecondaryButtonText>미리보기</SecondaryButtonText>
           </SecondaryButton>
-          <PrimaryButton type="button">
+          <PrimaryButton type="button" onClick={handleSaveProfile}>
             <PrimaryButtonText>저장하기</PrimaryButtonText>
           </PrimaryButton>
         </ActionRow>
       </MainContent>
     </Container>
   );
-};
+};;
 
 export default AdminMemberProfileEdit;
 
@@ -438,7 +666,8 @@ const Chips = styled.div`
 
 const Chip = styled.span<{ $active?: boolean }>`
   border-radius: 4px;
-  background: var(--primary-100, #d9e7fd);
+  background-color: ${({ $active }) =>
+    $active ? 'var(--primary-100, #d9e7fd)' : 'var(--gray-100, #f1f3f5)'};
   display: flex;
   padding: 2px 8px;
   justify-content: center;
@@ -446,15 +675,15 @@ const Chip = styled.span<{ $active?: boolean }>`
   gap: 8px;
 `;
 
-const ChipText = styled.span`
-  color: var(--primary-600-main, #4285f4);
+const ChipText = styled.span<{ $active?: boolean }>`
+  color: ${({ $active }) =>
+    $active ? 'var(--primary-600-main, #4285f4)' : 'var(--gray-500, #868e96)'};
 
-  /* body/b3/b3-bold */
   font-family: Pretendard;
   font-size: 18px;
   font-style: normal;
   font-weight: 700;
-  line-height: 160%; /* 28.8px */
+  line-height: 160%;
 `;
 
 const RoleNote = styled.span`
@@ -532,101 +761,23 @@ const LinkAddButton = styled.button`
   }
 `;
 
-const QuillContainer = styled.div`
-  display: flex;
-  width: 1080px;
-  height: 400px;
-  padding: 12px 16px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 40px;
-  align-self: stretch;
+const editorContainerCss = css`
+  margin-top: 1.5rem;
   border-radius: 8px;
-  border: 1px solid var(--grayscale-400, #c3c6cb);
+  overflow: hidden;
   background: #fff;
 
-  .ql-toolbar {
-    width: 913px;
-    height: 31px;
-    flex-shrink: 0;
-    border: none;
-    border-bottom: 1px solid #e0e4ea;
-    background: #fff;
-    padding: 0;
-    display: flex;
-    align-items: center;
-
-    .ql-formats {
-      display: flex;
-      align-items: center;
-      margin-right: 8px;
-      height: 100%;
-    }
-
-    button {
-      width: 24px;
-      height: 24px;
-      padding: 2px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      &:hover {
-        background: #f3f4f6;
-        border-radius: 4px;
-      }
-
-      svg {
-        width: 16px;
-        height: 16px;
-      }
-    }
-
-    .ql-picker {
-      height: 24px;
-
-      .ql-picker-label {
-        padding: 0 8px;
-        display: flex;
-        align-items: center;
-        font-size: 14px;
-        color: #1f2024;
-        border: none;
-
-        &::before {
-          line-height: 24px;
-        }
-      }
-    }
-
-    .ql-header .ql-picker-label::before {
-      content: 'Normal';
-    }
-
-    .ql-header .ql-picker-item[data-value='1']::before {
-      content: 'Heading 1';
-    }
-
-    .ql-header .ql-picker-item[data-value='2']::before {
-      content: 'Heading 2';
-    }
+  & .w-md-editor {
+    border-radius: 8px;
+    border: 1px solid #c3c6cb;
   }
 
-  .ql-container {
-    border: none;
-    min-height: 260px;
-    font-family: 'Pretendard', sans-serif;
+  & .w-md-editor-toolbar {
+    border-bottom: 1px solid #d0d7de;
   }
 
-  .ql-editor {
-    min-height: 260px;
-    font-size: 14px;
-    line-height: 1.6;
-  }
-
-  .ql-editor.ql-blank::before {
-    color: #9ca3af;
-    font-style: normal;
+  & .w-md-editor-text-pre {
+    font-family: 'Courier New', monospace;
   }
 `;
 
@@ -713,4 +864,63 @@ const LinkAddButtonText = styled.span`
   font-style: normal;
   font-weight: 500;
   line-height: 160%; /* 28.8px */
+`;
+
+const TechStackList = styled.div`
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+`;
+
+const TechStackIcon = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: #f5f5f5;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const previewContainerCss = css`
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  flex-wrap: wrap;
+`;
+
+const linkIconSimpleCss = css`
+  width: 40px;
+  height: 40px;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+`;
+
+const linkIconWithBorderCss = css`
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 8px;
+  border: 1px solid ${colors.grayscale[400]};
+  background-color: white;
+  padding: 8px;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  &:hover {
+    border-color: ${colors.grayscale[600]};
+  }
 `;

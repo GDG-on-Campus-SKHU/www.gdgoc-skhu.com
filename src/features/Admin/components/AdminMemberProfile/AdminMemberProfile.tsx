@@ -1,62 +1,76 @@
-import type { NextPage } from 'next';
+import { TechStack, useTechStackOptions, useUserLinkOptions } from '@/lib/mypageProfile.api';
+import { fetchUserProfile } from '@/lib/adminMember.api';
+import { Generation, UserLink } from '@/lib/mypageProfile.api';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
+import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
+import { css } from '@emotion/react';
+import { colors } from '@/styles/constants';
+import dynamic from 'next/dynamic';
+
+const MDPreview = dynamic(() => import('@uiw/react-markdown-preview').then(mod => mod.default), {
+  ssr: false,
+});
+
+type Props = {
+  memberProps?: MemberProfile;
+  onBack?: () => void;
+};
 
 type MemberProfile = {
+  userId: number;
   name: string;
   school: string;
-  roles: string[];
+  generations: Generation[];
   part: string;
-  techStacks: Array<{ name: string; icon: string }>; // 수정: 객체 배열로 변경
-  links: Array<{ type: string; label: string }>;
+  techStacks: TechStack[];
+  userLinks: UserLink[];
   introduction: string;
 };
 
-// 기술스택 아이콘 매핑
-const TECH_STACK_ICONS: Record<string, string> = {
-  Ae: '/techstack/ae.svg',
-  Ai: '/techstack/ai.svg',
-  Ps: '/techstack/ps.svg',
-  Figma: '/techstack/figma.svg',
-  Xd: '/techstack/xd.svg',
-  React: '/techstack/react.svg',
-  Vue: '/techstack/vue.svg',
-  Angular: '/techstack/angular.svg',
-  TypeScript: '/techstack/typescript.svg',
-  JavaScript: '/techstack/javascript.svg',
-  Node: '/techstack/node.svg',
-  Python: '/techstack/python.svg',
-  Java: '/techstack/java.svg',
-  Spring: '/techstack/spring.svg',
-  Swift: '/techstack/swift.svg',
-  Kotlin: '/techstack/kotlin.svg',
-  Flutter: '/techstack/flutter.svg',
-  // 필요한 기술스택 추가
-};
+const AdminMemberProfile = ({ memberProps, onBack }: Props) => {
+  const { data: techStackOptions = [] } = useTechStackOptions();
+  const { data: userLinkOptions = [] } = useUserLinkOptions();
 
-const MOCK_PROFILE: MemberProfile = {
-  name: '주현지',
-  school: '성공회대학교',
-  roles: ['25-26 Member', '24-25 Core', '23-24 Member'],
-  part: 'Design',
-  techStacks: [
-    { name: 'Ae', icon: '/icon/Adobe After Effect.svg' },
-    { name: 'Ae', icon: '/icon/Adobe After Effect.svg' },
-    { name: 'Ae', icon: '/icon/Adobe After Effect.svg' },
-    { name: 'Ae', icon: '/icon/Adobe After Effect.svg' },
-    { name: 'Ae', icon: '/icon/Adobe After Effect.svg' },
-  ],
-  links: [
-    { type: 'github', label: 'GitHub' },
-    { type: 'notion', label: 'Notion' },
-    { type: 'link', label: '링크 1' },
-    { type: 'link', label: '링크 2' },
-  ],
-  introduction: '자기소개 내용',
-};
+  const router = useRouter();
+  const userIdParam = router.query.userId;
 
-const AdminMemberProfile: NextPage = () => {
-  const member = MOCK_PROFILE;
+  const parsedUserId = typeof userIdParam === 'string' ? Number(userIdParam) : null;
+  const [member, setMember] = useState<MemberProfile | null>(null);
+
+  useEffect(() => {
+    if (memberProps !== undefined) {
+      setMember(memberProps);
+      return;
+    }
+
+    if (!parsedUserId) return;
+
+    const fetchData = async () => {
+      const member = await fetchUserProfile(parsedUserId);
+      setMember(member);
+    };
+
+    fetchData();
+  }, [parsedUserId, memberProps]);
+
+  const sortedGenerations = useMemo(() => {
+    if (!member) return [];
+
+    return [...member.generations].sort((a, b) => {
+      if (a.isMain === b.isMain) return 0;
+      return a.isMain ? -1 : 1;
+    });
+  }, [member]);
+
+  const handleUserProfileEdit = (userId: number) => {
+    router.push(`/admin-member/${userId}/edit`);
+  };
+
+  if (!member) {
+    return <div>로딩 중...</div>;
+  }
 
   return (
     <Container>
@@ -94,13 +108,19 @@ const AdminMemberProfile: NextPage = () => {
 
         <DetailHeader>
           <MemberName>{member.name}</MemberName>
-          <PrimaryButton type="button">
-            <PrimaryButtonText>수정하기</PrimaryButtonText>
-          </PrimaryButton>
+
+          {onBack ? (
+            <PrimaryButton type="button" onClick={onBack}>
+              <PrimaryButtonText>돌아가기</PrimaryButtonText>
+            </PrimaryButton>
+          ) : (
+            <PrimaryButton type="button" onClick={() => handleUserProfileEdit(member.userId)}>
+              <PrimaryButtonText>수정하기</PrimaryButtonText>
+            </PrimaryButton>
+          )}
         </DetailHeader>
 
         <ProfileSection>
-          {/* 학교, 역할, 파트 - 가로 정렬 */}
           <FieldRow>
             <FieldLabel>학교</FieldLabel>
             <FieldValue>{member.school}</FieldValue>
@@ -109,8 +129,12 @@ const AdminMemberProfile: NextPage = () => {
           <FieldRow>
             <FieldLabel>역할</FieldLabel>
             <Chips>
-              {member.roles.map(role => (
-                <Chip key={role}>{role}</Chip>
+              {sortedGenerations.map(gen => (
+                <Chip key={gen.id ?? `${gen.generation}-${gen.position}`} $active={gen.isMain}>
+                  <ChipText $active={gen.isMain}>
+                    {gen.generation} {gen.position}
+                  </ChipText>
+                </Chip>
               ))}
             </Chips>
           </FieldRow>
@@ -120,42 +144,55 @@ const AdminMemberProfile: NextPage = () => {
             <FieldValue>{member.part}</FieldValue>
           </FieldRow>
 
-          {/* 기술스택 - 세로 정렬 */}
           <VerticalFieldGroup>
             <FieldLabel>기술스택</FieldLabel>
+
             <TechStackList>
-              {member.techStacks.map((stack, idx) => (
-                <TechStackIcon key={`${stack.name}-${idx}`}>
-                  <Image src={stack.icon} alt={stack.name} width={36} height={36} />
-                </TechStackIcon>
-              ))}
+              {member.techStacks.map(stack => {
+                const option = techStackOptions.find(opt => opt.code === stack.techStackType);
+
+                if (!option) return null;
+
+                return (
+                  <TechStackIcon key={stack.techStackType}>
+                    <img src={option.iconUrl} alt={option.displayName} width={36} height={36} />
+                  </TechStackIcon>
+                );
+              })}
             </TechStackList>
           </VerticalFieldGroup>
 
-          {/* 링크 - 세로 정렬 */}
           <VerticalFieldGroup>
             <FieldLabel>링크</FieldLabel>
+
             <LinkButtons>
-              {member.links.map(link => (
-                <LinkButton key={`${link.type}-${link.label}`}>
-                  {link.type === 'github' && (
-                    <Image src="/github.svg" alt="GitHub" width={24} height={24} />
-                  )}
-                  {link.type === 'notion' && (
-                    <Image src="/Notion.svg" alt="Notion" width={24} height={24} />
-                  )}
-                  {link.type === 'link' && (
-                    <Image src="/icon/link.svg" alt="Link" width={24} height={24} />
-                  )}
-                </LinkButton>
-              ))}
+              {member.userLinks.map((link, idx) => {
+                const option = userLinkOptions.find(opt => opt.type === link.linkType);
+
+                return (
+                  <a
+                    key={`${link.linkType}-${idx}`}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      src={option?.iconUrl || '/icon/link.svg'}
+                      alt={option?.name || link.linkType}
+                      width={24}
+                      height={24}
+                    />
+                  </a>
+                );
+              })}
             </LinkButtons>
           </VerticalFieldGroup>
 
-          {/* 자기소개 - 세로 정렬 */}
           <IntroSection>
             <FieldLabel>자기소개</FieldLabel>
-            <IntroArea readOnly value={member.introduction} />
+            <div css={boxCss} data-color-mode="light">
+              <MDPreview source={member.introduction} />
+            </div>
           </IntroSection>
         </ProfileSection>
       </MainContent>
@@ -418,15 +455,21 @@ const Chips = styled.div`
   gap: 20px;
 `;
 
-const Chip = styled.span`
+const Chip = styled.span<{ $active?: boolean }>`
+  border-radius: 4px;
+  background-color: ${({ $active }) =>
+    $active ? 'var(--primary-100, #d9e7fd)' : 'var(--gray-100, #f1f3f5)'};
   display: flex;
   padding: 2px 8px;
   justify-content: center;
   align-items: center;
   gap: 8px;
-  border-radius: 4px;
-  background: var(--primary-100, #d9e7fd);
-  color: var(--primary-600-main, #4285f4);
+`;
+
+const ChipText = styled.span<{ $active?: boolean }>`
+  color: ${({ $active }) =>
+    $active ? 'var(--primary-600-main, #4285f4)' : 'var(--gray-500, #868e96)'};
+
   font-family: Pretendard;
   font-size: 18px;
   font-style: normal;
@@ -506,4 +549,27 @@ const IntroArea = styled.textarea`
   font-weight: 500;
   line-height: 160%;
   box-sizing: border-box; /* padding 포함 */
+`;
+
+const boxCss = css`
+  margin-top: 1.5rem;
+  border-radius: 8px;
+  outline: 1px ${colors.grayscale[400]} solid;
+  outline-offset: -1px;
+  padding: 32px;
+  background: #fff;
+  min-height: 400px;
+
+  & h1,
+  & h2,
+  & h3,
+  & h4,
+  & h5,
+  & h6 {
+    font-family: 'Pretendard', sans-serif;
+  }
+
+  & code {
+    font-family: 'Courier New', monospace;
+  }
 `;

@@ -5,7 +5,15 @@ import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 
 import SelectBoxBasic from '../../../team-building/components/SelectBoxBasic';
-import { UserStatus, fetchUserInfo } from '@/lib/adminMember.api';
+import {
+  BanUser,
+  DeleteUserGeneration,
+  UnbanUser,
+  UpdateUserInfoData,
+  UserStatus,
+  fetchUserInfo,
+  updateUserInfo,
+} from '@/lib/adminMember.api';
 import { Generation } from '@/lib/mypageProfile.api';
 import { useRouter } from 'next/router';
 
@@ -28,7 +36,7 @@ type MemberDetail = {
   generations: Generation[];
 };
 
-const PART_OPTIONS = ['Design', 'PM', 'FE', 'BE', 'iOS', 'Android'];
+const PART_OPTIONS = ['Design', 'PM', 'AI', 'Backend', 'Web', 'Mobile'];
 const GENERATION_OPTIONS = ['24-25', '25-26', '26-27'];
 const POSITION_OPTIONS = ['Member', 'Core', 'Organizer'];
 
@@ -59,7 +67,6 @@ const AdminMemberDetail: NextPage = () => {
     const fetchData = async () => {
       const member = await fetchUserInfo(parsedUserId);
       setMember(member);
-      console.log(member);
     };
 
     fetchData();
@@ -69,7 +76,7 @@ const AdminMemberDetail: NextPage = () => {
     if (!member) return [];
     return getStatusDisplay(member);
   }, [member]);
-  
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -81,6 +88,16 @@ const AdminMemberDetail: NextPage = () => {
       document.body.style.overflow = '';
     };
   }, [isModalOpen, mounted]);
+
+  const sortedGenerations = useMemo(() => {
+    if (!member) return [];
+
+    return [...member.generations].sort((a, b) => {
+      if (a.isMain === b.isMain) return 0;
+      return a.isMain ? -1 : 1;
+    });
+  }, [member]);
+
 
   if (!parsedUserId || !member) {
     return <div>로딩 중...</div>;
@@ -113,40 +130,40 @@ const AdminMemberDetail: NextPage = () => {
     setMember(prev => (prev ? { ...prev, [key]: value } : prev));
   };
 
-  const handleMainGenerationChange = (id: number) => {
+  const handleMainGenerationChange = (index: number) => {
     setMember(prev =>
       prev
         ? {
             ...prev,
-            generations: prev.generations.map(gen => ({
+            generations: prev.generations.map((gen, i) => ({
               ...gen,
-              isMain: gen.id === id,
+              isMain: i === index,
             })),
           }
         : prev
     );
   };
 
-  const handleGenerationChange = (id: number, value: string) => {
+  const handleGenerationChange = (index: number, value: string) => {
     setMember(prev =>
       prev
         ? {
             ...prev,
-            generations: prev.generations.map(gen =>
-              gen.id === id ? { ...gen, generation: value } : gen
+            generations: prev.generations.map((gen, i) =>
+              i === index ? { ...gen, generation: value } : gen
             ),
           }
         : prev
     );
   };
 
-  const handlePositionChange = (id: number, value: string) => {
+  const handlePositionChange = (index: number, value: string) => {
     setMember(prev =>
       prev
         ? {
             ...prev,
-            generations: prev.generations.map(gen =>
-              gen.id === id ? { ...gen, position: value } : gen
+            generations: prev.generations.map((gen, i) =>
+              i === index ? { ...gen, position: value } : gen
             ),
           }
         : prev
@@ -159,43 +176,100 @@ const AdminMemberDetail: NextPage = () => {
         ? {
             ...prev,
             generations: [
-              {
-                id: Date.now(),
-                generation: '',
-                position: '',
-                isMain: prev.generations.length === 0,
-              },
               ...prev.generations,
+              {
+                generation: '',
+                position: 'MEMBER',
+                isMain: prev.generations.length === 0,
+                _tempId: crypto.randomUUID(), // ⭐️ 핵심
+              } as any,
             ],
           }
         : prev
     );
   };
 
-  const handleRemoveGeneration = (id: number) => {
-    setMember(prev => {
-      if (!prev) return prev;
-
-      const filtered = prev.generations.filter(gen => gen.id !== id);
-      if (filtered.length === 0) return prev;
-
-      if (!filtered.some(gen => gen.isMain)) {
-        filtered[0] = { ...filtered[0], isMain: true };
-      }
-
-      return { ...prev, generations: filtered };
-    });
-  };
+  const buildUpdatePayload = (member: MemberDetail): UpdateUserInfoData => ({
+    school: member.school,
+    part: partUiToEnum(member.part),
+    generations: member.generations
+      .filter(gen => gen.generation.trim() !== '')
+      .map(gen => ({
+        ...(gen.id != null && { id: gen.id }),
+        generation: gen.generation,
+        position: positionToEnum(gen.position),
+        isMain: gen.isMain,
+      })),
+  });
 
   const handleSaveClick = () => {
-    setShowSoftbanModal(false);
     setShowConfirmModal(true);
-    setShowCompleteModal(false);
   };
 
-  const handleConfirmSave = () => {
-    setShowConfirmModal(false);
-    setShowCompleteModal(true);
+  const handleConfirmSave = async () => {
+    if (!member || !parsedUserId) return;
+    console.log(member.generations);
+    try {
+      const payload = buildUpdatePayload(member);
+
+      console.log('UPDATE PAYLOAD', payload); // 디버깅용
+      await updateUserInfo(parsedUserId, payload);
+
+      setShowConfirmModal(false);
+      setShowCompleteModal(true);
+    } catch (error) {
+      console.error(error);
+      alert('저장에 실패했습니다.');
+    }
+  };
+
+  const positionToEnum = (position: string) => {
+    if (['MEMBER', 'CORE', 'ORGANIZER'].includes(position)) {
+      return position;
+    }
+
+    switch (position) {
+      case 'Member':
+        return 'MEMBER';
+      case 'Core':
+        return 'CORE';
+      case 'Organizer':
+        return 'ORGANIZER';
+      default:
+        throw new Error(`Invalid position: ${position}`);
+    }
+  };
+  
+  const partUiToEnum = (part: string) => {
+    switch (part) {
+      case 'Design':
+        return 'DESIGN';
+      case 'PM':
+        return 'PM';
+      case 'AI':
+        return 'AI';
+      case 'Backend':
+        return 'BACKEND';
+      case 'Web':
+        return 'WEB';
+      case 'Mobile':
+        return 'MOBILE';
+      default:
+        throw new Error(`Invalid part: ${part}`);
+    }
+  };
+
+  const enumToPosition = (value: string): 'Member' | 'Core' | 'Organizer' => {
+    switch (value) {
+      case 'MEMBER':
+        return 'Member';
+      case 'CORE':
+        return 'Core';
+      case 'ORGANIZER':
+        return 'Organizer';
+      default:
+        throw new Error(`Invalid position enum: ${value}`);
+    }
   };
 
   const handleCloseModals = () => {
@@ -209,39 +283,78 @@ const AdminMemberDetail: NextPage = () => {
 
   const handleOpenSoftbanModal = () => {
     setShowSoftbanModal(true);
-    setShowConfirmModal(false);
-    setShowCompleteModal(false);
   };
 
-  const handleApplySoftban = () => {
-    const today = new Date().toISOString().slice(0, 10);
+  const handleApplySoftban = async () => {
+    if (!parsedUserId) return;
+    if (!softBanReason.trim()) {
+      alert('소프트밴 사유를 입력해주세요.');
+      return;
+    }
 
-    setMember(prev =>
-      prev
-        ? {
-            ...prev,
-            status: 'BANNED',
-            bannedAt: today,
-            unbannedAt: undefined,
-            banReason: softBanReason,
-          }
-        : prev
-    );
+    try {
+      await BanUser(parsedUserId, { reason: softBanReason });
+
+      const updatedMember = await fetchUserInfo(parsedUserId);
+      setMember(updatedMember);
+
+      setShowSoftbanModal(false);
+      setShowSoftbanCompleteModal(true);
+      setSoftBanReason('');
+    } catch (e) {
+      console.error(e);
+      alert('소프트밴 처리에 실패했습니다.');
+    }
   };
 
-  const handleReleaseSoftban = () => {
-    const today = new Date().toISOString().slice(0, 10);
 
-    setMember(prev =>
-      prev
-        ? {
-            ...prev,
-            status: 'ACTIVE',
-            unbannedAt: today,
-          }
-        : prev
-    );
+  const handleReleaseSoftban = async () => {
+    if (!parsedUserId) return;
+
+    try {
+      await UnbanUser(parsedUserId);
+
+      const updatedMember = await fetchUserInfo(parsedUserId);
+      setMember(updatedMember);
+
+      setShowSoftbanReleaseModal(true);
+    } catch (e) {
+      console.error(e);
+      alert('소프트밴 해제에 실패했습니다.');
+    }
   };
+
+  const getGenerationKey = (gen: Generation, index: number) => {
+    return gen.id ?? `temp-${index}`;
+  };
+
+  const handleUserProfile = (userId: number) => {
+    router.push(`/admin-member/${userId}/profile`);
+  }
+
+  const handleDeleteGeneration = async (gen: Generation) => {
+    setMember(prev => {
+      if (!prev) return prev;
+
+      const filtered = prev.generations.filter(g => g !== gen);
+
+      if (!filtered.some(g => g.isMain) && filtered.length > 0) {
+        filtered[0] = { ...filtered[0], isMain: true };
+      }
+
+      return { ...prev, generations: filtered };
+    });
+
+    if (gen.id) {
+      try {
+        await DeleteUserGeneration(gen.id);
+      } catch (e) {
+        console.error(e);
+        alert('역할 삭제에 실패했습니다.');
+      }
+    }
+  };
+
 
   return (
     <Container>
@@ -279,7 +392,9 @@ const AdminMemberDetail: NextPage = () => {
 
         <DetailHeader>
           <MemberName>{member.name}</MemberName>
-          <ProfileButton type="button">프로필 보기</ProfileButton>
+          <ProfileButton type="button" onClick={() => handleUserProfile(parsedUserId)}>
+            프로필 보기
+          </ProfileButton>
         </DetailHeader>
         <ContentCard>
           <FormGrid>
@@ -346,22 +461,22 @@ const AdminMemberDetail: NextPage = () => {
           </RoleHeaderRow>
 
           <RoleList>
-            {member.generations.map(gen => (
-              <RoleRow key={gen.id}>
-                <Radio checked={gen.isMain} onChange={() => handleMainGenerationChange(gen.id)} />
+            {sortedGenerations.map((gen, index) => (
+              <RoleRow key={getGenerationKey(gen, index)}>
+                <Radio checked={gen.isMain} onChange={() => handleMainGenerationChange(index)} />
 
                 <SelectBoxBasic
                   options={GENERATION_OPTIONS}
                   value={gen.generation ? [gen.generation] : []}
-                  onChange={selected =>
-                    handleGenerationChange(gen.id, selected[0] ?? gen.generation)
-                  }
+                  onChange={selected => handleGenerationChange(index, selected?.[0] ?? '')}
                 />
 
                 <SelectBoxBasic
                   options={POSITION_OPTIONS}
-                  value={gen.position ? [gen.position] : []}
-                  onChange={selected => handlePositionChange(gen.id, selected[0] ?? gen.position)}
+                  value={gen.position ? [enumToPosition(gen.position)] : []}
+                  onChange={selected =>
+                    handlePositionChange(index, positionToEnum(selected?.[0] ?? 'Member'))
+                  }
                 />
 
                 <DeleteIconCTNR
@@ -369,7 +484,7 @@ const AdminMemberDetail: NextPage = () => {
                   alt="삭제"
                   width={16}
                   height={16}
-                  onClick={() => handleRemoveGeneration(gen.id)}
+                  onClick={() => handleDeleteGeneration(gen)}
                 />
               </RoleRow>
             ))}
@@ -377,9 +492,9 @@ const AdminMemberDetail: NextPage = () => {
 
           <ActionRow $roleCount={member.generations.length}>
             {member.status === 'BANNED' ? (
-              <OutlineWarningButton onClick={handleReleaseSoftban}>
+              <OutlineDangerButton onClick={handleReleaseSoftban}>
                 소프트밴 해제
-              </OutlineWarningButton>
+              </OutlineDangerButton>
             ) : member.status === 'ACTIVE' ? (
               <OutlineDangerButton onClick={handleOpenSoftbanModal}>소프트밴</OutlineDangerButton>
             ) : null}

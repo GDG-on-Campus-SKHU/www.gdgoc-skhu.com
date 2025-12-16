@@ -44,7 +44,6 @@ export interface UserInfoDto {
   part: string;
 }
 
-
 interface GetMyProfileResponse {
   userId: number;
   name: string;
@@ -100,6 +99,27 @@ export interface UpdateUserInfoData {
     part: string;
 }
 
+export const partEnumToUi = (part: string) => {
+  switch (part) {
+    case 'DESIGN':
+      return 'Design';
+    case 'PM':
+      return 'PM';
+    case 'AI':
+      return 'AI';
+    case 'BACKEND':
+      return 'Backend';
+    case 'WEB':
+      return 'Web';
+    case 'ANDROID':
+    case 'IOS':
+    case 'MOBILE':
+      return 'Mobile';
+    default:
+      return part; // 방어 로직
+  }
+};
+
 /* =========================================================
  * utils
  * ======================================================= */
@@ -120,22 +140,19 @@ function mapUserInfoToDomain(dto: UserInfoDto): UserInfo {
   return {
     name: dto.name,
     school: dto.school,
-    part: dto.part,
+    part: partEnumToUi(dto.part),
     email: dto.email ?? '',
     phoneNum: dto.phoneNum ?? '',
     approveAt: dto.approveAt,
-
     status: dto.status,
-
-    bannedAt: dto.bannedAt ?? undefined,
-    unbannedAt: dto.unbannedAt ?? undefined,
-    deletedAt: dto.deletedAt ?? undefined,
-
-    banReason: dto.banReason ?? undefined,
-
     generations: dto.generations,
+    bannedAt: dto.bannedAt ?? '',
+    unbannedAt: dto.unbannedAt ?? '',
+    deletedAt: dto.deletedAt ?? '',
+    banReason: dto.banReason ?? '',
   };
 }
+
 
 
 function mapProfileDtoToDomain(dto: GetMyProfileResponse): MyProfile {
