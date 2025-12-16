@@ -27,6 +27,13 @@ export interface LoginResponse {
   role: string;
 }
 
+export interface ReissueAccessTokenResponse {
+  accessToken: string;
+  email: string;
+  name: string;
+  role: string;
+}
+
 export const signUp = (data: SignUpRequest) => {
   return api.post<SignUpResponse>('/auth/signup', data);
 };
@@ -49,4 +56,8 @@ export const resetPassword = (email: string, code: string, newPassword: string) 
     code,
     newPassword,
   });
+};
+
+export const reissueAccessToken = () => {
+  return api.post<ReissueAccessTokenResponse>('/auth/token/access');
 };

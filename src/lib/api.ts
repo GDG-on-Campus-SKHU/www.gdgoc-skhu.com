@@ -4,6 +4,11 @@ import { useAuthStore } from './authStore';
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL;
 
+/**
+ * 기본 API 인스턴스
+ * - accessToken은 Authorization 헤더로 전달
+ * - refreshToken은 HttpOnly Cookie로 자동 전달
+ */
 export const api = axios.create({
   baseURL,
   headers: {
@@ -12,46 +17,55 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-const refreshClient = axios.create({
-  baseURL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true,
-});
+/* =========================
+ * Types
+ * ========================= */
 
-refreshClient.interceptors.request.use(config => {
-  if (config.headers) delete config.headers.Authorization;
-  return config;
-});
-
-interface RefreshResponse {
+/**
+ * Access Token 재발급 응답
+ * - refreshToken은 응답에 포함되지 않음 (HttpOnly Cookie)
+ */
+interface ReissueAccessTokenResponse {
   accessToken: string;
-  refreshToken: string;
   email: string;
   name: string;
   role: string;
 }
 
+/* =========================
+ * Refresh Control Queue
+ * ========================= */
+
 let isRefreshing = false;
+
 let failedQueue: Array<{
-  resolve: (value?: unknown) => void;
+  resolve: (token: string) => void;
   reject: (error: unknown) => void;
 }> = [];
 
 const processQueue = (error: unknown, token: string | null) => {
   failedQueue.forEach(p => {
-    if (error) p.reject(error);
-    else p.resolve(token || undefined);
+    if (error || !token) {
+      p.reject(error);
+    } else {
+      p.resolve(token);
+    }
   });
   failedQueue = [];
 };
 
+/* =========================
+ * Request Interceptor
+ * ========================= */
+
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const state = useAuthStore.getState();
+  const { accessToken } = useAuthStore.getState();
+
   const token =
-    state.accessToken ||
-    (typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null);
+    accessToken ||
+    (typeof window !== 'undefined'
+      ? sessionStorage.getItem('accessToken')
+      : null);
 
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -59,6 +73,10 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
   return config;
 });
+
+/* =========================
+ * Response Interceptor
+ * ========================= */
 
 api.interceptors.response.use(
   response => response,
@@ -81,8 +99,8 @@ api.interceptors.response.use(
       return new Promise((resolve, reject) => {
         failedQueue.push({
           resolve: token => {
-            if (token && originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${String(token)}`;
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
             }
             resolve(api(originalRequest));
           },
@@ -94,10 +112,18 @@ api.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      const res = await refreshClient.post<RefreshResponse>('/auth/refresh');
+      const res = await api.post<ReissueAccessTokenResponse>(
+        '/auth/token/access'
+      );
+
       const { accessToken, email, name, role } = res.data;
 
-      useAuthStore.getState().setAuth({ accessToken, email, name, role });
+      useAuthStore.getState().setAuth({
+        accessToken,
+        email,
+        name,
+        role,
+      });
 
       processQueue(null, accessToken);
       isRefreshing = false;
@@ -107,16 +133,17 @@ api.interceptors.response.use(
       }
 
       return api(originalRequest);
-    } catch (refreshError) {
+    } catch (reissueError) {
       isRefreshing = false;
+      processQueue(reissueError, null);
+
       useAuthStore.getState().clearAuth();
-      processQueue(refreshError, null);
 
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
       }
 
-      return Promise.reject(refreshError);
+      return Promise.reject(reissueError);
     }
   }
 );
