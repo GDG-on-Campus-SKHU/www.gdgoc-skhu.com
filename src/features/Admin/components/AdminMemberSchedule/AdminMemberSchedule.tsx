@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
+
 import styles from '../../styles/AdminMemberSchedule.module.css';
 
 type ScheduleItem = {
@@ -89,13 +90,7 @@ const AdminProjectManagement: NextPage = () => {
         <div className={styles.contentWrapper}>
           <div className={styles.projectNameContainer}>
             <h2 className={styles.projectName}>{projectName}</h2>
-            <Image
-              className={styles.editIcon}
-              src="/edit.svg"
-              alt="편집"
-              width={24}
-              height={24}
-            />
+            <Image className={styles.editIcon} src="/edit.svg" alt="편집" width={24} height={24} />
           </div>
 
           {/* 프로젝트 일정 관리 */}
@@ -132,14 +127,10 @@ const AdminProjectManagement: NextPage = () => {
                   {schedules.map(schedule => (
                     <div key={schedule.id} className={styles.tableRow}>
                       <div className={styles.tableCellCategory}>
-                        <span className={styles.tableCellCategoryText}>
-                          {schedule.category}
-                        </span>
+                        <span className={styles.tableCellCategoryText}>{schedule.category}</span>
                       </div>
                       <div className={styles.tableCellStatus}>
-                        <span className={styles.tableCellStatusText}>
-                          {schedule.status}
-                        </span>
+                        <span className={styles.tableCellStatusText}>{schedule.status}</span>
                       </div>
                       <div className={styles.tableCellPeriod}>
                         <span className={styles.tableCellPeriodText}>
@@ -164,10 +155,7 @@ const AdminProjectManagement: NextPage = () => {
 
           {/* 주제 관리 */}
           <div className={styles.accordionSection}>
-            <div
-              className={styles.accordionHeader}
-              onClick={() => setIsTopicOpen(!isTopicOpen)}
-            >
+            <div className={styles.accordionHeader} onClick={() => setIsTopicOpen(!isTopicOpen)}>
               <span className={styles.accordionTitle}>주제 관리</span>
               <div
                 className={`${styles.accordionArrow} ${isTopicOpen ? styles.accordionArrowOpen : ''}`}
@@ -176,11 +164,7 @@ const AdminProjectManagement: NextPage = () => {
               </div>
             </div>
 
-            {isTopicOpen && (
-              <div className={styles.accordionContent}>
-                {/* 주제 관리 콘텐츠 */}
-              </div>
-            )}
+            {isTopicOpen && <div className={styles.accordionContent}>{/* 주제 관리 콘텐츠 */}</div>}
           </div>
 
           {/* 참여자 관리 */}
@@ -198,18 +182,13 @@ const AdminProjectManagement: NextPage = () => {
             </div>
 
             {isParticipantOpen && (
-              <div className={styles.accordionContent}>
-                {/* 참여자 관리 콘텐츠 */}
-              </div>
+              <div className={styles.accordionContent}>{/* 참여자 관리 콘텐츠 */}</div>
             )}
           </div>
 
           {/* 팀 관리 */}
           <div className={styles.accordionSection}>
-            <div
-              className={styles.accordionHeader}
-              onClick={() => setIsTeamOpen(!isTeamOpen)}
-            >
+            <div className={styles.accordionHeader} onClick={() => setIsTeamOpen(!isTeamOpen)}>
               <span className={styles.accordionTitle}>팀 관리</span>
               <div
                 className={`${styles.accordionArrow} ${isTeamOpen ? styles.accordionArrowOpen : ''}`}
@@ -218,11 +197,7 @@ const AdminProjectManagement: NextPage = () => {
               </div>
             </div>
 
-            {isTeamOpen && (
-              <div className={styles.accordionContent}>
-                {/* 팀 관리 콘텐츠 */}
-              </div>
-            )}
+            {isTeamOpen && <div className={styles.accordionContent}>{/* 팀 관리 콘텐츠 */}</div>}
           </div>
         </div>
 

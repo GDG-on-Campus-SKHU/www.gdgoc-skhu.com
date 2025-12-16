@@ -15,7 +15,6 @@ export const Sidebar = styled.aside`
   height: 1440px; /* ✔ 고정 px → vh 로 변경 */
   overflow-y: auto; /* ✔ 내부 스크롤 허용 */
 `;
-
 export const ImageContainer = styled.div`
   aspect-ratio: 30/19;
   width: 60px;

@@ -1,11 +1,12 @@
+import { useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
-import { useState } from 'react';
 import styled from 'styled-components';
-import closeButton from '../../../../../public/X.svg';
+
 import downArrow from '../../../../../public/dropdownarrow.svg';
 import editIcon from '../../../../../public/edit.svg';
 import rightArrow from '../../../../../public/rightarrow_admin.svg';
+import closeButton from '../../../../../public/X.svg';
 
 interface Project {
   id: number;
@@ -171,9 +172,7 @@ const AdminProjectManage: NextPage = () => {
             ) : modalMode === 'editSuccess' ? (
               <>
                 <SuccessModalTitle>수정이 완료되었습니다.</SuccessModalTitle>
-                <SuccessConfirmButton onClick={() => setModalMode(null)}>
-                  확인
-                </SuccessConfirmButton>
+                <SuccessConfirmButton onClick={() => setModalMode(null)}>확인</SuccessConfirmButton>
               </>
             ) : (
               <>
@@ -188,7 +187,11 @@ const AdminProjectManage: NextPage = () => {
                   </ModalTitle>
 
                   {(modalMode === 'create' || modalMode === 'edit') && (
-                    <CloseButton src={closeButton.src} alt="닫기" onClick={() => setModalMode(null)} />
+                    <CloseButton
+                      src={closeButton.src}
+                      alt="닫기"
+                      onClick={() => setModalMode(null)}
+                    />
                   )}
                 </ModalHeader>
 
