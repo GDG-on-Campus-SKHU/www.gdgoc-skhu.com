@@ -38,6 +38,7 @@ type IdeaInput = {
 
 interface IdeaStore {
   ideas: Idea[];
+  nextId: number; // 다음 ID 추적
   addIdea: (idea: IdeaInput) => Idea;
   getIdeaById: (id: number) => Idea | undefined;
   removeIdea: (id: number) => void;
@@ -47,6 +48,7 @@ interface IdeaStore {
 }
 
 const STORAGE_KEY = 'team-building:ideas';
+const NEXT_ID_KEY = 'team-building:nextId';
 
 const loadStoredIdeas = (): Idea[] => {
   if (typeof window === 'undefined') return [];
@@ -62,10 +64,31 @@ const loadStoredIdeas = (): Idea[] => {
   }
 };
 
+const loadNextId = (): number => {
+  if (typeof window === 'undefined') return 1;
+  try {
+    const raw = window.localStorage.getItem(NEXT_ID_KEY);
+    if (!raw) return 1;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  } catch {
+    return 1;
+  }
+};
+
 const saveIdeas = (ideas: Idea[]) => {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ideas));
+  } catch {
+    // ignore storage errors (quota/unavailable)
+  }
+};
+
+const saveNextId = (nextId: number) => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(NEXT_ID_KEY, String(nextId));
   } catch {
     // ignore storage errors (quota/unavailable)
   }
@@ -93,8 +116,10 @@ const clampTeamCounts = (candidate: TeamCounts | undefined, limits: TeamCounts):
 
 const sumTeamCounts = (team: TeamCounts): number =>
   Object.values(team).reduce((sum, count) => sum + count, 0);
+
 const safePositive = (value: number | undefined | null): number =>
   typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 0;
+
 export const resolveTotalMembers = (
   totalMembers: number | undefined,
   team: TeamCounts | undefined
@@ -107,12 +132,21 @@ export const resolveTotalMembers = (
 
 export const useIdeaStore = create<IdeaStore>((set, get) => ({
   ideas: [],
+  nextId: 1, // 초기값 1
   hasHydrated: false,
+
   hydrateFromStorage: () => {
     if (get().hasHydrated) return;
     const stored = loadStoredIdeas();
-    set({ ideas: stored, hasHydrated: true });
+    const storedNextId = loadNextId();
+
+    // 저장된 아이디어 중 가장 큰 ID + 1과 저장된 nextId 중 큰 값 사용
+    const maxIdFromIdeas = stored.reduce((max, idea) => Math.max(max, idea.id), 0);
+    const nextId = Math.max(storedNextId, maxIdFromIdeas + 1);
+
+    set({ ideas: stored, nextId, hasHydrated: true });
   },
+
   addIdea: ({ currentMembers, totalMembers, status, preferredPart, team, filledTeam, ...idea }) => {
     const part = preferredPart ?? '기획';
     const safeTeam: TeamCounts = {
@@ -131,8 +165,11 @@ export const useIdeaStore = create<IdeaStore>((set, get) => ({
     const resolvedStatus: Idea['status'] =
       status ?? (current >= total && total > 0 ? '모집 마감' : '모집 중');
 
+    // 현재 nextId 가져오기
+    const currentNextId = get().nextId;
+
     const newIdea: Idea = {
-      id: Date.now(),
+      id: currentNextId, // 순차적 ID 사용
       preferredPart: part,
       team: safeTeam,
       filledTeam: normalizedFilledTeam,
@@ -144,19 +181,24 @@ export const useIdeaStore = create<IdeaStore>((set, get) => ({
 
     set(state => {
       const ideas = [...state.ideas, newIdea];
+      const nextId = currentNextId + 1; // ID 증가
       saveIdeas(ideas);
-      return { ideas };
+      saveNextId(nextId); // 다음 ID 저장
+      return { ideas, nextId };
     });
 
     return newIdea;
   },
+
   getIdeaById: id => get().ideas.find(idea => idea.id === id),
+
   removeIdea: id =>
     set(state => {
       const ideas = state.ideas.filter(item => item.id !== id);
       saveIdeas(ideas);
       return { ideas };
     }),
+
   addApplicant: (id, part) => {
     const idea = get().getIdeaById(id);
     if (!idea) return false;

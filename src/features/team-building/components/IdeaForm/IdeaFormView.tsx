@@ -69,6 +69,7 @@ interface IdeaFormValues {
 interface IdeaFormViewProps {
   form: IdeaFormValues;
   team: TeamCounts;
+  topicOptions?: string[];
   preferredRoleKey: TeamRole | null;
   radioRenderVersion: number;
   onChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
@@ -101,6 +102,7 @@ interface IdeaFormViewProps {
 export default function IdeaFormView({
   form,
   team,
+  topicOptions,
   radioRenderVersion,
   onChange,
   onTopicSelect,
@@ -235,7 +237,7 @@ export default function IdeaFormView({
             <FieldLabel id="topic-label">아이디어 주제</FieldLabel>
             <SelectWrapper role="group" aria-labelledby="topic-label">
               <SelectBoxBasic
-                options={TOPIC_OPTIONS}
+                options={topicOptions ?? TOPIC_OPTIONS}
                 placeholder={TOPIC_PLACEHOLDER}
                 multiple={false}
                 searchable={false}

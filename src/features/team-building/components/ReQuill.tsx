@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
-import ReactQuill, { ReactQuillProps } from 'react-quill';
 
+import ReactQuill, { ReactQuillProps } from '../../../lib/patchedReactQuill';
 import { quillWrapperCss } from '../styles/quillWrapper';
 
 import 'react-quill/dist/quill.snow.css';

@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import styled from 'styled-components';
 
+import { colors } from '../../../styles/constants/colors';
 import SelectBoxBasic from '../components/SelectBoxBasic';
 
 export const Container = styled.div`
@@ -214,7 +215,7 @@ export const StateToggle = styled.div<{ $active: boolean }>`
     height: 30px;
     border-radius: 18px;
     background: #f9f9fa;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+
     transform: ${({ $active }) => ($active ? 'translateX(36px)' : 'translateX(0)')};
     transition: transform 0.2s ease;
   }
@@ -368,11 +369,6 @@ export const PageButton = styled.button<{ $active?: boolean; $isArrow?: boolean 
       $isArrow ? ($active ? '#3f7bf5' : '#c9ced8') : 'transparent'};
   }
 
-  &:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.35);
-  }
-
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -417,4 +413,144 @@ export const GrowthonLogo = styled(Image)`
   width: 36px;
   height: 36px;
   flex-shrink: 0;
+`;
+
+export const ScheduleModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+
+  /* 🔥 실제 보이는 결과 값이 정확히 180(0.706)이 되도록 계산된 배경 */
+  background: rgba(88, 88, 88, 0.45);
+
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 9999;
+`;
+
+export const ScheduleModalCard = styled.div`
+  width: min(640px, 100%);
+  max-height: min(90vh, 840px);
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
+  padding: 40px 40px;
+  overflow-y: auto;
+
+  position: relative;
+  width: 480px;
+  height: 796px;
+`;
+
+export const ScheduleModalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+`;
+
+export const ScheduleModalTitle = styled.h3`
+  align-self: stretch;
+  color: var(--grayscale-1000, #040405);
+
+  /* header/h2-bold */
+  font-family: Pretendard;
+  font-size: 36px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%; /* 57.6px */
+`;
+
+export const ScheduleModalSubtitle = styled.p`
+  color: var(--grayscale-1000, #040405);
+
+  /* body/b1/b1 */
+  font-family: Pretendard;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%; /* 38.4px */
+`;
+
+export const ScheduleModalCloseButton = styled.button`
+  width: 36px;
+  height: 36px;
+
+  &:hover {
+    background: ${colors.grayscale[200]};
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+export const ScheduleSteps = styled.ol`
+  display: flex;
+  width: 400px;
+  flex-direction: column;
+  gap: 32px;
+`;
+
+export const ScheduleStep = styled.li<{ $isLast: boolean }>`
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 40px;
+  position: relative;
+  align-items: flex-start;
+`;
+
+export const ScheduleMarker = styled.div<{ $isLast: boolean }>`
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-self: stretch;
+  align-items: flex-start;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: calc(100% + 28px);
+    background: ${colors.grayscale[300]};
+    display: ${({ $isLast }) => ($isLast ? 'none' : 'block')};
+  }
+`;
+
+export const ScheduleDot = styled.span`
+  width: 20px;
+  height: 20px;
+  border-radius: 20px;
+  border: 6px solid var(--primary-600-main, #4285f4);
+  background: #fff;
+  z-index: 1;
+  margin-top: 9px;
+`;
+
+export const ScheduleStepTitle = styled.p`
+  color: var(--grayscale-1000, #040405);
+
+  /* body/b1/b1-bold */
+  font-family: Pretendard;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%; /* 38.4px */
+`;
+
+export const ScheduleStepDate = styled.p`
+  color: var(--primary-600-main, #4285f4);
+
+  /* body/b2/b2 */
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%; /* 32px */
 `;
