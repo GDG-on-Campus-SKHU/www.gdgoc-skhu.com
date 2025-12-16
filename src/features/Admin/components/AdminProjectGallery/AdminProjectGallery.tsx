@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
+import { ProjectGalleryListItem, useProjectGalleryList } from '@/lib/adminProjectGallery.api';
 
 import {
   ActionButton,
@@ -41,60 +43,61 @@ import {
 } from '../../styles/AdminProjectGallery';
 
 type GalleryRow = {
-  id: string | number;
+  id: number;
   name: string;
   generation: string;
   displayStatus: string;
   createdAt: string;
 };
 
-type Props = {
-  items?: GalleryRow[];
-  currentPage?: number;
-  totalPages?: number;
-  onPageChange?: (page: number) => void;
-  onSearch?: (keyword: string) => void;
-};
-
 const ITEMS_PER_PAGE = 10;
 
-const DEFAULT_ROWS: GalleryRow[] = Array.from({ length: 20 }, (_, i) => ({
-  id: i + 1,
-  name: '프로젝트명은 20자까지!! 그래서 짧게 잡아도 될듯 !!',
-  generation: '25-26',
-  displayStatus: i % 2 === 0 ? '활성화' : '비활성화',
-  createdAt: '2025.10.31',
-}));
-
-export default function AdminProjectGallery({
-  items,
-  currentPage,
-  totalPages,
-  onPageChange,
-  onSearch,
-}: Props) {
-  const [internalPage, setInternalPage] = useState(1);
+export default function AdminProjectGallery() {
+  const router = useRouter();
+  const [page, setPage] = useState(1);
   const [keyword, setKeyword] = useState('');
 
-  const rows = useMemo(() => items ?? DEFAULT_ROWS, [items]);
+  const { data: listData, isLoading } = useProjectGalleryList();
 
-  const isControlled = typeof onPageChange === 'function';
-  const resolvedTotalPages = Math.max(
-    1,
-    isControlled ? (totalPages ?? 1) : Math.ceil(rows.length / ITEMS_PER_PAGE)
-  );
+  useEffect(() => {
+    setPage(1);
+  }, [keyword]);
 
-  const page = Math.min(
-    Math.max(isControlled ? (currentPage ?? 1) : internalPage, 1),
-    resolvedTotalPages
-  );
+  const rows: GalleryRow[] = useMemo(() => {
+    if (!listData) return [];
 
-  const displayedRows = rows.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+    const filteredList = listData.filter(item =>
+      item.projectName.toLowerCase().includes(keyword.toLowerCase())
+    );
 
-  const changePage = (p: number) => {
-    const next = Math.min(Math.max(p, 1), resolvedTotalPages);
-    if (isControlled && onPageChange) onPageChange(next);
-    else setInternalPage(next);
+    return filteredList.map((item: ProjectGalleryListItem) => {
+      const formattedDate = item.createdAt ? item.createdAt.split('T')[0].replace(/-/g, '.') : '-';
+
+      return {
+        id: item.id,
+        name: item.projectName,
+        generation: item.generation,
+        displayStatus: item.exhibited ? '활성화' : '비활성화',
+        createdAt: formattedDate,
+      };
+    });
+  }, [listData, keyword]);
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / ITEMS_PER_PAGE));
+
+  const displayedRows = useMemo(() => {
+    const currentPage = Math.min(Math.max(page, 1), totalPages);
+    return rows.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  }, [rows, page, totalPages]);
+
+  const changePage = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
+  };
+
+  const handleEdit = (id: number) => {
+    router.push(`/AdminProjectEdit?id=${id}`);
   };
 
   return (
@@ -113,10 +116,9 @@ export default function AdminProjectGallery({
             value={keyword}
             placeholder="프로젝트명 검색"
             onChange={e => setKeyword(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && onSearch?.(keyword)}
           />
         </SearchField>
-        <SearchButton onClick={() => onSearch?.(keyword)}>
+        <SearchButton onClick={() => {}}>
           <SearchButtonText>검색</SearchButtonText>
         </SearchButton>
       </SearchBar>
@@ -142,45 +144,59 @@ export default function AdminProjectGallery({
         </TableHeader>
 
         <TableBody>
-          {displayedRows.map(row => (
-            <TableRow key={row.id}>
-              <IdColumn>
-                <IDBodyCell>{row.id}</IDBodyCell>
-              </IdColumn>
-              <NameColumn>
-                <NameBodyCell>{row.name}</NameBodyCell>
+          {isLoading ? (
+            <TableRow>
+              <NameColumn style={{ width: '100%', textAlign: 'center', padding: '20px' }}>
+                로딩 중...
               </NameColumn>
-              <GenerationColumn>
-                <GenerationBodyCell>{row.generation}</GenerationBodyCell>
-              </GenerationColumn>
-              <DisplayColumn>
-                <DisplayBodyCell>{row.displayStatus}</DisplayBodyCell>
-              </DisplayColumn>
-              <DateColumn>
-                <DateBodyCell>{row.createdAt}</DateBodyCell>
-              </DateColumn>
-              <ActionColumn>
-                <ActionButton>수정하기</ActionButton>
-              </ActionColumn>
             </TableRow>
-          ))}
+          ) : displayedRows.length > 0 ? (
+            displayedRows.map(row => (
+              <TableRow key={row.id}>
+                <IdColumn>
+                  <IDBodyCell>{row.id}</IDBodyCell>
+                </IdColumn>
+                <NameColumn>
+                  <NameBodyCell>{row.name}</NameBodyCell>
+                </NameColumn>
+                <GenerationColumn>
+                  <GenerationBodyCell>{row.generation}</GenerationBodyCell>
+                </GenerationColumn>
+                <DisplayColumn>
+                  <DisplayBodyCell>{row.displayStatus}</DisplayBodyCell>
+                </DisplayColumn>
+                <DateColumn>
+                  <DateBodyCell>{row.createdAt}</DateBodyCell>
+                </DateColumn>
+                <ActionColumn>
+                  <ActionButton onClick={() => handleEdit(row.id)}>수정하기</ActionButton>
+                </ActionColumn>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <NameColumn style={{ width: '100%', textAlign: 'center', padding: '20px' }}>
+                검색 결과가 없습니다.
+              </NameColumn>
+            </TableRow>
+          )}
         </TableBody>
       </TableCard>
 
       <Pagination>
-        <PageButton $isArrow onClick={() => changePage(page - 1)}>
+        <PageButton $isArrow onClick={() => changePage(page - 1)} disabled={page === 1}>
           <ArrowIcon $direction="left" />
         </PageButton>
 
         <PageNumberGroup>
-          {Array.from({ length: resolvedTotalPages }, (_, i) => (
+          {Array.from({ length: totalPages }, (_, i) => (
             <PageInsertNum key={i + 1} $active={page === i + 1} onClick={() => changePage(i + 1)}>
               {i + 1}
             </PageInsertNum>
           ))}
         </PageNumberGroup>
 
-        <PageButton $isArrow onClick={() => changePage(page + 1)}>
+        <PageButton $isArrow onClick={() => changePage(page + 1)} disabled={page === totalPages}>
           <ArrowIcon $direction="right" />
         </PageButton>
       </Pagination>
