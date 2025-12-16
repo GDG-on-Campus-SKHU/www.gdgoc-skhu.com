@@ -23,8 +23,8 @@ export interface AdminPageInfo {
 export interface AdminProject {
   projectId: number;
   projectName: string;
-  startAt: string;          // ISO String
-  endAt: string | null;     // 종료일이 없을 수 있음
+  startAt: string | null;
+  endAt: string | null;
 }
 
 /**
@@ -60,9 +60,6 @@ export const getAdminProjects = (params: {
 
 /**
  * 관리자 아이디어 요약 정보
- *
- * ⚠️ authorName은 현재 백엔드 미지원
- * → 상세 API에서는 creator 객체로 제공됨
  */
 export interface AdminIdea {
   ideaId: number;
@@ -71,8 +68,7 @@ export interface AdminIdea {
   currentMemberCount: number;
   maxMemberCount: number;
   deleted: boolean;
-
-  authorName?: string; // 추후 백엔드 추가 예정
+  authorName?: string;
 }
 
 /**
@@ -94,33 +90,37 @@ export const getAdminProjectIdeas = (params: {
   sortBy?: 'id';
   order?: 'ASC' | 'DESC';
 }) =>
-  api.get<AdminIdeaListResponse>(
-    `/admin/projects/${params.projectId}/ideas`,
-    {
-      params: {
-        page: params.page,
-        size: params.size,
-        sortBy: params.sortBy ?? 'id',
-        order: params.order ?? 'ASC',
-      },
-    }
-  );
+  api.get<AdminIdeaListResponse>(`/admin/projects/${params.projectId}/ideas`, {
+    params: {
+      page: params.page,
+      size: params.size,
+      sortBy: params.sortBy ?? 'id',
+      order: params.order ?? 'ASC',
+    },
+  });
 
 /* ======================================================
  * Idea (Admin - Detail)
  * ====================================================== */
 
 /**
+ * 아이디어 팀원 정보
+ */
+export interface AdminIdeaMember {
+  userId: number;
+  memberName: string;
+  memberRole: 'CREATOR' | 'MEMBER';
+  confirmed: boolean;
+}
+
+/**
  * 팀 파트별 모집 현황
  */
 export interface AdminIdeaRoster {
-  part: string; // PM | DESIGN | WEB | BACKEND | ...
+  part: 'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI';
   currentMemberCount: number;
   maxMemberCount: number;
-  members: {
-    memberId: number;
-    name: string;
-  }[];
+  members: AdminIdeaMember[];
 }
 
 /**
@@ -137,7 +137,7 @@ export interface AdminIdeaDetail {
 
   creator: {
     creatorName: string;
-    part: string;
+    part: 'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI';
     school: string;
   };
 
@@ -147,10 +147,73 @@ export interface AdminIdeaDetail {
 /**
  * 특정 아이디어 상세 조회 (관리자)
  */
-export const getAdminProjectIdeaDetail = (params: {
-  projectId: number;
-  ideaId: number;
-}) =>
-  api.get<AdminIdeaDetail>(
-    `/admin/projects/${params.projectId}/ideas/${params.ideaId}`
-  );
+export const getAdminProjectIdeaDetail = (params: { projectId: number; ideaId: number }) =>
+  api.get<AdminIdeaDetail>(`/admin/projects/${params.projectId}/ideas/${params.ideaId}`);
+
+/* ======================================================
+ * Idea (Admin - Restore)
+ * ====================================================== */
+
+/**
+ * 소프트 딜리트된 아이디어 복원
+ *
+ * - 이미 다른 아이디어를 게시한 사용자가 있으면 4XX
+ * - 삭제 상태가 아니면 4XX
+ */
+export const restoreAdminIdea = (ideaId: number) =>
+  api.post<void>(`/admin/ideas/${ideaId}/restore`);
+
+/* ======================================================
+ * Idea (Admin - Hard Delete)
+ * ====================================================== */
+
+/**
+ * 관리자 아이디어 완전 삭제
+ *
+ * ⚠️ DB에서 실제 삭제되며 복구 불가
+ */
+export const deleteAdminIdea = (ideaId: number) => api.delete<void>(`/admin/ideas/${ideaId}`);
+
+/* ======================================================
+ * Idea (Admin - Remove Member)
+ * ====================================================== */
+
+/**
+ * 아이디어에 소속된 팀원 제거
+ *
+ * ⚠️ 팀장(CREATOR)은 제거 불가
+ */
+export const removeAdminIdeaMember = (params: { ideaId: number; memberId: number }) =>
+  api.delete<void>(`/admin/ideas/${params.ideaId}/members/${params.memberId}`);
+
+/* ======================================================
+ * Idea (Admin - Update)
+ * ====================================================== */
+
+/**
+ * 파트별 최대 인원 설정
+ */
+export interface AdminIdeaCompositionRequest {
+  part: 'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI';
+  maxCount: number;
+}
+
+/**
+ * 관리자 아이디어 수정 요청 DTO
+ *
+ * ⚠️ maxCount는 현재 인원수보다 작을 수 없음
+ */
+export interface AdminIdeaUpdateRequest {
+  title: string;
+  introduction: string;
+  description: string;
+  topicId: number;
+  creatorPart: 'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI';
+  compositions: AdminIdeaCompositionRequest[];
+}
+
+/**
+ * 관리자 아이디어 수정
+ */
+export const updateAdminIdea = (params: { ideaId: number; data: AdminIdeaUpdateRequest }) =>
+  api.put<void>(`/admin/ideas/${params.ideaId}`, params.data);

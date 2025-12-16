@@ -53,6 +53,8 @@ interface GetGalleryProjectsResponse {
   galleryProjectSummaryResponseDtoList: GalleryProjectSummaryDto[];
 }
 
+// [수정] 사용되지 않는 _GalleryProjectMemberDto_ 인터페이스 삭제함
+
 interface GalleryProjectMemberDetailDto {
   userId: number;
   memberRole: MemberRole;
@@ -70,8 +72,8 @@ interface GetGalleryProjectDetailResponse {
   serviceStatus: ServiceStatus;
   description: string; // markdown 본문
 
-  leader: GalleryProjectMemberDetailDto; // ✅ 추가/변경
-  members: GalleryProjectMemberDetailDto[]; // ✅ 변경
+  leader: GalleryProjectMemberDetailDto;
+  members: GalleryProjectMemberDetailDto[];
 
   thumbnailUrl?: string | null;
 }
@@ -104,7 +106,7 @@ function mapLeaderProfileDtoToDomain(
     userId: dto.userId,
     name: dto.name,
     school: dto.school,
-    badge: dto.generationAndPosition, // ✅ ProjectMemberBase의 badge로 매핑
+    badge: dto.generationAndPosition,
   };
 }
 
@@ -153,7 +155,7 @@ function mapDetailDtoToDomain(dto: GetGalleryProjectDetailResponse): ProjectDeta
     status: dto.serviceStatus,
     longDescription: dto.description,
 
-    leader: dto.leader ? mapDetailMemberDtoToDomain(dto.leader) : null, // ✅ 이제 leader는 dto.leader
+    leader: dto.leader ? mapDetailMemberDtoToDomain(dto.leader) : null,
     members: (dto.members ?? []).map(mapDetailMemberDtoToDomain),
 
     thumbnailUrl: dto.thumbnailUrl ?? null,
@@ -228,7 +230,7 @@ export function useProjectGalleryDetail(
 }
 
 /* =========================================================
- *  API: Member Search (팀원 등록용)
+ * API: Member Search (팀원 등록용)
  * ======================================================= */
 export async function fetchProjectGalleryMemberSearch(
   name: string

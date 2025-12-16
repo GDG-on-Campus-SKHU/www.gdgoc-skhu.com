@@ -1,8 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
-
+// 1. deleteAdminIdea API 추가 Import
 import {
-  Content,
+  AdminIdeaDetail as AdminIdeaDetailType,
+  deleteAdminIdea,
+  getAdminProjectIdeaDetail,
+} from '@/lib/adminIdea.api';
+import styled from 'styled-components';
+
+import MyTeamCount from '../../../team-building/components/MyTeam/MyTeamCount';
+import MyTeamMemberCard from '../../../team-building/components/MyTeam/MyTeamMember';
+import MyTeamStatusCard from '../../../team-building/components/MyTeam/MyTeamStatus';
+import {
+  CancelButtonText,
   ContentContainer,
   Description,
   DescriptionBox,
@@ -43,36 +53,27 @@ import {
   CountUnit,
 } from '../../styles/AdminIdeaDetail';
 
-import { sanitizeDescription } from '../../utils/sanitizeDescription';
-import {
-  AdminIdeaDetail as AdminIdeaDetailType,
-  AdminIdeaRoster,
-  getAdminProjectIdeaDetail,
-} from '@/lib/adminIdea.api';
+const TEAM_ROLES = [
+  { key: 'planning', label: '기획', apiKey: 'PM' },
+  { key: 'design', label: '디자인', apiKey: 'DESIGN' },
+  { key: 'aiMl', label: 'AI/ML', apiKey: 'AI' },
+  { key: 'frontendWeb', label: '프론트엔드 (웹)', apiKey: 'WEB' },
+  { key: 'frontendMobile', label: '프론트엔드 (모바일)', apiKey: 'MOBILE' },
+  { key: 'backend', label: '백엔드', apiKey: 'BACKEND' },
+] as const;
 
-/* ======================================================
- * Constants
- * ====================================================== */
-
-/**
- * 백엔드 part → 화면 표시용 라벨 매핑
- */
-const TEAM_ROLE_LABEL_MAP: Record<AdminIdeaRoster['part'], string> = {
-  PM: '기획',
-  DESIGN: '디자인',
-  AI: 'AI/ML',
-  WEB: '프론트엔드 (웹)',
-  MOBILE: '프론트엔드 (모바일)',
-  BACKEND: '백엔드',
-};
-
-/**
- * 화면 배치용 파트 그룹
- */
-const TEAM_GROUPS: Array<Array<AdminIdeaRoster['part']>> = [
-  ['PM', 'DESIGN', 'AI'],
-  ['WEB', 'MOBILE', 'BACKEND'],
+const TEAM_GROUPS: Array<Array<(typeof TEAM_ROLES)[number]['key']>> = [
+  ['planning', 'design', 'aiMl'],
+  ['frontendWeb', 'frontendMobile', 'backend'],
 ];
+
+const SectionTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 700;
+  color: #040405;
+  display: flex;
+  align-items: center;
+`;
 
 /* ======================================================
  * Component
@@ -82,163 +83,237 @@ export default function AdminIdeaDetail() {
   const router = useRouter();
   const { id, projectId } = router.query;
 
-  const [idea, setIdea] = useState<AdminIdeaDetailType | null>(null);
-  const [modalState, setModalState] =
-    useState<'closed' | 'confirm' | 'success'>('closed');
+  const [ideaData, setIdeaData] = useState<AdminIdeaDetailType | null>(null);
+  const [modalState, setModalState] = useState<'closed' | 'confirm' | 'success'>('closed');
 
-  /* =========================
-   * Fetch idea detail
-   * ========================= */
   useEffect(() => {
     if (!id || !projectId) return;
 
-    const fetchDetail = async () => {
-      try {
-        const res = await getAdminProjectIdeaDetail({
-          projectId: Number(projectId),
-          ideaId: Number(id),
-        });
-        setIdea(res.data);
-      } catch (error) {
-        console.error('아이디어 상세 조회 실패', error);
-      }
-    };
-
-    fetchDetail();
+    getAdminProjectIdeaDetail({
+      projectId: Number(projectId),
+      ideaId: Number(id),
+    })
+      .then(res => setIdeaData(res.data))
+      .catch(err => console.error(err));
   }, [id, projectId]);
 
-  /* =========================
-   * Derived values
-   * ========================= */
+  const teamParts = useMemo(() => {
+    if (!ideaData) return [];
+
+    return TEAM_ROLES.map(roleDef => {
+      const roster = ideaData.rosters.find(r => r.part === roleDef.apiKey);
+      const capacity = roster?.maxMemberCount ?? 0;
+      const current = roster?.currentMemberCount ?? 0;
+      const members =
+        roster?.members.map(m => ({
+          id: String(m.userId),
+          name: m.memberName,
+          isLeader: m.memberRole === 'CREATOR',
+        })) ?? [];
+
+      return {
+        key: roleDef.key,
+        label: roleDef.label,
+        capacity,
+        current,
+        isRecruiting: capacity > 0,
+        members,
+      };
+    });
+  }, [ideaData]);
+
+  const statsMap = useMemo(() => {
+    const map: Record<string, { current: number; total: number }> = {};
+    teamParts.forEach(part => {
+      map[part.key] = {
+        current: part.current,
+        total: part.capacity,
+      };
+    });
+    return map;
+  }, [teamParts]);
 
   const safeDescription = useMemo(
-    () => sanitizeDescription(idea?.description ?? ''),
-    [idea?.description]
+    () => sanitizeDescription(ideaData?.description ?? ''),
+    [ideaData]
   );
 
-  if (!idea) return null;
+  const handleEditClick = () => {
+    router.push({
+      pathname: '/AdminIdeaEdit',
+      query: { projectId, id },
+    });
+  };
 
-  /* =========================
-   * Render
-   * ========================= */
+  // 2. 삭제 핸들러 수정: 실제 API 호출
+  const handleDeleteConfirm = async () => {
+    if (!id) return;
+
+    try {
+      // API 호출
+      await deleteAdminIdea(Number(id));
+      // 성공 시 모달 상태 변경
+      setModalState('success');
+    } catch (error) {
+      console.error('Failed to delete idea:', error);
+      alert('아이디어 삭제에 실패했습니다.');
+      setModalState('closed');
+    }
+  };
+
+  const handleCloseModal = () => setModalState('closed');
+
+  const handleSuccessClose = () => {
+    setModalState('closed');
+    // 삭제 후 아이디어 목록으로 이동 (projectId 유지)
+    router.push({
+      pathname: '/AdminIdeaIdea',
+      query: { projectId },
+    });
+  };
+
+  if (!ideaData) {
+    return <ContentContainer>Loading...</ContentContainer>;
+  }
 
   return (
-    <Content>
-      <ContentContainer>
-        <Heading>
-          <Title>아이디어 관리</Title>
-          <Description>선택한 아이디어 상세 정보입니다.</Description>
-        </Heading>
+    <ContentContainer>
+      <Heading>
+        <Title>아이디어 관리</Title>
+        <Description>역대 프로젝트에 게시된 아이디어 리스트를 관리할 수 있습니다.</Description>
+      </Heading>
 
-        <PreviewCanvas>
-          <ResponsiveWrapper>
-            <TitleSection>
-              <TitleText>{idea.title}</TitleText>
+      <PreviewCanvas>
+        <ResponsiveWrapper>
+          <TitleSection>
+            <TitleText>{ideaData.title}</TitleText>
+            <IntroRow>
+              <IntroText>{ideaData.introduction}</IntroText>
+              <MentorContainer>
+                <MentorPart>
+                  {ideaData.creator.school} {ideaData.creator.part}{' '}
+                  <Mentor as="span">{ideaData.creator.creatorName}</Mentor>
+                </MentorPart>
+              </MentorContainer>
+            </IntroRow>
+          </TitleSection>
 
-              <IntroRow>
-                <IntroText>{idea.introduction}</IntroText>
-                <MentorContainer>
-                  <MentorPart>
-                    {idea.creator.school} {idea.creator.part}{' '}
-                    <Mentor as="span">{idea.creator.creatorName}</Mentor>
-                  </MentorPart>
-                </MentorContainer>
-              </IntroRow>
-            </TitleSection>
-
+          <SubjectRow>
             <SubjectLabel>아이디어 주제</SubjectLabel>
-            <SubjectValue>{idea.topic}</SubjectValue>
+            <SubjectValue>{ideaData.topic}</SubjectValue>
+          </SubjectRow>
 
-            <MembersSection>
-              <Heading>
-                <Title>모집 인원</Title>
-              </Heading>
+          <MembersSection>
+            <SectionTitle>모집 인원</SectionTitle>
+            <MemberCard>
+              {TEAM_GROUPS.map(group => (
+                <MemberRow key={group.join('-')}>
+                  {group.map(roleKey => {
+                    const roleLabel = TEAM_ROLES.find(r => r.key === roleKey)?.label;
+                    const stat = statsMap[roleKey] ?? { current: 0, total: 0 };
+                    return (
+                      <MemberCount key={roleKey}>
+                        <RoleName>{roleLabel}</RoleName>
+                        <CountStat>
+                          <CountNum>
+                            {stat.current} / {stat.total}
+                          </CountNum>
+                          <CountUnit>명</CountUnit>
+                        </CountStat>
+                      </MemberCount>
+                    );
+                  })}
+                </MemberRow>
+              ))}
+            </MemberCard>
+          </MembersSection>
 
-              <MemberCard>
-                {TEAM_GROUPS.map(group => (
-                  <MemberRow key={group.join('-')}>
-                    {group.map(part => {
-                      const roster = idea.rosters.find(
-                        (r: AdminIdeaRoster) => r.part === part
-                      );
-                      if (!roster) return null;
+          <DescriptionSection>
+            <SectionTitle>아이디어 설명</SectionTitle>
+            <DescriptionBox dangerouslySetInnerHTML={{ __html: safeDescription }} />
+          </DescriptionSection>
+        </ResponsiveWrapper>
 
-                      return (
-                        <MemberCount key={part}>
-                          <RoleName>{TEAM_ROLE_LABEL_MAP[part]}</RoleName>
-                          <CountStat>
-                            <CountNum>
-                              {roster.currentMemberCount} / {roster.maxMemberCount}
-                            </CountNum>
-                            <CountUnit>명</CountUnit>
-                          </CountStat>
-                        </MemberCount>
-                      );
-                    })}
-                  </MemberRow>
-                ))}
-              </MemberCard>
-            </MembersSection>
+        <TeamCompositionSection>
+          <SectionTitle>현재 팀원 구성</SectionTitle>
+          <TeamGrid>
+            {teamParts.map(part => (
+              <TeamPartColumn key={part.key}>
+                <TeamPartHeader>
+                  <TeamPartTitle>{part.label}</TeamPartTitle>
+                  <MyTeamCount
+                    current={part.current}
+                    capacity={part.capacity}
+                    isRecruiting={part.isRecruiting}
+                  />
+                </TeamPartHeader>
 
-            <DescriptionSection>
-              <Heading>
-                <Title>아이디어 설명</Title>
-              </Heading>
+                <TeamPartBody>
+                  {!part.isRecruiting && <MyTeamStatusCard variant="not-recruiting" />}
+                  {part.isRecruiting && part.current === 0 && (
+                    <MyTeamStatusCard variant="not-filled" />
+                  )}
+                  {part.isRecruiting &&
+                    part.members.map(member => (
+                      <MyTeamMemberCard
+                        key={member.id}
+                        variant={member.isLeader ? 'leader' : 'managedMember'}
+                        name={member.name}
+                        width="100%"
+                      />
+                    ))}
+                </TeamPartBody>
+              </TeamPartColumn>
+            ))}
+          </TeamGrid>
+        </TeamCompositionSection>
+      </PreviewCanvas>
 
-              <DescriptionBox
-                dangerouslySetInnerHTML={{ __html: safeDescription }}
-              />
-            </DescriptionSection>
-          </ResponsiveWrapper>
-        </PreviewCanvas>
+      <ActionRow>
+        <ActionButton $primary type="button" onClick={handleEditClick}>
+          아이디어 수정하기
+        </ActionButton>
+        <ActionButton $danger type="button" onClick={() => setModalState('confirm')}>
+          아이디어 삭제하기
+        </ActionButton>
+      </ActionRow>
 
-        <ModalActions>
-          <MyConfirmButton onClick={() => setModalState('confirm')}>
-            아이디어 삭제하기
-          </MyConfirmButton>
-        </ModalActions>
-
-        {modalState === 'confirm' && (
-          <ModalOverlay>
+      {modalState !== 'closed' && (
+        <ModalOverlay>
+          {modalState === 'confirm' && (
             <ModalCard>
               <ModalInfo>
-                <ModalTitle>{idea.title}</ModalTitle>
+                <ModalTitle>{ideaData.title}</ModalTitle>
                 <ModalMessage>아이디어를 삭제할까요?</ModalMessage>
                 <ModalMessage>이 작업은 되돌릴 수 없습니다.</ModalMessage>
               </ModalInfo>
-
-              <ModalButtonContainer>
-                <MyDeleteButton onClick={() => setModalState('success')}>
-                  <MySuccessButtonText>삭제하기</MySuccessButtonText>
-                </MyDeleteButton>
-                <MyCancelButton onClick={() => setModalState('closed')}>
-                  취소
-                </MyCancelButton>
-              </ModalButtonContainer>
+              <ModalActions>
+                <ModalButtonContainer>
+                  <MyDeleteButton type="button" onClick={handleDeleteConfirm}>
+                    <DeleteButtonText>삭제하기</DeleteButtonText>
+                  </MyDeleteButton>
+                  <MyCancelButton type="button" disabled={false} onClick={handleCloseModal}>
+                    <CancelButtonText>취소</CancelButtonText>
+                  </MyCancelButton>
+                </ModalButtonContainer>
+              </ModalActions>
             </ModalCard>
-          </ModalOverlay>
-        )}
+          )}
 
-        {modalState === 'success' && (
-          <ModalOverlay>
-            <ModalSuccessCard>
-              <ModalSuccessCardTitle>
-                아이디어가 삭제되었습니다.
-              </ModalSuccessCardTitle>
-              <MyConfirmButton
-                onClick={() =>
-                  router.push({
-                    pathname: '/AdminIdeaIdea',
-                    query: { projectId },
-                  })
-                }
-              >
-                확인
-              </MyConfirmButton>
+          {modalState === 'success' && (
+            <ModalSuccessCard $compact>
+              <ModalSuccessCardTitle>아이디어가 삭제가 완료되었습니다.</ModalSuccessCardTitle>
+              <ModalActions>
+                <ModalButtonContainer>
+                  <MyConfirmButton type="button" onClick={handleSuccessClose}>
+                    <MySuccessButtonText>확인</MySuccessButtonText>
+                  </MyConfirmButton>
+                </ModalButtonContainer>
+              </ModalActions>
             </ModalSuccessCard>
-          </ModalOverlay>
-        )}
-      </ContentContainer>
-    </Content>
+          )}
+        </ModalOverlay>
+      )}
+    </ContentContainer>
   );
 }
