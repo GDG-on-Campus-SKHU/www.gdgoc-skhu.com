@@ -25,7 +25,7 @@ import ProjectMemberRow from './ProjectMemberRow';
 // 기수 / 파트 옵션
 const GENERATION_TABS: GenerationTab[] = ['25-26', '24-25', '이전 기수'];
 
-const PART_OPTIONS = [
+export const PART_OPTIONS = [
   '기획',
   '디자인',
   '프론트엔드 (웹)',
@@ -50,7 +50,7 @@ export type ProjectPostFormValues = {
   oneLiner?: string;
   generation?: string;
   leader?: ProjectMemberBase;
-  leaderPart?: PartLabel;
+  leaderPart: PartLabel;
   serviceStatus?: 'IN_SERVICE' | 'NOT_IN_SERVICE';
   description?: string;
   teamMembers?: TeamMember[];

@@ -131,3 +131,9 @@ export type GetCurrentTeamResponseDto = {
   myRole: TeamMemberRole;
   rosters: CurrentTeamRosterDto[];
 };
+
+/** 팀장: 팀원 삭제 */
+export type RemoveTeamMemberParams = {
+  ideaId: number;
+  memberId: number; // 팀원의 userId
+};

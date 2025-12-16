@@ -1,36 +1,48 @@
 import { useCallback, useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
+import { useAdminCategories } from '@/lib/adminActivity.api';
 import styled from 'styled-components';
 
 const AdminActivity: NextPage = () => {
-  const TOTAL_PAGES = 10;
+  const router = useRouter();
+  const ITEMS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
-  const categories = [
-    { id: 1, title: '이서영 PM의 프로젝트 관리법이 궁금하다면?', count: '1개', status: '공개' },
-    {
-      id: 2,
-      title: '💫 24-25 PM 코어(서혜근 코어)의 프로젝트 비법이 궁금하시다면?',
-      count: '5개',
-      status: '공개',
+
+  const { data: categoriesData, isLoading, error } = useAdminCategories();
+
+  // [수정됨] 클릭 시 해당 카테고리의 ID를 받아 수정 페이지로 이동
+  const onAdminListCategoryContainerClick = useCallback(
+    (categoryId: number) => {
+      router.push(`/AdminActivityCategoryEdit?id=${categoryId}`);
     },
-    { id: 3, title: '👀 24-25 Tech Talk 다시보기', count: '99개', status: '비공개' },
-    { id: 4, title: '👀 23-24 Tech Talk 다시보기', count: '7개', status: '공개' },
-  ];
-  const onAdminListCategoryContainerClick = useCallback(() => {
-    // Please sync "등록된 카테고리 수정창" to the project
-  }, []);
+    [router]
+  );
+
+  const handleAddCategory = () => {
+    router.push('/AdminActivityCategoryCreate'); // 생성 페이지 경로는 Create로 가정
+  };
 
   const handlePageChange = (page: number) => {
-    const next = Math.min(Math.max(page, 1), TOTAL_PAGES);
+    if (!categoriesData) return;
+    const totalPages = Math.ceil(categoriesData.length / ITEMS_PER_PAGE);
+    const next = Math.min(Math.max(page, 1), totalPages);
     setCurrentPage(next);
   };
+
+  const displayedCategories = categoriesData
+    ? categoriesData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+    : [];
+
+  const emptyRowsCount = Math.max(0, ITEMS_PER_PAGE - displayedCategories.length);
+  const totalPages = categoriesData ? Math.ceil(categoriesData.length / ITEMS_PER_PAGE) : 1;
 
   return (
     <Container>
       <Sidebar>
         <Logo>
-          <GdgocSkhuImage src="gdgoc_skhu_admin.svg" alt="" width={60} height={38} />
+          <GdgocSkhuImage src="/gdgoc_skhu_admin.svg" alt="" width={60} height={38} />
           <LogoText>GDGoC SKHU</LogoText>
         </Logo>
 
@@ -48,7 +60,7 @@ const AdminActivity: NextPage = () => {
           <MenuItem>프로젝트 갤러리 관리</MenuItem>
           <MenuItemActive>
             <span>액티비티 관리</span>
-            <ArrowIcon src="rightarrow_admin.svg" width={16} height={16} alt="" />
+            <ArrowIcon src="/rightarrow_admin.svg" width={16} height={16} alt="" />
           </MenuItemActive>
           <MenuItem>홈 화면으로 나가기</MenuItem>
         </MenuList>
@@ -65,74 +77,90 @@ const AdminActivity: NextPage = () => {
 
           <FormBlock>
             <FormHeaderRow>
-              <ApplyButton type="button">카테고리 추가</ApplyButton>
+              <ApplyButton type="button" onClick={handleAddCategory}>
+                카테고리 추가
+              </ApplyButton>
             </FormHeaderRow>
 
-            <CategoryList>
-              <CategoryTitle>
-                <ContentTitle>
-                  <ContentTitleText>카테고리명</ContentTitleText>
-                </ContentTitle>
-                <ContentCount>
-                  <ContentCountText>영상 수</ContentCountText>
-                </ContentCount>
-                <ContentCount>
-                  <ContentCountText>상태</ContentCountText>
-                </ContentCount>
-              </CategoryTitle>
+            {isLoading && <LoadingMessage>카테고리 목록을 불러오는 중...</LoadingMessage>}
 
-              {categories.map((category: any) => (
-                <AdminListCategory key={category.id} onClick={onAdminListCategoryContainerClick}>
-                  <ContentTitle>
-                    <ContentTitleText>{category.title}</ContentTitleText>
-                  </ContentTitle>
-                  <ContentCount>
-                    <ContentCountText>{category.count}</ContentCountText>
-                  </ContentCount>
-                  <ContentCount>
-                    <ContentCountText>{category.status}</ContentCountText>
-                  </ContentCount>
-                </AdminListCategory>
-              ))}
-              {Array.from({ length: 10 - categories.length }).map((_, idx) => (
-                <AdminListCategoryEmpty key={`empty-${idx}`} />
-              ))}
-            </CategoryList>
+            {error && <ErrorMessage>카테고리 목록을 불러오는 중 오류가 발생했습니다.</ErrorMessage>}
 
-            <Pagination>
-              <PageButton
-                $isArrow
-                onClick={() => handlePageChange(currentPage - 1)}
-                aria-label="이전 페이지"
-              >
-                <PaginationArrowIcon $direction="left" src="leftarrow.svg" alt="이전" />
-              </PageButton>
+            {!isLoading && !error && categoriesData && (
+              <>
+                <CategoryList>
+                  <CategoryTitle>
+                    <ContentTitle>
+                      <ContentTitleText>카테고리명</ContentTitleText>
+                    </ContentTitle>
+                    <ContentCount>
+                      <ContentCountText>영상 수</ContentCountText>
+                    </ContentCount>
+                    <ContentCount>
+                      <ContentCountText>상태</ContentCountText>
+                    </ContentCount>
+                  </CategoryTitle>
 
-              <PageNumberGroup>
-                {Array.from({ length: TOTAL_PAGES }, (_, idx) => {
-                  const pageNumber = idx + 1;
-                  const isActive = pageNumber === currentPage;
-                  return (
-                    <PageNumber
-                      key={pageNumber}
-                      $active={isActive}
-                      onClick={() => handlePageChange(pageNumber)}
-                      aria-current={isActive ? 'page' : undefined}
+                  {displayedCategories.map(category => (
+                    <AdminListCategory
+                      key={category.categoryId}
+                      // [수정됨] ID 전달
+                      onClick={() => onAdminListCategoryContainerClick(category.categoryId)}
                     >
-                      {pageNumber}
-                    </PageNumber>
-                  );
-                })}
-              </PageNumberGroup>
+                      <ContentTitle>
+                        <ContentTitleText>{category.categoryName}</ContentTitleText>
+                      </ContentTitle>
+                      <ContentCount>
+                        <ContentCountText>{category.count}개</ContentCountText>
+                      </ContentCount>
+                      <ContentCount>
+                        <ContentCountText>
+                          {category.isPublished ? '공개' : '비공개'}
+                        </ContentCountText>
+                      </ContentCount>
+                    </AdminListCategory>
+                  ))}
 
-              <PageButton
-                $isArrow
-                onClick={() => handlePageChange(currentPage + 1)}
-                aria-label="다음 페이지"
-              >
-                <PaginationArrowIcon $direction="right" src="rightarrow.svg" alt="다음" />
-              </PageButton>
-            </Pagination>
+                  {Array.from({ length: emptyRowsCount }).map((_, idx) => (
+                    <AdminListCategoryEmpty key={`empty-${idx}`} />
+                  ))}
+                </CategoryList>
+
+                <Pagination>
+                  <PageButton
+                    $isArrow
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <PaginationArrowIcon $direction="left" src="/leftarrow.svg" alt="이전" />
+                  </PageButton>
+
+                  <PageNumberGroup>
+                    {Array.from({ length: totalPages }, (_, idx) => {
+                      const pageNumber = idx + 1;
+                      const isActive = pageNumber === currentPage;
+                      return (
+                        <PageNumber
+                          key={pageNumber}
+                          $active={isActive}
+                          onClick={() => handlePageChange(pageNumber)}
+                        >
+                          {pageNumber}
+                        </PageNumber>
+                      );
+                    })}
+                  </PageNumberGroup>
+
+                  <PageButton
+                    $isArrow
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    <PaginationArrowIcon $direction="right" src="/rightarrow.svg" alt="다음" />
+                  </PageButton>
+                </Pagination>
+              </>
+            )}
           </FormBlock>
         </ContentWrapper>
       </MainContent>
@@ -453,6 +481,10 @@ const AdminListCategory = styled.div`
   padding: 0 8px;
   gap: 44px;
   cursor: pointer;
+
+  &:hover {
+    background-color: #f9f9fa;
+  }
 `;
 
 const AdminListCategoryEmpty = styled.div`
@@ -494,9 +526,14 @@ const PageButton = styled.button<{ $active?: boolean; $isArrow?: boolean }>`
     border-color 0.2s ease,
     box-shadow 0.2s ease;
 
-  &:hover {
+  &:hover:not(:disabled) {
     border-color: ${({ $isArrow }) => ($isArrow ? '#4285f4' : 'transparent')};
     background: ${({ $active }) => ($active ? '#3367d6' : 'rgba(66, 133, 244, 0.08)')};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 `;
 
@@ -511,4 +548,20 @@ const PageNumber = styled(PageButton)<{ $active?: boolean }>`
 const PaginationArrowIcon = styled.img<{ $direction: 'left' | 'right' }>`
   width: 16px;
   height: 16px;
+`;
+
+const LoadingMessage = styled.div`
+  width: 100%;
+  text-align: center;
+  padding: 60px 0;
+  font-size: 18px;
+  color: #626873;
+`;
+
+const ErrorMessage = styled.div`
+  width: 100%;
+  text-align: center;
+  padding: 60px 0;
+  font-size: 18px;
+  color: #e53e3e;
 `;

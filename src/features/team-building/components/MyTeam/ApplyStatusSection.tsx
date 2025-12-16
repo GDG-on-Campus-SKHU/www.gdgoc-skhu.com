@@ -41,7 +41,7 @@ function choiceToLabel(choice: ReceivedEnrollment['choice']) {
 /**
  * 이 매핑 함수 유틸로 분리 예정
  */
-function partToLabel(part: string) {
+export function partToLabel(part: string) {
   switch (part) {
     case 'PM':
       return '기획';
@@ -308,6 +308,9 @@ const emptyCss = css`
   background-color: ${colors.grayscale[200]};
   border: 1px solid ${colors.grayscale[400]};
 
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 38.4px;
   display: flex;
   align-items: center;
   justify-content: center;

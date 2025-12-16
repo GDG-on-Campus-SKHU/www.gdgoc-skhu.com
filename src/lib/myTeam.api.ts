@@ -24,6 +24,7 @@ import type {
   CurrentTeamMemberDto,
   CurrentTeamRosterDto,
   GetCurrentTeamResponseDto,
+  RemoveTeamMemberParams,
 } from '../features/team-building/types/currentTeamData';
 import { api } from './api';
 
@@ -48,6 +49,8 @@ export const myTeamKeys = {
   determineEnrollment: () => [...myTeamKeys.all, 'enrollments', 'determine'] as const,
 
   cancelEnrollment: () => [...myTeamKeys.all, 'enrollments', 'cancel'] as const,
+
+  removeTeamMember: () => [...myTeamKeys.all, 'ideas', 'members', 'remove'] as const,
 };
 
 /* =========================================================
@@ -155,7 +158,6 @@ export function useCurrentTeam(
 
 /* =========================================================
  * API: Received Enrollments (팀장 - 받은 지원 내역 현황)
- * GET /enrollments/received?scheduleType=FIRST_TEAM_BUILDING|SECOND_TEAM_BUILDING
  * ======================================================= */
 export async function fetchReceivedEnrollments(
   scheduleType: EnrollmentScheduleType
@@ -181,7 +183,6 @@ export function useReceivedEnrollments(
 
 /* =========================================================
  * API: Enrollment Readabilities (지원 현황 메뉴 접근 가능 여부)
- * GET /enrollments/sent/readabilities
  * ======================================================= */
 export async function fetchEnrollmentReadabilities(): Promise<EnrollmentReadability[]> {
   const res = await api.get<EnrollmentReadabilityDto[]>('/enrollments/sent/readabilities');
@@ -201,7 +202,6 @@ export function useEnrollmentReadabilities(
 
 /* =========================================================
  * API: Sent Enrollments (팀원 - 보낸 지원 내역 현황)
- * GET /enrollments/sent?scheduleType=FIRST_TEAM_BUILDING|SECOND_TEAM_BUILDING
  * ======================================================= */
 export async function fetchSentEnrollments(
   scheduleType: EnrollmentScheduleType
@@ -227,9 +227,6 @@ export function useSentEnrollments(
 
 /* =========================================================
  * API: Determine Enrollment (팀장 - 지원 수락/거절)
- * POST /enrollments/{enrollmentId}/determine
- * body: { accept: boolean }
- * response: empty
  * ======================================================= */
 export async function determineEnrollment(params: DetermineEnrollmentParams): Promise<void> {
   const { enrollmentId, body } = params;
@@ -243,7 +240,7 @@ export function useDetermineEnrollment(
   const { onSuccess: userOnSuccess, ...restOptions } = options ?? {};
 
   return useMutation<void, Error, DetermineEnrollmentParams>({
-    mutationKey: myTeamKeys.determineEnrollment(), // ✅ enrollmentId는 변수라 0으로 고정(react-query pattern)
+    mutationKey: myTeamKeys.determineEnrollment(),
     mutationFn: determineEnrollment,
 
     onSuccess: (data, variables, context) => {
@@ -277,6 +274,36 @@ export function useCancelEnrollment(
     mutationFn: cancelEnrollment,
 
     onSuccess: (data, variables, context) => {
+      qc.invalidateQueries({ queryKey: myTeamKeys.all });
+
+      if (userOnSuccess) (userOnSuccess as any)(data, variables, undefined, context);
+    },
+
+    ...restOptions,
+  });
+}
+
+/* =========================================================
+ * API: 팀원 삭제 (팀장만)
+ * ======================================================= */
+export async function removeTeamMember(params: RemoveTeamMemberParams): Promise<void> {
+  const { ideaId, memberId } = params;
+  await api.delete(`/ideas/${ideaId}/members/${memberId}`);
+}
+
+export function useRemoveTeamMember(
+  options?: UseMutationOptions<void, Error, RemoveTeamMemberParams>
+) {
+  const qc = useQueryClient();
+  const { onSuccess: userOnSuccess, ...restOptions } = options ?? {};
+
+  return useMutation<void, Error, RemoveTeamMemberParams>({
+    mutationKey: myTeamKeys.removeTeamMember(),
+    mutationFn: removeTeamMember,
+
+    onSuccess: (data, variables, context) => {
+      // 삭제 후 팀원구성/전체 관련 데이터 갱신
+      qc.invalidateQueries({ queryKey: myTeamKeys.current() });
       qc.invalidateQueries({ queryKey: myTeamKeys.all });
 
       if (userOnSuccess) (userOnSuccess as any)(data, variables, undefined, context);
