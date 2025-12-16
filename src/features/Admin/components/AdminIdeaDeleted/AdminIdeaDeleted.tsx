@@ -220,7 +220,7 @@ export default function AdminIdeaDeleted() {
     setModalType('closed');
     // 목록으로 이동 (쿼리 유지)
     router.push({
-      pathname: '/AdminIdeaIdea', // 목록 페이지 경로 확인 필요
+      pathname: '/AdminIdeaIdea',
       query: { projectId },
     });
   };
