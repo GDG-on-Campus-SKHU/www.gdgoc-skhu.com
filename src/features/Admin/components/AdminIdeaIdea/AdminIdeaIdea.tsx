@@ -1,13 +1,14 @@
-import { useMemo, useState } from 'react';
-import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
-import { Idea } from '../../store/IdeaStore';
+import {
+  getAdminProjectIdeas,
+  getAdminProjects,
+  AdminProject,
+} from '@/lib/adminIdea.api';
+
 import {
   ArrowIcon,
-  Brand,
-  BrandContainer,
-  BrandName,
   Content,
   ContentBody,
   ContentContainer,
@@ -19,25 +20,15 @@ import {
   IDCNTR,
   IdeaNameHeaderCell,
   IdHeaderCell,
-  ImageContainer,
   InfoRow,
   NameBodyCell,
   NameBodyCTNR,
   NameCNTR,
   NameInfoRow,
-  Nav,
-  NavArrow,
-  NavButton,
-  NavString,
-  Page,
   PageButton,
   PageInsertNum,
   PageNumberGroup,
   Pagination,
-  ProfileDetails,
-  ProfileName,
-  ProfileTitle,
-  Sidebar,
   StatusBodyCell,
   StatusBodyCTNR,
   StatusCNTR,
@@ -60,393 +51,193 @@ type IdeaRow = {
   status: string;
 };
 
-type AdminIdeaProps = {
-  ideas?: Array<Idea | IdeaRow>;
-  totalIdeas?: number;
-  visibleIdeasCount?: number;
-  topicFilter?: string;
-  excludeClosed?: boolean;
-  currentPage?: number;
-  totalPages?: number;
-  startIndex?: number;
-  onChangeTopic?: (topic: string) => void;
-  onToggleExclude?: () => void;
-  onPageChange?: (page: number) => void;
+const ITEMS_PER_PAGE = 20;
+
+const formatDate = (iso?: string | null) => {
+  if (!iso) return '—';
+  return iso.split('T')[0].replace(/-/g, '.');
 };
 
-type NavItem = {
-  label: string;
-  active?: boolean;
-};
-
-const NAV_ITEMS: NavItem[] = [
-  { label: '대시보드' },
-  { label: '가입 심사' },
-  { label: '멤버 관리' },
-  { label: '프로젝트 관리' },
-  { label: '아이디어 관리', active: true },
-  { label: '프로젝트 갤러리 관리' },
-  { label: '액티비티 관리' },
-];
-
-const IDEA_ROWS: IdeaRow[] = [
-  {
-    id: 10,
-    title: '아이디어 제목 제한이 20자라서 이것보다 길어질 일은 없겠지만? 만약 길어지면 이런...',
-    author: '이서영',
-    status: '모집 중',
-  },
-  { id: 9, title: '리빙메이트', author: '주현지', status: '모집 완료' },
-  { id: 8, title: '어디갈래', author: '김규빈', status: '모집 중' },
-  { id: 7, title: '아이디어 제목', author: '김다운', status: '모집 중단' },
-  { id: 6, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 5, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 4, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 3, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 2, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 1, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  {
-    id: 10,
-    title: '아이디어 제목 제한이 20자라서 이것보다 길어질 일은 없겠지만? 만약 길어지면 이런...',
-    author: '이서영',
-    status: '모집 중',
-  },
-  { id: 9, title: '리빙메이트', author: '주현지', status: '모집 완료' },
-  { id: 8, title: '어디갈래', author: '김규빈', status: '모집 중단' },
-  { id: 7, title: '아이디어 제목', author: '김다운', status: '모집 중단' },
-  { id: 6, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 5, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 4, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 3, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 2, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 1, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  {
-    id: 10,
-    title: '아이디어 제목 제한이 20자라서 이것보다 길어질 일은 없겠지만? 만약 길어지면 이런...',
-    author: '이서영',
-    status: '모집 중',
-  },
-  { id: 9, title: '리빙메이트', author: '주현지', status: '모집 완료' },
-  { id: 8, title: '어디갈래', author: '김규빈', status: '모집 중단' },
-  { id: 7, title: '아이디어 제목', author: '김다운', status: '모집 중단' },
-  { id: 6, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 5, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 4, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 3, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 2, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 1, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  {
-    id: 10,
-    title: '아이디어 제목 제한이 20자라서 이것보다 길어질 일은 없겠지만? 만약 길어지면 이런...',
-    author: '이서영',
-    status: '모집 중',
-  },
-  { id: 9, title: '리빙메이트', author: '주현지', status: '모집 완료' },
-  { id: 8, title: '어디갈래', author: '김규빈', status: '모집 중단' },
-  { id: 7, title: '아이디어 제목', author: '김다운', status: '모집 중단' },
-  { id: 6, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 5, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 4, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 3, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 2, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 1, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  {
-    id: 10,
-    title: '아이디어 제목 제한이 20자라서 이것보다 길어질 일은 없겠지만? 만약 길어지면 이런...',
-    author: '이서영',
-    status: '모집 중',
-  },
-  { id: 9, title: '리빙메이트', author: '주현지', status: '모집 완료' },
-  { id: 8, title: '어디갈래', author: '김규빈', status: '모집 중단' },
-  { id: 7, title: '아이디어 제목', author: '김다운', status: '모집 중단' },
-  { id: 6, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 5, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 4, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 3, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 2, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 1, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  {
-    id: 10,
-    title: '아이디어 제목 제한이 20자라서 이것보다 길어질 일은 없겠지만? 만약 길어지면 이런...',
-    author: '이서영',
-    status: '모집 중',
-  },
-  { id: 9, title: '리빙메이트', author: '주현지', status: '모집 완료' },
-  { id: 8, title: '어디갈래', author: '김규빈', status: '모집 중단' },
-  { id: 7, title: '아이디어 제목', author: '김다운', status: '모집 중단' },
-  { id: 6, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 5, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 4, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 3, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 2, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 1, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  {
-    id: 10,
-    title: '아이디어 제목 제한이 20자라서 이것보다 길어질 일은 없겠지만? 만약 길어지면 이런...',
-    author: '이서영',
-    status: '모집 중',
-  },
-  { id: 9, title: '리빙메이트', author: '주현지', status: '모집 완료' },
-  { id: 8, title: '어디갈래', author: '김규빈', status: '모집 중단' },
-  { id: 7, title: '아이디어 제목', author: '김다운', status: '모집 중단' },
-  { id: 6, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 5, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 4, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 3, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 2, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 1, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  {
-    id: 10,
-    title: '아이디어 제목 제한이 20자라서 이것보다 길어질 일은 없겠지만? 만약 길어지면 이런...',
-    author: '이서영',
-    status: '모집 중',
-  },
-  { id: 9, title: '리빙메이트', author: '주현지', status: '모집 완료' },
-  { id: 8, title: '어디갈래', author: '김규빈', status: '모집 중단' },
-  { id: 7, title: '아이디어 제목', author: '김다운', status: '모집 중단' },
-  { id: 6, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 5, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 4, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 3, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 2, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 1, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  {
-    id: 10,
-    title: '아이디어 제목 제한이 20자라서 이것보다 길어질 일은 없겠지만? 만약 길어지면 이런...',
-    author: '이서영',
-    status: '모집 중',
-  },
-  { id: 9, title: '리빙메이트', author: '주현지', status: '모집 완료' },
-  { id: 8, title: '어디갈래', author: '김규빈', status: '모집 중단' },
-  { id: 7, title: '아이디어 제목', author: '김다운', status: '모집 중단' },
-  { id: 6, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 5, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 4, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 3, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 2, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 1, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  {
-    id: 10,
-    title: '아이디어 제목 제한이 20자라서 이것보다 길어질 일은 없겠지만? 만약 길어지면 이런...',
-    author: '이서영',
-    status: '모집 중',
-  },
-  { id: 9, title: '리빙메이트', author: '주현지', status: '모집 완료' },
-  { id: 8, title: '어디갈래', author: '김규빈', status: '모집 중단' },
-  { id: 7, title: '아이디어 제목', author: '김다운', status: '모집 중단' },
-  { id: 6, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 5, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 4, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 3, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 2, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-  { id: 1, title: '아이디어 제목', author: '작성자', status: '모집 중단' },
-];
-
-const ITEMS_PER_PAGE = 10;
-
-export default function AdminIdeaIdea({
-  ideas,
-  currentPage,
-  totalPages,
-  startIndex,
-  onPageChange,
-}: AdminIdeaProps) {
-  const [internalPage, setInternalPage] = useState(1);
-
+export default function AdminIdeaIdea() {
   const router = useRouter();
+  const { projectId } = router.query;
 
-  const baseRows = useMemo<IdeaRow[]>(() => {
-    const source = ideas ?? IDEA_ROWS;
-    return source.map(item => {
-      if ('author' in item && 'status' in item && 'title' in item) return item as IdeaRow;
-      const idea = item as Idea;
-      return {
-        id: idea.id ?? 0,
-        title: idea.title ?? '제목 없음',
-        author: '작성자',
-        status: idea.status ?? '모집 중',
-      };
-    });
-  }, [ideas]);
+  const [project, setProject] = useState<AdminProject | null>(null);
+  const [ideas, setIdeas] = useState<IdeaRow[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const isControlled = typeof onPageChange === 'function';
-  const resolvedTotalPages = isControlled
-    ? Math.max(1, totalPages ?? 1)
-    : Math.max(1, Math.ceil(baseRows.length / ITEMS_PER_PAGE));
+  /** 프로젝트 메타 정보 조회 */
+  useEffect(() => {
+    if (!projectId) return;
 
-  const resolvedCurrentPage = Math.min(
-    Math.max(isControlled ? (currentPage ?? 1) : internalPage, 1),
-    resolvedTotalPages
-  );
+    const fetchProject = async () => {
+      try {
+        const res = await getAdminProjects({
+          page: 0,
+          size: 50,
+        });
 
-  const shouldSlice = !isControlled || baseRows.length > ITEMS_PER_PAGE;
-  const sliceStart = isControlled
-    ? typeof startIndex === 'number'
-      ? startIndex
-      : (resolvedCurrentPage - 1) * ITEMS_PER_PAGE
-    : (resolvedCurrentPage - 1) * ITEMS_PER_PAGE;
-  const displayedRows = shouldSlice
-    ? baseRows.slice(sliceStart, sliceStart + ITEMS_PER_PAGE)
-    : baseRows;
+        const found = res.data.projects.find(
+          p => p.projectId === Number(projectId)
+        );
 
-  const handlePageChange = (page: number) => {
-    const nextPage = Math.min(Math.max(page, 1), resolvedTotalPages);
-    if (isControlled && onPageChange) {
-      onPageChange(nextPage);
-    } else {
-      setInternalPage(nextPage);
-    }
-  };
+        setProject(found ?? null);
+      } catch (e) {
+        console.error('프로젝트 정보 조회 실패', e);
+      }
+    };
+
+    fetchProject();
+  }, [projectId]);
+
+  /** 아이디어 목록 조회 */
+  useEffect(() => {
+    if (!projectId) return;
+
+    const fetchIdeas = async () => {
+      try {
+        const res = await getAdminProjectIdeas({
+          projectId: Number(projectId),
+          page: page - 1,
+          size: ITEMS_PER_PAGE,
+        });
+
+        const mapped: IdeaRow[] = res.data.ideas.map(idea => {
+          let status = '모집 중';
+
+          if (idea.deleted) {
+            status = '모집 중단';
+          } else if (idea.currentMemberCount >= idea.maxMemberCount) {
+            status = '모집 완료';
+          }
+
+          return {
+            id: idea.ideaId,
+            title: idea.title,
+            author: idea.authorName ?? '작성자', // 백엔드 지원 전 임시
+            status,
+          };
+        });
+
+        setIdeas(mapped);
+        setTotalPages(res.data.pageInfo.totalPages);
+      } catch (e) {
+        console.error('아이디어 목록 조회 실패', e);
+      }
+    };
+
+    fetchIdeas();
+  }, [projectId, page]);
 
   const handleRowClick = (row: IdeaRow) => {
     router.push({
       pathname: '/AdminIdeaDetail',
-      query: { id: row.id, title: row.title },
+      query: { id: row.id },
     });
   };
 
   return (
-    <Page>
-      <Sidebar>
-        <BrandContainer>
-          <Brand>
-            <ImageContainer>
-              <Image src="/gdgoc_skhu_admin.svg" alt="GDGoC SKHU 로고" width={60} height={38} />
-            </ImageContainer>
-            <BrandName>GDGoC SKHU</BrandName>
-          </Brand>
-        </BrandContainer>
+    <Content>
+      <ContentContainer>
+        <Heading>
+          <Title>아이디어 관리</Title>
+          <Description>
+            선택한 프로젝트에 등록된 아이디어 목록입니다.
+          </Description>
+        </Heading>
 
-        <ProfileDetails>
-          <ProfileName>윤준석</ProfileName>
-          <ProfileTitle>님</ProfileTitle>
-        </ProfileDetails>
+        <ContentBody>
+          <InfoRow>
+            <NameInfoRow>
+              {project ? project.projectName : '프로젝트명'}
+            </NameInfoRow>
+            <DateInfoRow>
+              {project
+                ? `${formatDate(project.startAt)} ~ ${formatDate(project.endAt)}`
+                : '— ~ —'}
+            </DateInfoRow>
+          </InfoRow>
 
-        <Nav>
-          {NAV_ITEMS.map(item => (
-            <NavButton key={item.label} type="button" $active={item.active}>
-              <NavString $active={item.active}>
-                <span>{item.label}</span>
-              </NavString>
-              <NavArrow aria-hidden="true" $visible={Boolean(item.active)}>
-                <Image src="/rightarrow_admin.svg" alt="오른쪽 화살표" width={16} height={16} />
-              </NavArrow>
-            </NavButton>
-          ))}
-          <NavButton key="" type="button">
-            <NavString>
-              <span>홈 화면으로 나가기</span>
-            </NavString>
-          </NavButton>
-        </Nav>
-      </Sidebar>
+          <TableWrapper>
+            <TableHeaderRow>
+              <IDCNTR>
+                <IdHeaderCell>ID</IdHeaderCell>
+              </IDCNTR>
+              <NameCNTR>
+                <IdeaNameHeaderCell>아이디어명</IdeaNameHeaderCell>
+              </NameCNTR>
+              <WriterCNTR>
+                <WriterHeaderCell>작성자</WriterHeaderCell>
+              </WriterCNTR>
+              <StatusCNTR>
+                <StatusHeaderCell>모집 상태</StatusHeaderCell>
+              </StatusCNTR>
+            </TableHeaderRow>
 
-      <Content>
-        <ContentContainer>
-          <Heading>
-            <Title>아이디어 관리</Title>
-            <Description>역대 프로젝트에 게시된 아이디어 리스트를 관리할 수 있습니다.</Description>
-          </Heading>
-          <ContentBody>
-            <InfoRow>
-              <NameInfoRow>그로우톤</NameInfoRow>
-              <DateInfoRow>2025.10.30~2025.11.28</DateInfoRow>
-            </InfoRow>
+            <TableBodyWrapper>
+              {ideas.map(row => (
+                <TableBodyLayout
+                  key={row.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleRowClick(row)}
+                >
+                  <IdBodyCTNR>
+                    <IDBodyCell>{row.id}</IDBodyCell>
+                  </IdBodyCTNR>
+                  <NameBodyCTNR>
+                    <NameBodyCell title={row.title}>
+                      {row.title}
+                    </NameBodyCell>
+                  </NameBodyCTNR>
+                  <WriterBodyCTNR>
+                    <WriterBodyCell $muted>
+                      {row.author}
+                    </WriterBodyCell>
+                  </WriterBodyCTNR>
+                  <StatusBodyCTNR>
+                    <StatusBodyCell>{row.status}</StatusBodyCell>
+                  </StatusBodyCTNR>
+                </TableBodyLayout>
+              ))}
+            </TableBodyWrapper>
+          </TableWrapper>
 
-            <TableWrapper>
-              <TableHeaderRow>
-                <IDCNTR>
-                  {' '}
-                  <IdHeaderCell>ID</IdHeaderCell>
-                </IDCNTR>
-                <NameCNTR>
-                  {' '}
-                  <IdeaNameHeaderCell>아이디어명</IdeaNameHeaderCell>
-                </NameCNTR>
-                <WriterCNTR>
-                  {' '}
-                  <WriterHeaderCell>작성자</WriterHeaderCell>
-                </WriterCNTR>
-                <StatusCNTR>
-                  {' '}
-                  <StatusHeaderCell>모집 상태</StatusHeaderCell>{' '}
-                </StatusCNTR>
-              </TableHeaderRow>
+          <Pagination>
+            <PageButton
+              $isArrow
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              <ArrowIcon $direction="left" />
+            </PageButton>
 
-              <TableBodyWrapper>
-                {displayedRows.map((row, index) => (
-                  <TableBodyLayout
-                    key={`${row.id}-${index}`}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => handleRowClick(row)}
-                    onKeyDown={event => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        handleRowClick(row);
-                      }
-                    }}
+            <PageNumberGroup>
+              {Array.from({ length: totalPages }, (_, i) => {
+                const p = i + 1;
+                return (
+                  <PageInsertNum
+                    key={p}
+                    $active={p === page}
+                    onClick={() => setPage(p)}
                   >
-                    <IdBodyCTNR>
-                      {' '}
-                      <IDBodyCell>{row.id}</IDBodyCell>
-                    </IdBodyCTNR>
-                    <NameBodyCTNR>
-                      {' '}
-                      <NameBodyCell title={row.title}>{row.title}</NameBodyCell>
-                    </NameBodyCTNR>
-                    <WriterBodyCTNR>
-                      {' '}
-                      <WriterBodyCell $muted title={row.author}>
-                        {row.author}
-                      </WriterBodyCell>
-                    </WriterBodyCTNR>
-                    <StatusBodyCTNR>
-                      {' '}
-                      <StatusBodyCell title={row.status}>{row.status}</StatusBodyCell>
-                    </StatusBodyCTNR>
-                  </TableBodyLayout>
-                ))}
-              </TableBodyWrapper>
-            </TableWrapper>
+                    {p}
+                  </PageInsertNum>
+                );
+              })}
+            </PageNumberGroup>
 
-            <Pagination>
-              <PageButton
-                $isArrow
-                onClick={() => handlePageChange(resolvedCurrentPage - 1)}
-                aria-label="Previous page"
-              >
-                <ArrowIcon $direction="left" />
-              </PageButton>
-
-              <PageNumberGroup>
-                {Array.from({ length: resolvedTotalPages }, (_, pageIndex) => {
-                  const pageNumber = pageIndex + 1;
-                  const isActive = pageNumber === resolvedCurrentPage;
-                  return (
-                    <PageInsertNum
-                      key={pageNumber}
-                      $active={isActive}
-                      aria-current={isActive ? 'page' : undefined}
-                      onClick={() => handlePageChange(pageNumber)}
-                    >
-                      {pageNumber}
-                    </PageInsertNum>
-                  );
-                })}
-              </PageNumberGroup>
-
-              <PageButton
-                $isArrow
-                onClick={() => handlePageChange(resolvedCurrentPage + 1)}
-                aria-label="Next page"
-              >
-                <ArrowIcon $direction="right" />
-              </PageButton>
-            </Pagination>
-          </ContentBody>
-        </ContentContainer>
-      </Content>
-    </Page>
+            <PageButton
+              $isArrow
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              <ArrowIcon $direction="right" />
+            </PageButton>
+          </Pagination>
+        </ContentBody>
+      </ContentContainer>
+    </Content>
   );
 }
