@@ -6,110 +6,36 @@ import styled from 'styled-components';
 import SelectBoxBasic from '../../../team-building/components/SelectBoxBasic';
 import { ArrowIcon, PageButton, PageInsertNum } from '../../styles/AdminIdeaProject';
 
-type SearchField = 'name' | 'generation' | 'school' | 'part' | 'category';
-const SEARCH_FIELD_VALUES = ['name', 'generation', 'school', 'part', 'category'] as const;
+import { fetchUserSummaryList } from '@/lib/adminMember.api';
+
+type SearchField = 'userName' | 'generation' | 'school' | 'part' | 'position';
+const SEARCH_FIELD_VALUES = ['name', 'generation', 'school', 'part', 'position'] as const;
 
 type Member = {
   id: number;
-  name: string;
+  userName: string;
   generation?: string;
   school?: string;
   part?: string;
-  category?: string;
+  position?: string;
 };
 
 const TABLE_VISIBLE_ROWS = 10;
 const TABLE_ROW_HEIGHT = 72;
 
 const SEARCH_OPTIONS: Array<{ value: SearchField; label: string }> = [
-  { value: 'name', label: '이름' },
+  { value: 'userName', label: '이름' },
   { value: 'generation', label: '기수' },
   { value: 'school', label: '학교' },
   { value: 'part', label: '파트' },
-  { value: 'category', label: '분류' },
-];
-
-const BASE_MEMBERS: Member[] = [
-  {
-    id: 1,
-    name: '이서영',
-    generation: '25-26',
-    school: '성공회대학교',
-    part: 'PM',
-    category: 'Core',
-  },
-  {
-    id: 2,
-    name: '주현지',
-    generation: '25-26',
-    school: '성공회대학교',
-    part: 'Design',
-    category: 'Core',
-  },
-  {
-    id: 3,
-    name: '한시연',
-    generation: '25-26',
-    school: '서울과학기술대학교',
-    part: 'FE',
-    category: 'Core',
-  },
-  { id: 4, name: '이윤하' },
-  {
-    id: 5,
-    name: '홍길동',
-    generation: '25-26',
-    school: '서울과학기술대학교',
-    part: 'Design',
-    category: 'Organizer',
-  },
-  {
-    id: 6,
-    name: '홍길동',
-    generation: '25-26',
-    school: '서울과학기술대학교',
-    part: 'Design',
-    category: 'Organizer',
-  },
-  {
-    id: 7,
-    name: '홍길동',
-    generation: '25-26',
-    school: '서울과학기술대학교',
-    part: 'Design',
-    category: 'Organizer',
-  },
-  {
-    id: 8,
-    name: '홍길동',
-    generation: '25-26',
-    school: '서울과학기술대학교',
-    part: 'Design',
-    category: 'Organizer',
-  },
-  {
-    id: 9,
-    name: '홍길동',
-    generation: '25-26',
-    school: '서울과학기술대학교',
-    part: 'Design',
-    category: 'Organizer',
-  },
-  {
-    id: 10,
-    name: '홍길동',
-    generation: '25-26',
-    school: '서울과학기술대학교',
-    part: 'Design',
-    category: 'Organizer',
-  },
+  { value: 'position', label: '분류' },
 ];
 
 const AdminMember: NextPage = () => {
-  const [members] = useState<Member[]>(() => BASE_MEMBERS);
-  const [searchField, setSearchField] = useState<SearchField>('name');
+  const [members, setMembers] = useState<Member[]>([]);
+  const [searchField, setSearchField] = useState<SearchField>('userName');
   const [inputKeyword, setInputKeyword] = useState('');
-  const [submittedField, setSubmittedField] = useState<SearchField>('name');
+  const [submittedField, setSubmittedField] = useState<SearchField>('userName');
   const [submittedKeyword, setSubmittedKeyword] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -118,6 +44,14 @@ const AdminMember: NextPage = () => {
       SEARCH_OPTIONS.find(option => option.value === searchField)?.label ?? SEARCH_OPTIONS[0].label,
     [searchField]
   );
+
+  useEffect(() => {
+    const fetchData = async() => {
+      const members = await fetchUserSummaryList();
+      setMembers(members);
+    }
+    fetchData();
+  }, []);
 
   const handleSearchFieldChange = (selected: string[]) => {
     const nextLabel = selected[0];
@@ -265,7 +199,7 @@ const AdminMember: NextPage = () => {
                 <TableRow key={member.id}>
                   <BodyName>
                     {' '}
-                    <BodyNameCell>{member.name}</BodyNameCell>
+                    <BodyNameCell>{member.userName}</BodyNameCell>
                   </BodyName>
                   <BodyGen>
                     <BodyGenCell>{member.generation}</BodyGenCell>
@@ -277,7 +211,7 @@ const AdminMember: NextPage = () => {
                     <BodyPartCell>{member.part}</BodyPartCell>
                   </BodyPart>
                   <BodyCategory>
-                    <BodyCategoryCell>{member.category}</BodyCategoryCell>
+                    <BodyCategoryCell>{member.position}</BodyCategoryCell>
                   </BodyCategory>
                 </TableRow>
               ))}
