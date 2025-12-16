@@ -133,7 +133,10 @@ export default function AdminIdeaIdea() {
   const handleRowClick = (row: IdeaRow) => {
     router.push({
       pathname: '/AdminIdeaDetail',
-      query: { id: row.id },
+      query: {
+        projectId,
+        id: row.id,
+      },
     });
   };
 
