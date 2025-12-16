@@ -123,9 +123,13 @@ export default function AdminIdeaIdea() {
     fetchIdeas();
   }, [projectId, page]);
 
+  // [수정됨] 클릭 시 상태에 따라 페이지 분기 처리
   const handleRowClick = (row: IdeaRow) => {
+    // 모집 중단 상태라면 Deleted 페이지로, 아니면 Detail 페이지로 이동
+    const targetPath = row.status === '모집 중단' ? '/AdminIdeaDeleted' : '/AdminIdeaDetail';
+
     router.push({
-      pathname: '/AdminIdeaDetail',
+      pathname: targetPath,
       query: {
         projectId,
         id: row.id,
@@ -135,7 +139,8 @@ export default function AdminIdeaIdea() {
 
   return (
     <Content>
-      <ContentContainer>
+      {/* 레이아웃 너비 제한 유지 */}
+      <ContentContainer style={{ maxWidth: '1080px', width: '100%' }}>
         <Heading>
           <Title>아이디어 관리</Title>
           <Description>선택한 프로젝트에 등록된 아이디어 목록입니다.</Description>
