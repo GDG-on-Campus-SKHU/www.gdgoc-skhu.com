@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
+import {
+  useCancelEnrollment,
+  useEnrollmentReadabilities,
+  useSentEnrollments,
+} from '@/lib/myTeam.api';
+import { colors } from '@/styles/constants';
 import { css } from '@emotion/react';
 
-import Modal from '../Modal_Fix';
-import ApplyPeriodToggle, { SupportPhase } from './ApplyPeriodToggle';
-import MyApplyCard from './MyApplyCard';
 import {
   EnrollmentChoice,
   EnrollmentPriority,
@@ -12,13 +15,9 @@ import {
   EnrollmentStatus,
   MemberSentApplyCard,
 } from '../../types/applyStatusData';
-import { Part } from '../../types/gallery';
-import {
-  useCancelEnrollment,
-  useEnrollmentReadabilities,
-  useSentEnrollments,
-} from '@/lib/myTeam.api';
-import { colors } from '@/styles/constants';
+import Modal from '../Modal_Fix';
+import ApplyPeriodToggle, { SupportPhase } from './ApplyPeriodToggle';
+import MyApplyCard from './MyApplyCard';
 
 type MemberApplyStatusSectionProps = {
   /** 탭 전환 시 불필요한 호출 방지용 */

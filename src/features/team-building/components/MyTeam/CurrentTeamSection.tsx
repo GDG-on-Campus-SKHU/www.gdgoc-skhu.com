@@ -1,13 +1,13 @@
 import { useState } from 'react';
+import { useRemoveTeamMember } from '@/lib/myTeam.api';
 import { css } from '@emotion/react';
 
-import { CurrentTeamRoster, CurrentTeamMember, CurrentTeamData } from '../../types/currentTeamData';
+import { CurrentTeamData, CurrentTeamMember, CurrentTeamRoster } from '../../types/currentTeamData';
 import Modal from '../Modal_Fix';
+import { partToLabel } from './ApplyStatusSection';
 import MyTeamCount from './MyTeamCount';
 import MyTeamMemberCard, { MyTeamMemberVariant } from './MyTeamMember';
 import MyTeamStatusCard from './MyTeamStatus';
-import { partToLabel } from './ApplyStatusSection';
-import { useRemoveTeamMember } from '@/lib/myTeam.api';
 
 type PartColumnProps = {
   roster: CurrentTeamRoster;

@@ -1,9 +1,9 @@
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
-import MyApplyStatusBadge from './ApplyStatusBadge';
 import { EnrollmentPriority, MemberSentApplyCard } from '../../types/applyStatusData';
 import { Part } from '../../types/gallery';
+import MyApplyStatusBadge from './ApplyStatusBadge';
 
 function partToLabel(part: Part) {
   switch (part) {

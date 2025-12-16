@@ -1,9 +1,9 @@
 import dynamic from 'next/dynamic';
+import { useUploadImage } from '@/lib/image.api';
 import { css } from '@emotion/react';
 import type React from 'react';
 
 import { colors } from '../../../../styles/constants';
-import { useUploadImage } from '@/lib/image.api';
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor').then(mod => mod.default), {
   ssr: false,

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useCurrentTeam } from '@/lib/myTeam.api';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
@@ -8,7 +9,6 @@ import CurrentTeamEmpty from '../../components/MyTeam/CurrentTeamEmpty';
 import CurrentTeamSection from '../../components/MyTeam/CurrentTeamSection';
 import MemberApplyStatusSection from '../../components/MyTeam/MemberApplyStatusSection';
 import TabBar from '../../components/TabBar';
-import { useCurrentTeam } from '@/lib/myTeam.api';
 
 type MyTeamTabKey = 'currentMembers' | 'applications';
 

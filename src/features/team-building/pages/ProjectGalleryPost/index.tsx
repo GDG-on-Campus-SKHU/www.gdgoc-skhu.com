@@ -1,17 +1,22 @@
 import { useMemo } from 'react';
 import { useRouter } from 'next/router';
+import { useCreateProjectGallery } from '@/lib/projectGallery.api';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
 import ProjectPostForm, {
+  PART_OPTIONS,
   ProjectPostFormInitialValues,
 } from '../../components/ProjectGalleryPost/ProjectPostForm';
-
-import { useCreateProjectGallery } from '@/lib/projectGallery.api';
 import type {
   CreateProjectGalleryResponseDto,
   ProjectGalleryUpsertBody,
 } from '../../types/gallery';
+
+type PartLabel = (typeof PART_OPTIONS)[number];
+function isPartLabel(v: unknown): v is PartLabel {
+  return typeof v === 'string' && (PART_OPTIONS as readonly string[]).includes(v);
+}
 
 export default function ProjectGalleryPostPage() {
   const router = useRouter();
@@ -45,10 +50,7 @@ export default function ProjectGalleryPostPage() {
         ? (genRaw as '25-26' | '24-25' | '이전 기수')
         : undefined;
 
-    const leaderPart =
-      typeof query.leaderPart === 'string' && query.leaderPart.length > 0
-        ? query.leaderPart
-        : undefined;
+    const leaderPart = isPartLabel(query.leaderPart) ? query.leaderPart : undefined;
 
     let serviceStatus: 'IN_SERVICE' | 'NOT_IN_SERVICE' | undefined;
     const statusRaw = query.serviceStatus;
@@ -56,8 +58,6 @@ export default function ProjectGalleryPostPage() {
       serviceStatus = statusRaw;
     }
 
-    // ⚠️ teamMembers 파싱은 ProjectPostFormInitialValues 타입에 맞춰야 함
-    // (다음에 ProjectPostForm 보여주면 정확히 맞춰서 수정해줄게)
     let teamMembers: any[] | undefined;
     if (typeof query.teamMembers === 'string') {
       try {
