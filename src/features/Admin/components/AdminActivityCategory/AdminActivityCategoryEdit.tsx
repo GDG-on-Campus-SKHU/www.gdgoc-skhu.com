@@ -1,22 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { useCreateCategory, useCreatePost } from '@/lib/adminActivity.api';
+import {
+  useCategoryPosts,
+  useCreatePost,
+  useDeletePost,
+  useUpdateCategory,
+  useUpdatePost,
+} from '@/lib/adminActivity.api';
 import styled from 'styled-components';
 
-import {
-  DeleteButtonText,
-  ModalActions,
-  ModalButtonContainer,
-  ModalCard,
-  ModalInfo,
-  ModalMessage,
-  ModalOverlay,
-  ModalTitle,
-  MyCancelButton,
-  MyDeleteButton,
-} from '../../styles/AdminIdeaDeleted';
+import { ModalCard } from '../../styles/AdminIdeaDeleted';
 
 type VideoItem = {
   id: number;
@@ -31,54 +26,183 @@ type VideoItem = {
 const GENERATION_OPTIONS = ['25-26', '24-25', '23-24', '22-23'];
 const LOAD_STEP = 10;
 
-const AdminActivityCategoryCreate: NextPage = () => {
+const AdminActivityCategoryEdit: NextPage = () => {
   const router = useRouter();
+  const { id } = router.query;
+  const categoryId = Number(id);
 
-  const { mutateAsync: createCategory, isPending: isCategoryPending } = useCreateCategory();
-  const { mutateAsync: createPost, isPending: isPostPending } = useCreatePost();
+  // 리스트를 다시 불러올 때 깜빡임 방지를 위해 refetch 옵션 조정
+  const { data: categoryData, isLoading: isDataLoading } = useCategoryPosts(categoryId, {
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  const { mutateAsync: updateCategory, isPending: isUpdatePending } = useUpdateCategory();
+  const { mutateAsync: createPost } = useCreatePost();
+  const { mutateAsync: updatePost } = useUpdatePost();
+  const { mutateAsync: deletePost } = useDeletePost();
 
   const [categoryName, setCategoryName] = useState('');
   const [status, setStatus] = useState<'public' | 'private'>('public');
   const [videos, setVideos] = useState<VideoItem[]>([]);
+  const [deletedVideoIds, setDeletedVideoIds] = useState<number[]>([]);
 
-  const [editingId, setEditingId] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState<number>(LOAD_STEP);
 
-  // 삭제 관련 상태
   const [deleteTargetTitle, setDeleteTargetTitle] = useState<string>('');
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDeleteComplete, setShowDeleteComplete] = useState(false);
 
+  // [중요] 세션 스토리지 데이터를 저장해둘 Ref (재렌더링 시에도 유지)
+  const pendingEditRef = useRef<Partial<VideoItem> | null>(null);
+  const pendingNewRef = useRef<Partial<VideoItem> | null>(null);
+
   const nameCount = `${categoryName.length}/50`;
   const isMaxCategoryLength = categoryName.length >= 50;
 
-  // 유효성 검사
-  const allVideosValid = useMemo(
-    () =>
-      videos.length > 0 &&
-      videos.every(v => v.title.trim() && v.owner.trim() && v.generation.trim()),
-    [videos]
-  );
+  // 1. 마운트 시점에만 세션 스토리지 확인 (Ref에 저장)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const storedNew = window.sessionStorage.getItem('newActivityVideo');
+    const storedEdit = window.sessionStorage.getItem('editActivityVideo');
 
-  const canSave = useMemo(
-    () => categoryName.trim().length > 0 && allVideosValid && editingId === null,
-    [categoryName, allVideosValid, editingId]
-  );
+    if (storedNew) pendingNewRef.current = JSON.parse(storedNew);
+    if (storedEdit) pendingEditRef.current = JSON.parse(storedEdit);
 
-  const isSubmitting = isCategoryPending || isPostPending;
+    // 확인 후 스토리지 비우기
+    window.sessionStorage.removeItem('newActivityVideo');
+    window.sessionStorage.removeItem('editActivityVideo');
+    window.sessionStorage.removeItem('editActivityVideoDraft');
+  }, []);
+
+  // 2. 서버 데이터가 로드되면 Ref에 있는 수정사항을 적용해서 State 설정
+  useEffect(() => {
+    if (categoryData && categoryData.length > 0) {
+      const targetCategory = categoryData.find(c => c.categoryId === categoryId) || categoryData[0];
+
+      if (targetCategory) {
+        setCategoryName(targetCategory.categoryTitle);
+        setStatus(targetCategory.publish ? 'public' : 'private');
+
+        // 2-1. 기존 데이터 매핑
+        let mappedVideos: VideoItem[] = targetCategory.posts.map(post => ({
+          id: post.id,
+          title: post.title,
+          owner: post.speaker,
+          generation: post.generation,
+          url: post.videoUrl,
+          thumbnailUrl: post.youtubeId
+            ? `https://img.youtube.com/vi/${post.youtubeId}/mqdefault.jpg`
+            : undefined,
+          isNew: false,
+        }));
+
+        // 2-2. 수정된 내역이 있다면 덮어쓰기 (Ref 사용)
+        const pendingEdit = pendingEditRef.current;
+        if (pendingEdit?.id) {
+          mappedVideos = mappedVideos.map(video =>
+            video.id === pendingEdit.id
+              ? { ...video, ...pendingEdit } // 기존 정보 위에 수정 정보 덮어쓰기
+              : video
+          );
+        }
+
+        // 2-3. 새로 추가된 내역이 있다면 추가 (Ref 사용)
+        const pendingNew = pendingNewRef.current;
+        if (pendingNew?.title) {
+          // 임시 ID 생성 (기존 ID 중 가장 큰 값 + 1)
+          const nextId = mappedVideos.length > 0 ? Math.max(...mappedVideos.map(v => v.id)) + 1 : 1;
+
+          const newVideo: VideoItem = {
+            id: nextId,
+            title: pendingNew.title || '제목 없음',
+            owner: pendingNew.owner || '',
+            generation: pendingNew.generation || GENERATION_OPTIONS[0],
+            url: pendingNew.url || '',
+            thumbnailUrl: pendingNew.thumbnailUrl || '',
+            isNew: true,
+          };
+          mappedVideos.push(newVideo);
+        }
+
+        setVideos(mappedVideos);
+      }
+    }
+  }, [categoryData, categoryId]); // categoryData가 변경될 때(로드 완료 시) 실행
+
+  const handleSave = async () => {
+    if (categoryName.trim().length === 0) {
+      alert('카테고리 이름을 입력해주세요.');
+      return;
+    }
+
+    try {
+      // 1. 카테고리 정보 업데이트
+      await updateCategory({
+        categoryId: categoryId,
+        data: {
+          categoryName: categoryName,
+          published: status === 'public',
+        },
+      });
+
+      // 2. 영상 추가/수정/삭제 처리
+      const promises: Array<Promise<any>> = [];
+
+      // 삭제 처리
+      if (deletedVideoIds.length > 0) {
+        deletedVideoIds.forEach(id => {
+          promises.push(deletePost(id));
+        });
+      }
+
+      // 추가 및 수정 처리
+      videos.forEach(video => {
+        const postData = {
+          title: video.title,
+          speaker: video.owner,
+          generation: video.generation,
+          videoUrl: video.url || '',
+        };
+
+        if (video.isNew) {
+          // 새 영상은 createPost
+          promises.push(
+            createPost({
+              categoryId: categoryId,
+              data: postData,
+            })
+          );
+        } else {
+          // 기존 영상은 updatePost (단, 변경된 것만 보내는 최적화는 생략하고 모두 보냄)
+          promises.push(
+            updatePost({
+              postId: video.id,
+              data: postData,
+            })
+          );
+        }
+      });
+
+      await Promise.all(promises);
+
+      router.push('/AdminActivity');
+    } catch (error) {
+      console.error(error);
+      alert('저장 중 오류가 발생했습니다.');
+    }
+  };
 
   const handleAddVideo = () => {
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem(
-        'createCategoryDraft',
-        JSON.stringify({
-          categoryName,
-          status,
-        })
-      );
-    }
     router.push('/AdminActivityVideoCreate');
+  };
+
+  const handleStartEdit = (video: VideoItem) => {
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem('editActivityVideoDraft', JSON.stringify(video));
+    }
+    router.push('/AdminActivityVideoEdit');
   };
 
   const handleDeleteVideo = (video: VideoItem) => {
@@ -89,14 +213,14 @@ const AdminActivityCategoryCreate: NextPage = () => {
 
   const confirmDelete = () => {
     if (deleteTargetId === null) return;
-    if (editingId === deleteTargetId) {
-      setEditingId(null);
+
+    // 삭제 대상이 기존에 있던 영상(isNew가 false)인 경우에만 API 호출 목록에 추가
+    const targetVideo = videos.find(v => v.id === deleteTargetId);
+    if (targetVideo && !targetVideo.isNew) {
+      setDeletedVideoIds(prev => [...prev, deleteTargetId]);
     }
-    setVideos(prev => {
-      const next = prev.filter(v => v.id !== deleteTargetId);
-      setVisibleCount(count => Math.min(count, Math.max(next.length, 0)));
-      return next;
-    });
+
+    setVideos(prev => prev.filter(v => v.id !== deleteTargetId));
     setShowDeleteConfirm(false);
     setShowDeleteComplete(true);
   };
@@ -107,143 +231,21 @@ const AdminActivityCategoryCreate: NextPage = () => {
     setDeleteTargetTitle('');
   };
 
-  const handleStartEdit = (video: VideoItem) => {
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem(
-        'createCategoryDraft',
-        JSON.stringify({
-          categoryName,
-          status,
-        })
-      );
-      window.sessionStorage.setItem('editActivityVideoDraft', JSON.stringify(video));
-    }
-    router.push('/AdminActivityVideoEdit');
-  };
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const categoryDraft = window.sessionStorage.getItem('createCategoryDraft');
-    if (categoryDraft) {
-      try {
-        const parsedDraft = JSON.parse(categoryDraft);
-        if (parsedDraft.categoryName) setCategoryName(parsedDraft.categoryName);
-        if (parsedDraft.status) setStatus(parsedDraft.status);
-      } catch (e) {
-        console.error('Failed to parse category draft', e);
-      }
-    }
-
-    const storedNew = window.sessionStorage.getItem('newActivityVideo');
-    const storedEdit = window.sessionStorage.getItem('editActivityVideo');
-    let added = false;
-    let editParsed: Partial<VideoItem> | null = null;
-
-    try {
-      if (storedEdit) editParsed = JSON.parse(storedEdit);
-    } catch {
-      editParsed = null;
-    }
-
-    try {
-      const parsedNew: Partial<VideoItem> | null = storedNew ? JSON.parse(storedNew) : null;
-
-      setVideos(prev => {
-        let next = prev;
-        if (parsedNew?.title) {
-          const nextId = prev.length ? Math.max(...prev.map(v => v.id)) + 1 : 1;
-          const nextVideo: VideoItem = {
-            id: nextId,
-            title: parsedNew.title ?? '영상 제목',
-            owner: parsedNew.owner ?? '',
-            generation: parsedNew.generation ?? GENERATION_OPTIONS[0],
-            url: parsedNew.url,
-            thumbnailUrl: parsedNew.thumbnailUrl,
-          };
-          next = [...prev, nextVideo];
-          added = true;
-        }
-        if (editParsed?.id !== undefined) {
-          next = next.map(video =>
-            video.id === editParsed?.id
-              ? {
-                  ...video,
-                  title: editParsed?.title ?? video.title,
-                  owner: editParsed?.owner ?? video.owner,
-                  generation: editParsed?.generation ?? video.generation,
-                  url: editParsed?.url ?? video.url,
-                  thumbnailUrl: editParsed?.thumbnailUrl ?? video.thumbnailUrl,
-                }
-              : video
-          );
-        }
-        return next;
-      });
-      if (added) {
-        setVisibleCount(prev => {
-          const base = prev || 0;
-          if (base < LOAD_STEP) return Math.min(LOAD_STEP, base + 1);
-          return base;
-        });
-      }
-    } catch (error) {
-      console.error('Failed to restore video from sessionStorage', error);
-    } finally {
-      if (storedNew) window.sessionStorage.removeItem('newActivityVideo');
-      if (storedEdit) window.sessionStorage.removeItem('editActivityVideo');
-    }
-  }, []);
-
   const handleLoadMore = () => {
     setVisibleCount(prev => Math.min(prev + LOAD_STEP, videos.length));
-  };
-
-  const handleSave = async () => {
-    if (!canSave || isSubmitting) return;
-
-    try {
-      const categoryResponse = await createCategory({
-        categoryName: categoryName,
-        published: status === 'public',
-      });
-
-      const newCategoryId = categoryResponse.categoryId || (categoryResponse as any).id;
-
-      if (!newCategoryId) {
-        throw new Error('Category ID not found in response');
-      }
-
-      const postPromises = videos.map(video =>
-        createPost({
-          categoryId: newCategoryId,
-          data: {
-            title: video.title,
-            speaker: video.owner,
-            generation: video.generation,
-            videoUrl: video.url || '',
-          },
-        })
-      );
-
-      await Promise.all(postPromises);
-
-      alert('카테고리와 영상이 성공적으로 저장되었습니다.');
-
-      sessionStorage.removeItem('newActivityVideo');
-      sessionStorage.removeItem('editActivityVideo');
-      sessionStorage.removeItem('createCategoryDraft');
-
-      router.push('/AdminActivity');
-    } catch (error) {
-      console.error('Save failed:', error);
-      alert('저장 중 오류가 발생했습니다.');
-    }
   };
 
   const handleBack = () => {
     router.back();
   };
+
+  if (isDataLoading) {
+    return (
+      <Page>
+        <LoadingWrapper>데이터를 불러오는 중입니다...</LoadingWrapper>
+      </Page>
+    );
+  }
 
   return (
     <Page>
@@ -396,14 +398,13 @@ const AdminActivityCategoryCreate: NextPage = () => {
             <SecondaryButton type="button" onClick={handleBack}>
               돌아가기
             </SecondaryButton>
-            <PrimaryButton type="button" disabled={!canSave || isSubmitting} onClick={handleSave}>
-              {isSubmitting ? '저장 중...' : '저장하기'}
+            <PrimaryButton type="button" disabled={isUpdatePending} onClick={handleSave}>
+              {isUpdatePending ? '저장 중...' : '저장하기'}
             </PrimaryButton>
           </Actions>
         </ContentContainer>
       </Content>
 
-      {/* Modals */}
       {showDeleteConfirm && (
         <ModalOverlay onClick={() => setShowDeleteConfirm(false)}>
           <ModalCard onClick={e => e.stopPropagation()}>
@@ -445,7 +446,7 @@ const AdminActivityCategoryCreate: NextPage = () => {
   );
 };
 
-export default AdminActivityCategoryCreate;
+export default AdminActivityCategoryEdit;
 
 const Page = styled.div`
   display: grid;
@@ -635,13 +636,11 @@ const FieldHeader = styled.div`
 
 const FieldLabel = styled.span`
   color: var(--grayscale-1000, #040405);
-
-  /* body/b2/b2-bold */
   font-family: Pretendard;
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
-  line-height: 160%; /* 32px */
+  line-height: 160%;
 `;
 
 const Counter = styled.span<{ $hasValue: boolean; $isMaxLength?: boolean }>`
@@ -651,7 +650,7 @@ const Counter = styled.span<{ $hasValue: boolean; $isMaxLength?: boolean }>`
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 25.6px */
+  line-height: 160%;
 `;
 
 const Input = styled.input<{ $hasValue: boolean; $isMaxLength?: boolean }>`
@@ -710,7 +709,6 @@ const RadioInput = styled.input`
 const VideoSection = styled.div`
   display: flex;
   flex-direction: column;
-
   width: 100%;
 `;
 
@@ -740,7 +738,6 @@ const VideoTitleRow = styled.div`
 const VideoTable = styled.div`
   display: flex;
   flex-direction: column;
-
   overflow: hidden;
   background: #fff;
   width: 100%;
@@ -768,13 +765,11 @@ const HeaderCell = styled.div<{ $thumb?: boolean; $title?: boolean; $management?
   overflow: hidden;
   color: var(--grayscale-600, #7e8590);
   text-overflow: ellipsis;
-
-  /* body/b3/b3 */
   font-family: Pretendard;
   font-size: 18px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 28.8px */
+  line-height: 160%;
 `;
 
 const VideoRow = styled.div`
@@ -813,13 +808,11 @@ const EmptyRow = styled.div`
   justify-content: center;
   align-items: center;
   color: var(--grayscale-600, #7e8590);
-
-  /* body/b2/b2 */
   font-family: Pretendard;
   font-size: 20px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 32px */
+  line-height: 160%;
 `;
 
 const ManagementCell = styled.div`
@@ -856,13 +849,11 @@ const DeleteButton = styled(BaseActionButton)`
 
 const CancelButtonText = styled.span`
   color: var(--primary-600-main, #4285f4);
-
-  /* body/b3/b3 */
   font-family: Pretendard;
   font-size: 18px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 28.8px */
+  line-height: 160%;
 `;
 
 const AddVideoButton = styled.button`
@@ -885,13 +876,11 @@ const AddVideoButton = styled.button`
 
 const VideoCount = styled.span`
   color: var(--primary-600-main, #4285f4);
-
-  /* body/b2/b2-bold */
   font-family: Pretendard;
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
-  line-height: 160%; /* 32px */
+  line-height: 160%;
 `;
 
 const VideoHelperText = styled.span`
@@ -909,7 +898,6 @@ const LoadMore = styled.button`
   display: flex;
   width: 1105px;
   height: 60px;
-
   padding: 16px 8px;
   justify-content: center;
   align-items: center;
@@ -1003,13 +991,11 @@ const OwnerBody = styled.div`
 const OwnerBodyCell = styled.span`
   color: var(--grayscale-1000, #040405);
   text-align: center;
-
-  /* body/b2/b2 */
   font-family: Pretendard;
   font-size: 20px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 32px */
+  line-height: 160%;
   width: 52px;
   height: 32px;
 `;
@@ -1024,13 +1010,11 @@ const GenerationBody = styled.div`
 const GenerationBodyCell = styled.div`
   color: var(--grayscale-1000, #040405);
   text-align: center;
-
-  /* body/b2/b2 */
   font-family: Pretendard;
   font-size: 20px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 32px */
+  line-height: 160%;
   width: 57px;
 `;
 
@@ -1084,13 +1068,11 @@ const GenerationHeader = styled.div`
 const GenerationHeaderCell = styled.div`
   color: var(--grayscale-600, #7e8590);
   text-align: left;
-
-  /* body/b3/b3 */
   font-family: Pretendard;
   font-size: 18px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 28.8px */
+  line-height: 160%;
   width: 32px;
 `;
 
@@ -1105,13 +1087,11 @@ const ManagementHeader = styled.div`
 const ManagementHeaderCell = styled.div`
   color: var(--grayscale-600, #7e8590);
   text-align: center;
-
-  /* body/b3/b3 */
   font-family: Pretendard;
   font-size: 18px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 28.8px */
+  line-height: 160%;
   width: 32px;
 `;
 
@@ -1127,13 +1107,11 @@ const LoadMoreCTNR = styled.div`
 
 const LoadMoreText = styled.span`
   color: var(--primary-600-main, #4285f4);
-
-  /* body/b2/b2-bold */
   font-family: Pretendard;
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
-  line-height: 160%; /* 32px */
+  line-height: 160%;
   align-items: center;
 `;
 
@@ -1153,24 +1131,20 @@ const FieldSelection = styled.div`
 
 const TrueText = styled.span`
   color: var(--grayscale-1000, #040405);
-
-  /* body/b4/b4 */
   font-family: Pretendard;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 25.6px */
+  line-height: 160%;
 `;
 
 const FalseText = styled.span`
   color: var(--grayscale-1000, #040405);
-
-  /* body/b4/b4 */
   font-family: Pretendard;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 25.6px */
+  line-height: 160%;
 `;
 
 const ThumbnailHeader = styled.div`
@@ -1179,4 +1153,103 @@ const ThumbnailHeader = styled.div`
   padding: 8px;
   align-items: center;
   gap: 8px;
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  width: 100%;
+  justify-content: center;
+`;
+
+const ModalButtonContainer = styled.div`
+  display: flex;
+  gap: 8px;
+  width: 100%;
+`;
+
+const MyDeleteButton = styled.button`
+  border-radius: 8px;
+  background: var(--primary-600-main, #4285f4);
+  display: flex;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  flex: 1 0 0;
+  cursor: pointer;
+  border: none;
+`;
+
+const MyCancelButton = styled.button`
+  display: flex;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  flex: 1 0 0;
+  border-radius: 8px;
+  border: 1px solid var(--primary-600-main, #4285f4);
+  background: #fff;
+  cursor: pointer;
+`;
+
+const DeleteButtonText = styled.span`
+  color: #fff;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-weight: 500;
+`;
+
+const ModalTitle = styled.h2`
+  overflow: hidden;
+  color: var(--grayscale-1000, #040405);
+  text-align: center;
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%;
+`;
+
+export const ModalMessage = styled.p`
+  overflow: hidden;
+  color: var(--grayscale-600, #7e8590);
+  text-align: center;
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+`;
+
+const LoadingWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+  font-size: 20px;
+  color: #626873;
 `;

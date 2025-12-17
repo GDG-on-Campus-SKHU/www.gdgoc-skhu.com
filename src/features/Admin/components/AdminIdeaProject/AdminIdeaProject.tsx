@@ -1,25 +1,14 @@
-import { useMemo, useState } from 'react';
-import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
-import { Idea } from '../../store/IdeaStore';
+import { getAdminProjects } from '../../../../lib/adminIdea.api';
 import {
   ArrowIcon,
-  Brand,
-  BrandContainer,
-  BrandName,
-  Content,
   ContentContainer,
   DateItemCell,
   Description,
   HeaderCell,
   Heading,
-  ImageContainer,
-  Nav,
-  NavArrow,
-  NavButton,
-  NavString,
-  Page,
   PageButton,
   PageInsertNum,
   PageNumberGroup,
@@ -31,10 +20,6 @@ import {
   PJName,
   PJNameItemCell,
   PJStart,
-  ProfileDetails,
-  ProfileName,
-  ProfileTitle,
-  Sidebar,
   TableBody,
   TableCard,
   TableHeader,
@@ -42,294 +27,116 @@ import {
   Title,
 } from '../../styles/AdminIdeaProject';
 
-import '../../styles/AdminIdeaDetail';
-
-type IdeaRow = {
-  id: string;
+type ProjectRow = {
+  id: number;
   name: string;
   startDate: string;
   endDate: string;
 };
 
-type AdminIdeaProps = {
-  ideas?: Array<Idea | IdeaRow>;
-  totalIdeas?: number;
-  visibleIdeasCount?: number;
-  topicFilter?: string;
-  excludeClosed?: boolean;
-  currentPage?: number;
-  totalPages?: number;
-  startIndex?: number;
-  onChangeTopic?: (topic: string) => void;
-  onToggleExclude?: () => void;
-  onPageChange?: (page: number) => void;
-};
-
-type NavItem = {
-  label: string;
-  active?: boolean;
-};
-
-const NAV_ITEMS: NavItem[] = [
-  { label: '대시보드' },
-  { label: '가입 심사' },
-  { label: '멤버 관리' },
-  { label: '프로젝트 관리' },
-  { label: '아이디어 관리', active: true },
-  { label: '프로젝트 갤러리 관리' },
-  { label: '액티비티 관리' },
-];
-
-const IDEA_ROWS: IdeaRow[] = [
-  { id: 'idea-1', name: '그로우톤', startDate: '2025.10.30', endDate: '2025.11.28' },
-  {
-    id: 'idea-2',
-    name: '성신X숙명X성공 SSS프로젝트',
-    startDate: '2025.10.30',
-    endDate: '2025.11.28',
-  },
-  {
-    id: 'idea-3',
-    name: '성신X숙명X성공 SSS프로젝트',
-    startDate: '2025.10.30',
-    endDate: '2025.11.28',
-  },
-  {
-    id: 'idea-4',
-    name: '성신X숙명X성공 SSS프로젝트',
-    startDate: '2025.10.30',
-    endDate: '2025.11.28',
-  },
-  {
-    id: 'idea-5',
-    name: '프로젝트명이 리스트보다 길어진다면 ...처리가 되는데요 이게생각보다 기네요',
-    startDate: '2025.10.30',
-    endDate: '2025.11.28',
-  },
-  {
-    id: 'idea-5',
-    name: '프로젝트명이 리스트보다 길어진다면 ...처리가 되는데요 이게생각보다 기네요',
-    startDate: '2025.10.30',
-    endDate: '2025.11.28',
-  },
-  {
-    id: 'idea-5',
-    name: '프로젝트명이 리스트보다 길어진다면 ...처리가 되는데요 이게생각보다 기네요',
-    startDate: '2025.10.30',
-    endDate: '2025.11.28',
-  },
-  {
-    id: 'idea-5',
-    name: '프로젝트명이 리스트보다 길어진다면 ...처리가 되는데요 이게생각보다 기네요',
-    startDate: '2025.10.30',
-    endDate: '2025.11.28',
-  },
-  {
-    id: 'idea-5',
-    name: '프로젝트명이 리스트보다 길어진다면 ...처리가 되는데요 이게생각보다 기네요',
-    startDate: '2025.10.30',
-    endDate: '2025.11.28',
-  },
-  {
-    id: 'idea-5',
-    name: '프로젝트명이 리스트보다 길어진다면 ...처리가 되는데요 이게생각보다 기네요',
-    startDate: '2025.10.30',
-    endDate: '2025.11.28',
-  },
-  {
-    id: 'idea-5',
-    name: '프로젝트명이 리스트보다 길어진다면 ...처리가 되는데요 이게생각보다 기네요',
-    startDate: '2025.10.30',
-    endDate: '2025.11.28',
-  },
-];
-
 const ITEMS_PER_PAGE = 5;
 
-export default function AdminIdeaProject({
-  ideas,
-  currentPage,
-  totalPages,
-  startIndex,
-  onPageChange,
-}: AdminIdeaProps) {
-  const [internalPage, setInternalPage] = useState(1);
+export default function AdminIdeaProject() {
   const router = useRouter();
 
-  const baseRows = useMemo<IdeaRow[]>(() => {
-    const source = ideas ?? IDEA_ROWS;
-    return source.map(item => {
-      if ('startDate' in item && 'endDate' in item && 'name' in item) {
-        return item as IdeaRow;
+  const [rows, setRows] = useState<ProjectRow[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const res = await getAdminProjects({
+          page: page - 1,
+          size: ITEMS_PER_PAGE,
+          sortBy: 'id',
+          order: 'ASC',
+        });
+
+        const { projects, pageInfo } = res.data;
+
+        setRows(
+          projects.map(project => ({
+            id: project.projectId,
+            name: project.projectName,
+            startDate: project.startAt ? project.startAt.slice(0, 10).replaceAll('-', '.') : '—',
+            endDate: project.endAt ? project.endAt.slice(0, 10).replaceAll('-', '.') : '—',
+          }))
+        );
+
+        setTotalPages(pageInfo.totalPages);
+      } catch (error) {
+        console.error('프로젝트 조회 실패', error);
       }
-      const idea = item as Idea;
-      return {
-        id: String(idea.id),
-        name: idea.title ?? '제목 없음',
-        startDate: '—',
-        endDate: '—',
-      };
-    });
-  }, [ideas]);
+    };
 
-  const isControlled = typeof onPageChange === 'function';
-  const resolvedTotalPages = isControlled
-    ? Math.max(1, totalPages ?? 1)
-    : Math.max(1, Math.ceil(baseRows.length / ITEMS_PER_PAGE));
-
-  const resolvedCurrentPage = Math.min(
-    Math.max(isControlled ? (currentPage ?? 1) : internalPage, 1),
-    resolvedTotalPages
-  );
-
-  const shouldSlice = !isControlled || baseRows.length > ITEMS_PER_PAGE;
-  const sliceStart = isControlled
-    ? typeof startIndex === 'number'
-      ? startIndex
-      : (resolvedCurrentPage - 1) * ITEMS_PER_PAGE
-    : (resolvedCurrentPage - 1) * ITEMS_PER_PAGE;
-  const displayedRows = shouldSlice
-    ? baseRows.slice(sliceStart, sliceStart + ITEMS_PER_PAGE)
-    : baseRows;
-
-  const handlePageChange = (page: number) => {
-    const nextPage = Math.min(Math.max(page, 1), resolvedTotalPages);
-    if (isControlled && onPageChange) {
-      onPageChange(nextPage);
-    } else {
-      setInternalPage(nextPage);
-    }
-  };
-
-  const handleRowClick = (row: IdeaRow) => {
-    router.push({
-      pathname: '/AdminIdeaDetail',
-      query: { id: row.id, title: row.name },
-    });
-  };
+    fetchProjects();
+  }, [page]);
 
   return (
-    <Page>
-      <Sidebar>
-        <BrandContainer>
-          <Brand>
-            <ImageContainer>
-              <Image src="/gdgoc_skhu_admin.svg" alt="GDGoC SKHU 로고" width={60} height={38} />
-            </ImageContainer>
-            <BrandName>GDGoC SKHU</BrandName>
-          </Brand>
-        </BrandContainer>
+    <ContentContainer>
+      <Heading>
+        <Title>아이디어 관리</Title>
+        <Description>역대 프로젝트에 게시된 아이디어 리스트를 관리할 수 있습니다.</Description>
+      </Heading>
 
-        <ProfileDetails>
-          <ProfileName>윤준석</ProfileName>
-          <ProfileTitle>님</ProfileTitle>
-        </ProfileDetails>
+      <TableCard>
+        <TableHeader>
+          <PJName>
+            <HeaderCell>프로젝트명</HeaderCell>
+          </PJName>
+          <PJStart>
+            <HeaderCell>시작일</HeaderCell>
+          </PJStart>
+          <PJEnd>
+            <HeaderCell>종료일</HeaderCell>
+          </PJEnd>
+        </TableHeader>
 
-        <Nav>
-          {NAV_ITEMS.map(item => (
-            <NavButton key={item.label} type="button" $active={item.active}>
-              <NavString $active={item.active}>
-                <span>{item.label}</span>
-              </NavString>
-
-              <NavArrow aria-hidden="true" $visible={Boolean(item.active)}>
-                <Image src="/rightarrow_admin.svg" alt="오른쪽 화살표" width={16} height={16} />
-              </NavArrow>
-            </NavButton>
+        <TableBody>
+          {rows.map(row => (
+            <TableRow
+              key={row.id}
+              role="button"
+              tabIndex={0}
+              onClick={() =>
+                router.push({
+                  pathname: '/AdminIdeaIdea',
+                  query: { projectId: row.id },
+                })
+              }
+            >
+              <PJItemName>
+                <PJNameItemCell title={row.name}>{row.name}</PJNameItemCell>
+              </PJItemName>
+              <PJItemStart>
+                <DateItemCell>{row.startDate}</DateItemCell>
+              </PJItemStart>
+              <PJItemEnd>
+                <DateItemCell>{row.endDate}</DateItemCell>
+              </PJItemEnd>
+            </TableRow>
           ))}
-          <NavButton key={''} type="button">
-            <NavString>
-              <span>홈 화면으로 나가기</span>
-            </NavString>
-          </NavButton>
-        </Nav>
-      </Sidebar>
+        </TableBody>
+      </TableCard>
 
-      <Content>
-        <ContentContainer>
-          <Heading>
-            <Title>아이디어 관리</Title>
-            <Description>역대 프로젝트에 게시된 아이디어 리스트를 관리할 수 있습니다.</Description>
-          </Heading>
+      <Pagination>
+        <PageButton $isArrow onClick={() => setPage(p => Math.max(1, p - 1))}>
+          <ArrowIcon $direction="left" />
+        </PageButton>
 
-          <TableCard>
-            <TableHeader>
-              <PJName>
-                <HeaderCell>프로젝트명</HeaderCell>
-              </PJName>
-              <PJStart>
-                {' '}
-                <HeaderCell>시작일</HeaderCell>
-              </PJStart>
-              <PJEnd>
-                {' '}
-                <HeaderCell>종료일</HeaderCell>
-              </PJEnd>
-            </TableHeader>
+        <PageNumberGroup>
+          {Array.from({ length: totalPages }, (_, i) => (
+            <PageInsertNum key={i + 1} $active={page === i + 1} onClick={() => setPage(i + 1)}>
+              {i + 1}
+            </PageInsertNum>
+          ))}
+        </PageNumberGroup>
 
-            <TableBody>
-              {displayedRows.map((row, index) => (
-                <TableRow
-                  key={`${row.id}-${index}`}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => handleRowClick(row)}
-                  onKeyDown={event => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      handleRowClick(row);
-                    }
-                  }}
-                >
-                  <PJItemName>
-                    <PJNameItemCell title={row.name}>{row.name}</PJNameItemCell>
-                  </PJItemName>
-                  <PJItemStart>
-                    <DateItemCell>{row.startDate}</DateItemCell>
-                  </PJItemStart>
-                  <PJItemEnd>
-                    <DateItemCell>{row.endDate}</DateItemCell>
-                  </PJItemEnd>
-                </TableRow>
-              ))}
-            </TableBody>
-          </TableCard>
-          <Pagination>
-            <PageButton
-              $isArrow
-              onClick={() => handlePageChange(resolvedCurrentPage - 1)}
-              aria-label="Previous page"
-            >
-              <ArrowIcon $direction="left" />
-            </PageButton>
-
-            <PageNumberGroup>
-              {Array.from({ length: resolvedTotalPages }, (_, pageIndex) => {
-                const pageNumber = pageIndex + 1;
-                const isActive = pageNumber === resolvedCurrentPage;
-                return (
-                  <PageInsertNum
-                    key={pageNumber}
-                    $active={isActive}
-                    aria-current={isActive ? 'page' : undefined}
-                    onClick={() => handlePageChange(pageNumber)}
-                  >
-                    {pageNumber}
-                  </PageInsertNum>
-                );
-              })}
-            </PageNumberGroup>
-
-            <PageButton
-              $isArrow
-              onClick={() => handlePageChange(resolvedCurrentPage + 1)}
-              aria-label="Next page"
-            >
-              <ArrowIcon $direction="right" />
-            </PageButton>
-          </Pagination>
-        </ContentContainer>
-      </Content>
-    </Page>
+        <PageButton $isArrow onClick={() => setPage(p => Math.min(totalPages, p + 1))}>
+          <ArrowIcon $direction="right" />
+        </PageButton>
+      </Pagination>
+    </ContentContainer>
   );
 }

@@ -25,13 +25,12 @@ type VideoItem = {
   thumbnailUrl?: string;
 };
 
-const DEFAULT_VIDEOS: VideoItem[] = [
-  { id: 1, title: '👀 24-25 Tech Talk 다시보기', owner: '윤준석', generation: '24-25' },
-  { id: 2, title: '👀 23-24 Tech Talk 다시보기', owner: '이솔', generation: '23-24' },
-];
 const GenOptions = ['25-26', '24-25', '23-24', '22-23', '기타'];
-const AdminActivityCategoryCreate: NextPage = () => {
+
+const AdminActivityVideoEdit: NextPage = () => {
   const router = useRouter();
+
+  // State
   const [id, setId] = useState<number | null>(null);
   const [videoTitle, setVideoTitle] = useState('');
   const [presenterName, setPresenterName] = useState('');
@@ -42,12 +41,14 @@ const AdminActivityCategoryCreate: NextPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [presetThumbnailUrl, setPresetThumbnailUrl] = useState('');
 
+  // Validation
   const titleCount = `${videoTitle.length}/20`;
   const presenterCount = `${presenterName.length}/5`;
   const isTitleMax = videoTitle.length >= 20;
   const isPresenterMax = presenterName.length >= 5;
   const hasKoreanInUrl = /[ㄱ-ㅎ가-힣]/.test(videoUrl);
 
+  // Thumbnail Logic
   const derivedThumbnailUrl = useMemo(() => {
     const extractId = (url: string) => {
       try {
@@ -71,8 +72,10 @@ const AdminActivityCategoryCreate: NextPage = () => {
     const id = extractId(videoUrl.trim());
     return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : '';
   }, [videoUrl]);
+
   const thumbnailUrl = presetThumbnailUrl || derivedThumbnailUrl;
 
+  // Fetch YouTube Title
   useEffect(() => {
     setFetchedTitle('');
     if (!thumbnailUrl) return;
@@ -99,11 +102,17 @@ const AdminActivityCategoryCreate: NextPage = () => {
     return () => controller.abort();
   }, [thumbnailUrl, videoUrl]);
 
-  // 선택한 행 데이터 로드
+  // Load Data from Session Storage
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const stored = window.sessionStorage.getItem('editActivityVideoDraft');
-    if (!stored) return;
+
+    if (!stored) {
+      // 데이터가 없으면 잘못된 접근이므로 뒤로가기
+      router.back();
+      return;
+    }
+
     try {
       const parsed: Partial<VideoItem> = JSON.parse(stored);
       setId(typeof parsed?.id === 'number' ? parsed.id : null);
@@ -116,15 +125,36 @@ const AdminActivityCategoryCreate: NextPage = () => {
       }
     } catch (error) {
       console.error('Failed to load edit draft', error);
-      router.replace('/AdminActivityCategoryCreate');
-    } finally {
-      window.sessionStorage.removeItem('editActivityVideoDraft');
+      router.back();
     }
+    // 데이터 로드 후 즉시 삭제하지 않음 (Strict Mode 등에서 튕김 방지)
   }, [router]);
 
   const handleSave = () => {
     if (!id) return;
     setShowModal(true);
+  };
+
+  const handleConfirmSave = () => {
+    if (typeof window !== 'undefined' && id) {
+      // 수정된 데이터를 세션 스토리지에 저장 (부모 페이지가 읽을 수 있도록)
+      window.sessionStorage.setItem(
+        'editActivityVideo',
+        JSON.stringify({
+          id,
+          title: videoTitle.trim(),
+          owner: presenterName.trim(),
+          generation,
+          url: videoUrl.trim(),
+          thumbnailUrl: thumbnailUrl || undefined,
+        })
+      );
+    }
+    setShowModal(false);
+
+    // [중요] router.push 대신 router.back() 사용
+    // 그래야 생성 페이지면 생성 페이지로, 수정 페이지면 수정 페이지로 돌아가서 데이터를 반영함
+    router.back();
   };
 
   return (
@@ -266,26 +296,7 @@ const AdminActivityCategoryCreate: NextPage = () => {
             </ModalInfo>
             <ModalActions>
               <ModalButtonContainer>
-                <MyDeleteButton
-                  type="button"
-                  onClick={() => {
-                    if (typeof window !== 'undefined' && id) {
-                      window.sessionStorage.setItem(
-                        'editActivityVideo',
-                        JSON.stringify({
-                          id,
-                          title: videoTitle.trim(),
-                          owner: presenterName.trim(),
-                          generation,
-                          url: videoUrl.trim(),
-                          thumbnailUrl: thumbnailUrl || undefined,
-                        })
-                      );
-                    }
-                    setShowModal(false);
-                    router.push('/AdminActivityCategoryCreate');
-                  }}
-                >
+                <MyDeleteButton type="button" onClick={handleConfirmSave}>
                   <DeleteButtonText>확인</DeleteButtonText>
                 </MyDeleteButton>
               </ModalButtonContainer>
@@ -297,7 +308,7 @@ const AdminActivityCategoryCreate: NextPage = () => {
   );
 };
 
-export default AdminActivityCategoryCreate;
+export default AdminActivityVideoEdit;
 
 const Page = styled.div`
   display: grid;
@@ -305,7 +316,6 @@ const Page = styled.div`
   min-height: 100vh;
   background: #ffffff;
   width: 100%;
-  height:;
 `;
 
 const Sidebar = styled.div`

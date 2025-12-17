@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import Image from 'next/image';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
+import {
+  AdminIdeaDetail as AdminIdeaDetailType,
+  deleteAdminIdea,
+  getAdminProjectIdeaDetail,
+  restoreAdminIdea,
+} from '@/lib/adminIdea.api';
 import styled from 'styled-components';
 
-import { createEmptyTeamCounts, Idea, useIdeaStore } from '../../store/IdeaStore';
 import {
-  Brand,
-  BrandContainer,
-  BrandName,
   CancelButtonText,
-  Content,
   ContentContainer,
   CountNum,
   CountStat,
@@ -22,7 +22,6 @@ import {
   DescriptionBox,
   DescriptionSection,
   Heading,
-  ImageContainer,
   IntroRow,
   IntroText,
   MarkBar,
@@ -47,80 +46,34 @@ import {
   MyConfirmButton,
   MyDeleteButton,
   MySuccessButtonText,
-  Nav,
-  NavArrow,
-  NavButton,
-  NavString,
-  Page,
   PreviewCanvas,
-  ProfileDetails,
-  ProfileName,
-  ProfileTitle,
   ResponsiveWrapper,
   RoleName,
-  Sidebar,
   SubjectLabel,
   SubjectValue,
   Title,
   TitleSection,
   TitleText,
-} from '../../styles/AdminIdeaDeleted';
+} from '../../styles/AdminIdeaDeleted'; // 스타일 파일 경로는 프로젝트에 맞게 확인 필요
 import { sanitizeDescription } from '../../utils/sanitizeDescription';
 
-type NavItem = {
-  label: string;
-  active?: boolean;
-};
+// --- Constants & Types ---
 
-const NAV_ITEMS: NavItem[] = [
-  { label: '대시보드' },
-  { label: '가입 심사' },
-  { label: '멤버 관리' },
-  { label: '프로젝트 관리' },
-  { label: '아이디어 관리', active: true },
-  { label: '프로젝트 갤러리 관리' },
-  { label: '액티비티 관리' },
-];
 const TEAM_ROLES = [
-  { key: 'planning', label: '기획' },
-  { key: 'design', label: '디자인' },
-  { key: 'frontendWeb', label: '프론트엔드 (웹)' },
-  { key: 'frontendMobile', label: '프론트엔드 (모바일)' },
-  { key: 'backend', label: '백엔드' },
-  { key: 'aiMl', label: 'AI/ML' },
+  { key: 'planning', label: '기획', apiKey: 'PM' },
+  { key: 'design', label: '디자인', apiKey: 'DESIGN' },
+  { key: 'aiMl', label: 'AI/ML', apiKey: 'AI' },
+  { key: 'frontendWeb', label: '프론트엔드 (웹)', apiKey: 'WEB' },
+  { key: 'frontendMobile', label: '프론트엔드 (모바일)', apiKey: 'MOBILE' },
+  { key: 'backend', label: '백엔드', apiKey: 'BACKEND' },
 ] as const;
+
 const TEAM_GROUPS: Array<Array<(typeof TEAM_ROLES)[number]['key']>> = [
   ['planning', 'design', 'aiMl'],
   ['frontendWeb', 'frontendMobile', 'backend'],
 ];
-const DUMMY_IDEA: Idea = {
-  id: 1,
-  topic: '청년 세대의 경제적, 사회적 어려움을 해결하기 위한 솔루션',
-  title: '어디갈래',
-  intro: 'AI 기반 여행 일정 메이커 서비스',
-  description:
-    '# 청년들의 월세 부담을 덜어줄 메이트, 리빙메이트\n\n### 다들 월세 얼마씩 내세요?\n저는 80만원이나 내고 있는데, 이걸 반반 부담할 친구가 있다면 얼마나 좋을까요? ',
-  preferredPart: 'planning',
-  team: {
-    planning: 1,
-    design: 1,
-    frontendWeb: 0,
-    frontendMobile: 2,
-    backend: 2,
-    aiMl: 0,
-  },
-  filledTeam: {
-    planning: 0,
-    design: 0,
-    frontendWeb: 0,
-    frontendMobile: 0,
-    backend: 0,
-    aiMl: 0,
-  },
-  currentMembers: 0,
-  totalMembers: 6,
-  status: '모집 중',
-};
+
+// --- Styled Components ---
 
 const SectionTitle = styled.h3`
   font-size: 20px;
@@ -179,302 +132,277 @@ const SubjectRow = styled.div`
 
 export default function AdminIdeaDeleted() {
   const router = useRouter();
-  const { id } = router.query;
+  const { id, projectId } = router.query;
 
-  const hasHydratedIdeas = useIdeaStore(state => state.hasHydrated);
-  const hydrateIdeas = useIdeaStore(state => state.hydrateFromStorage);
+  // 데이터 상태
+  const [ideaData, setIdeaData] = useState<AdminIdeaDetailType | null>(null);
 
-  const numericId = React.useMemo(() => {
-    if (Array.isArray(id)) return Number(id[0]);
-    return id ? Number(id) : NaN;
-  }, [id]);
+  // 모달 상태 ('restore' | 'delete' | 'success_restore' | 'success_delete')
+  const [modalType, setModalType] = useState<
+    'closed' | 'restore_confirm' | 'delete_confirm' | 'restore_success' | 'delete_success'
+  >('closed');
 
-  const idea: Idea | undefined = useIdeaStore(state =>
-    Number.isFinite(numericId) ? state.getIdeaById(numericId) : undefined
+  // 1. API 데이터 조회
+  useEffect(() => {
+    if (!id || !projectId) return;
+
+    getAdminProjectIdeaDetail({
+      projectId: Number(projectId),
+      ideaId: Number(id),
+    })
+      .then(res => setIdeaData(res.data))
+      .catch(err => {
+        console.error('Failed to fetch deleted idea detail:', err);
+        // 에러 처리 (예: 이미 완전히 삭제된 경우 등)
+      });
+  }, [id, projectId]);
+
+  // 2. 데이터 가공 (모집 인원 통계)
+  const statsMap = useMemo(() => {
+    if (!ideaData) return {};
+
+    const map: Record<string, { current: number; total: number }> = {};
+
+    // 기본 0으로 초기화
+    TEAM_ROLES.forEach(r => {
+      map[r.key] = { current: 0, total: 0 };
+    });
+
+    // API Roster 데이터 매핑
+    ideaData.rosters.forEach(roster => {
+      const roleDef = TEAM_ROLES.find(r => r.apiKey === roster.part);
+      if (roleDef) {
+        map[roleDef.key] = {
+          current: roster.currentMemberCount,
+          total: roster.maxMemberCount,
+        };
+      }
+    });
+    return map;
+  }, [ideaData]);
+
+  const safeDescription = useMemo(
+    () => sanitizeDescription(ideaData?.description ?? ''),
+    [ideaData]
   );
 
-  const effectiveIdea: Idea = idea ?? DUMMY_IDEA;
+  // --- Handlers ---
 
-  React.useEffect(() => {
-    if (!hasHydratedIdeas) {
-      hydrateIdeas();
+  // 복구 API 호출
+  const handleRestoreConfirm = async () => {
+    if (!id) return;
+    try {
+      await restoreAdminIdea(Number(id));
+      setModalType('restore_success');
+    } catch (error) {
+      console.error('Failed to restore idea:', error);
+      alert('아이디어 복구에 실패했습니다.');
+      setModalType('closed');
     }
-  }, [hasHydratedIdeas, hydrateIdeas]);
-  const [modalState, setModalState] = useState<'closed' | 'confirm' | 'success'>('closed');
-  const [resolvedTitle, setResolvedTitle] = useState<string>(effectiveIdea.title);
-  const [resolvedIntro, setResolvedIntro] = useState<string>(effectiveIdea.intro);
-  const [rawDescription, setRawDescription] = useState<string>(effectiveIdea.description);
-
-  const handleRestoreConfirm = () => {
-    // 복구 로직 추가 예정
-    setModalState('success');
   };
 
-  const handleCloseModal = () => setModalState('closed');
+  // 완전 삭제 API 호출
+  const handleDeleteConfirm = async () => {
+    if (!id) return;
+    try {
+      await deleteAdminIdea(Number(id));
+      setModalType('delete_success');
+    } catch (error) {
+      console.error('Failed to delete idea permanently:', error);
+      alert('아이디어 삭제에 실패했습니다.');
+      setModalType('closed');
+    }
+  };
+
+  const handleCloseModal = () => setModalType('closed');
 
   const handleSuccessClose = () => {
-    setModalState('closed');
-    router.push('/AdminIdeaProject');
+    setModalType('closed');
+    // 목록으로 이동 (쿼리 유지)
+    router.push({
+      pathname: '/AdminIdeaIdea',
+      query: { projectId },
+    });
   };
 
-  const roleMap = React.useMemo(
-    () =>
-      TEAM_ROLES.reduce(
-        (acc, role) => {
-          acc[role.key] = role;
-          return acc;
-        },
-        {} as Record<(typeof TEAM_ROLES)[number]['key'], (typeof TEAM_ROLES)[number]>
-      ),
-    []
-  );
-
-  const team = React.useMemo(
-    () => ({
-      ...createEmptyTeamCounts(),
-      ...(effectiveIdea.team ?? {}),
-    }),
-    [effectiveIdea.team]
-  );
-
-  const preferredRoleKey = React.useMemo<(typeof TEAM_ROLES)[number]['key'] | null>(() => {
-    const preferred = effectiveIdea.preferredPart;
-    if (!preferred) return null;
-    const matched = TEAM_ROLES.find(role => role.label === preferred || role.key === preferred);
-    return matched ? matched.key : null;
-  }, [effectiveIdea.preferredPart]);
-
-  const filledTeam = React.useMemo(
-    () => ({
-      ...createEmptyTeamCounts(),
-      ...(effectiveIdea.filledTeam ?? {}),
-    }),
-    [effectiveIdea.filledTeam]
-  );
-
-  const displayTotals = React.useMemo(() => {
-    const totals: Record<(typeof TEAM_ROLES)[number]['key'], number> = {
-      ...createEmptyTeamCounts(),
-      ...team,
-    };
-    if (preferredRoleKey) {
-      totals[preferredRoleKey] = Math.max(totals[preferredRoleKey] ?? 0, 1);
-    }
-    return totals;
-  }, [preferredRoleKey, team]);
-
-  const displayCurrents = React.useMemo(() => {
-    const currents: Record<(typeof TEAM_ROLES)[number]['key'], number> = createEmptyTeamCounts();
-    TEAM_ROLES.forEach(role => {
-      const limit = displayTotals[role.key] ?? 0;
-      const ownerSlot = preferredRoleKey === role.key ? 1 : 0;
-      const applied = filledTeam[role.key] ?? 0;
-      const totalApplied = ownerSlot + applied;
-      currents[role.key] = limit > 0 ? Math.min(totalApplied, limit) : totalApplied;
-    });
-    return currents;
-  }, [displayTotals, filledTeam, preferredRoleKey]);
-
-  React.useEffect(() => {
-    setResolvedTitle(effectiveIdea.title);
-    setResolvedIntro(effectiveIdea.intro);
-    setRawDescription(effectiveIdea.description);
-  }, [effectiveIdea.description, effectiveIdea.intro, effectiveIdea.title]);
-
-  React.useEffect(() => {
-    if (idea) return;
-    if (typeof window === 'undefined') return;
-    try {
-      const stored = window.sessionStorage.getItem('ideaFormData');
-      if (!stored) return;
-      const parsed = JSON.parse(stored);
-      const draft = parsed?.form ?? parsed;
-      if (draft?.title) setResolvedTitle(draft.title);
-      if (draft?.intro) setResolvedIntro(draft.intro);
-      if (draft?.description) setRawDescription(draft.description);
-    } catch (error) {
-      console.error('Failed to load idea data from session', error);
-    }
-  }, [idea]);
-
-  const safeDescription = React.useMemo(
-    () => sanitizeDescription(rawDescription || ''),
-    [rawDescription]
-  );
-
-  const sidebar = (
-    <Sidebar>
-      <BrandContainer>
-        <Brand>
-          <ImageContainer>
-            <Image src="/gdgoc_skhu_admin.svg" alt="GDGoC SKHU 로고" width={60} height={38} />
-          </ImageContainer>
-          <BrandName>GDGoC SKHU</BrandName>
-        </Brand>
-      </BrandContainer>
-
-      <ProfileDetails>
-        <ProfileName>윤준석</ProfileName>
-        <ProfileTitle>님</ProfileTitle>
-      </ProfileDetails>
-
-      <Nav>
-        {NAV_ITEMS.map(item => (
-          <NavButton key={item.label} type="button" $active={item.active}>
-            <NavString $active={item.active}>
-              <span>{item.label}</span>
-            </NavString>
-
-            <NavArrow aria-hidden="true" $visible={Boolean(item.active)}>
-              <Image src="/rightarrow_admin.svg" alt="오른쪽 화살표" width={16} height={16} />
-            </NavArrow>
-          </NavButton>
-        ))}
-        <NavButton key={''} type="button">
-          <NavString>
-            <span>홈 화면으로 나가기</span>
-          </NavString>
-        </NavButton>
-      </Nav>
-    </Sidebar>
-  );
+  if (!ideaData) {
+    return <ContentContainer>Loading...</ContentContainer>;
+  }
 
   return (
-    <Page>
-      {sidebar}
+    <ContentContainer>
+      <Heading>
+        <Title>아이디어 관리</Title>
+        <Description>역대 프로젝트에 게시된 아이디어 리스트를 관리할 수 있습니다.</Description>
+      </Heading>
 
-      <Content>
-        <ContentContainer>
-          <Heading>
-            <Title>아이디어 관리</Title>
-            <Description>역대 프로젝트에 게시된 아이디어 리스트를 관리할 수 있습니다.</Description>
-          </Heading>
+      <PreviewCanvas>
+        <ResponsiveWrapper>
+          <TitleSection>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                width: '100%',
+                alignItems: 'flex-start',
+              }}
+            >
+              <TitleText>{ideaData.title}</TitleText>
 
-          <PreviewCanvas>
-            <ResponsiveWrapper>
-              <TitleSection>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  <TitleText>{resolvedTitle || '아이디어 제목'}</TitleText>
+              <DeletedMarkContainer>
+                <DeletedMark>
+                  <MarkBar />
+                  <MarkDot />
+                </DeletedMark>
+                <DeletedText> 작성자가 삭제한 아이디어입니다.</DeletedText>
+              </DeletedMarkContainer>
+            </div>
 
-                  <DeletedMarkContainer>
-                    <DeletedMark>
-                      <MarkBar />
-                      <MarkDot />
-                    </DeletedMark>
-                    <DeletedText> 작성자가 삭제한 아이디어입니다.</DeletedText>
-                  </DeletedMarkContainer>
-                </div>
+            <IntroRow>
+              <div style={{ flex: 1 }}>
+                <IntroText>{ideaData.introduction}</IntroText>
+              </div>
 
-                <IntroRow>
-                  <div style={{ flex: 1 }}>
-                    <IntroText>{resolvedIntro}</IntroText>
-                  </div>
+              <MentorContainer>
+                <MentorPart>
+                  {ideaData.creator.school} {ideaData.creator.part}{' '}
+                  <Mentor as="span">{ideaData.creator.creatorName}</Mentor>
+                </MentorPart>
+              </MentorContainer>
+            </IntroRow>
+          </TitleSection>
 
-                  <MentorContainer>
-                    <MentorPart>
-                      성공회대 디자인 <Mentor as="span">주현지</Mentor>
-                    </MentorPart>
-                  </MentorContainer>
-                </IntroRow>
-              </TitleSection>
+          <SubjectRow>
+            <SubjectLabel>아이디어 주제</SubjectLabel>
+            <SubjectValue>{ideaData.topic}</SubjectValue>
+          </SubjectRow>
 
-              <SubjectRow>
-                <SubjectLabel>아이디어 주제</SubjectLabel>
-                <SubjectValue>{effectiveIdea.topic}</SubjectValue>
-              </SubjectRow>
+          <MembersSection>
+            <SectionTitle>모집 인원</SectionTitle>
+            <MemberCard>
+              {TEAM_GROUPS.map(group => (
+                <MemberRow key={group.join('-')}>
+                  {group.map(roleKey => {
+                    const roleLabel = TEAM_ROLES.find(r => r.key === roleKey)?.label;
+                    const stat = statsMap[roleKey] ?? { current: 0, total: 0 };
 
-              <MembersSection>
-                <SectionTitle>모집 인원</SectionTitle>
-                <MemberCard>
-                  {TEAM_GROUPS.map(group => (
-                    <MemberRow key={group.join('-')}>
-                      {group.map(roleKey => {
-                        const role = roleMap[roleKey];
-                        const total = displayTotals[role.key] ?? 0;
-                        const current = displayCurrents[role.key] ?? 0;
-                        return (
-                          <MemberCount key={role.key}>
-                            <RoleName>{role.label}</RoleName>
-                            <CountStat>
-                              <CountNum>
-                                {' '}
-                                {current} / {total}
-                              </CountNum>
-                              <CountUnit>명</CountUnit>
-                            </CountStat>
-                          </MemberCount>
-                        );
-                      })}
-                    </MemberRow>
-                  ))}
-                </MemberCard>
-              </MembersSection>
+                    return (
+                      <MemberCount key={roleKey}>
+                        <RoleName>{roleLabel}</RoleName>
+                        <CountStat>
+                          <CountNum>
+                            {' '}
+                            {stat.current} / {stat.total}
+                          </CountNum>
+                          <CountUnit>명</CountUnit>
+                        </CountStat>
+                      </MemberCount>
+                    );
+                  })}
+                </MemberRow>
+              ))}
+            </MemberCard>
+          </MembersSection>
 
-              <DescriptionSection>
-                <SectionTitle>아이디어 설명</SectionTitle>
-                <DescriptionBox
-                  dangerouslySetInnerHTML={{
-                    __html:
-                      safeDescription ||
-                      '<p>Github README 작성에 쓰이는 "markdown"을 이용해 작성해보세요.</p>',
-                  }}
-                />
-              </DescriptionSection>
-            </ResponsiveWrapper>
-          </PreviewCanvas>
-          <ActionRow>
-            <ActionButton $primary type="button" onClick={() => setModalState('confirm')}>
-              아이디어 복구하기
-            </ActionButton>
-            <ActionButton $danger type="button" onClick={() => setModalState('confirm')}>
-              아이디어 삭제하기
-            </ActionButton>
-          </ActionRow>
+          <DescriptionSection>
+            <SectionTitle>아이디어 설명</SectionTitle>
+            <DescriptionBox
+              dangerouslySetInnerHTML={{
+                __html: safeDescription,
+              }}
+            />
+          </DescriptionSection>
+        </ResponsiveWrapper>
+      </PreviewCanvas>
 
-          {modalState !== 'closed' && (
-            <ModalOverlay>
-              {modalState === 'confirm' && (
-                <ModalCard>
-                  <ModalInfo>
-                    <ModalTitle>{resolvedTitle || '아이디어 제목'}</ModalTitle>
-                    <ModalMessage>아이디어를 복구할까요?</ModalMessage>
-                  </ModalInfo>
-                  <ModalActions>
-                    <ModalButtonContainer>
-                      <MyDeleteButton type="button" onClick={handleRestoreConfirm}>
-                        <DeleteButtonText>복구하기</DeleteButtonText>
-                      </MyDeleteButton>
-                      <MyCancelButton type="button" disabled={false} onClick={handleCloseModal}>
-                        <CancelButtonText>취소</CancelButtonText>
-                      </MyCancelButton>
-                    </ModalButtonContainer>
-                  </ModalActions>
-                </ModalCard>
-              )}
+      <ActionRow>
+        <ActionButton $primary type="button" onClick={() => setModalType('restore_confirm')}>
+          아이디어 복구하기
+        </ActionButton>
+        <ActionButton $danger type="button" onClick={() => setModalType('delete_confirm')}>
+          아이디어 삭제하기
+        </ActionButton>
+      </ActionRow>
 
-              {modalState === 'success' && (
-                <ModalSuccessCard $compact>
-                  <ModalSuccessCardTitle>아이디어가 복구가 완료되었습니다.</ModalSuccessCardTitle>
-                  <ModalActions>
-                    <ModalButtonContainer>
-                      <MyConfirmButton type="button" onClick={handleSuccessClose}>
-                        <MySuccessButtonText>확인</MySuccessButtonText>
-                      </MyConfirmButton>
-                    </ModalButtonContainer>
-                  </ModalActions>
-                </ModalSuccessCard>
-              )}
-            </ModalOverlay>
+      {/* ===== MODAL ===== */}
+      {modalType !== 'closed' && (
+        <ModalOverlay>
+          {/* 복구 확인 모달 */}
+          {modalType === 'restore_confirm' && (
+            <ModalCard>
+              <ModalInfo>
+                <ModalTitle>{ideaData.title}</ModalTitle>
+                <ModalMessage>아이디어를 복구할까요?</ModalMessage>
+                <ModalMessage>
+                  이 작업은 아이디어를 &apos;모집 중&apos; 상태로 되돌립니다.
+                </ModalMessage>
+              </ModalInfo>
+              <ModalActions>
+                <ModalButtonContainer>
+                  {/* 복구 버튼 스타일 (Primary 색상 재사용하거나 커스텀) */}
+                  <MyConfirmButton type="button" onClick={handleRestoreConfirm}>
+                    <MySuccessButtonText>복구하기</MySuccessButtonText>
+                  </MyConfirmButton>
+                  <MyCancelButton type="button" onClick={handleCloseModal}>
+                    <CancelButtonText>취소</CancelButtonText>
+                  </MyCancelButton>
+                </ModalButtonContainer>
+              </ModalActions>
+            </ModalCard>
           )}
-        </ContentContainer>
-      </Content>
-    </Page>
+
+          {/* 완전 삭제 확인 모달 */}
+          {modalType === 'delete_confirm' && (
+            <ModalCard>
+              <ModalInfo>
+                <ModalTitle>{ideaData.title}</ModalTitle>
+                <ModalMessage>아이디어를 완전히 삭제할까요?</ModalMessage>
+                <ModalMessage style={{ color: '#f44242' }}>
+                  이 작업은 되돌릴 수 없으며 DB에서 영구 삭제됩니다.
+                </ModalMessage>
+              </ModalInfo>
+              <ModalActions>
+                <ModalButtonContainer>
+                  <MyDeleteButton type="button" onClick={handleDeleteConfirm}>
+                    <DeleteButtonText>영구 삭제</DeleteButtonText>
+                  </MyDeleteButton>
+                  <MyCancelButton type="button" onClick={handleCloseModal}>
+                    <CancelButtonText>취소</CancelButtonText>
+                  </MyCancelButton>
+                </ModalButtonContainer>
+              </ModalActions>
+            </ModalCard>
+          )}
+
+          {/* 복구 성공 모달 */}
+          {modalType === 'restore_success' && (
+            <ModalSuccessCard $compact>
+              <ModalSuccessCardTitle>아이디어가 성공적으로 복구되었습니다.</ModalSuccessCardTitle>
+              <ModalActions>
+                <ModalButtonContainer>
+                  <MyConfirmButton type="button" onClick={handleSuccessClose}>
+                    <MySuccessButtonText>확인</MySuccessButtonText>
+                  </MyConfirmButton>
+                </ModalButtonContainer>
+              </ModalActions>
+            </ModalSuccessCard>
+          )}
+
+          {/* 삭제 성공 모달 */}
+          {modalType === 'delete_success' && (
+            <ModalSuccessCard $compact>
+              <ModalSuccessCardTitle>아이디어가 영구적으로 삭제되었습니다.</ModalSuccessCardTitle>
+              <ModalActions>
+                <ModalButtonContainer>
+                  <MyConfirmButton type="button" onClick={handleSuccessClose}>
+                    <MySuccessButtonText>확인</MySuccessButtonText>
+                  </MyConfirmButton>
+                </ModalButtonContainer>
+              </ModalActions>
+            </ModalSuccessCard>
+          )}
+        </ModalOverlay>
+      )}
+    </ContentContainer>
   );
 }

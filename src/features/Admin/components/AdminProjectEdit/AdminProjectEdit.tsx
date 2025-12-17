@@ -1,12 +1,28 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
+import SelectBoxBasic from '@/features/team-building/components/SelectBoxBasic';
+import {
+  ProjectMember,
+  SearchMember,
+  UpdateProjectGalleryRequestDto,
+  useProjectGalleryDetail,
+  useSearchMembers,
+  useUpdateProjectGallery,
+} from '@/lib/adminProjectGallery.api';
 import styled from 'styled-components';
 
-import ReQuill from '../../../team-building/components/ReQuill';
-import SelectBoxBasic from '../../../team-building/components/SelectBoxBasic';
+import '@uiw/react-md-editor/markdown-editor.css';
+import '@uiw/react-markdown-preview/markdown.css';
+
+const MDEditor = dynamic(() => import('@uiw/react-md-editor'), {
+  ssr: false,
+});
 
 const PROJECT_TITLE_MAX = 20;
 const PROJECT_INTRO_MAX = 30;
+
 const ROLE_OPTIONS = [
   '기획',
   '디자인',
@@ -16,27 +32,37 @@ const ROLE_OPTIONS = [
   'AI/ML',
 ] as const;
 
-const quillModules = {
-  toolbar: [
-    [{ header: [1, 2, 3, false] }],
-    ['bold', 'italic', 'underline', 'strike'],
-    [{ list: 'ordered' }, { list: 'bullet' }],
-    ['link', 'image'],
-    ['clean'],
-  ],
+const PART_MAP_TO_KR: Record<string, string> = {
+  PM: '기획',
+  DESIGN: '디자인',
+  WEB: '프론트엔드 (웹)',
+  ANDROID: '프론트엔드 (모바일)',
+  IOS: '프론트엔드 (모바일)',
+  SERVER: '백엔드',
+  AI: 'AI/ML',
 };
 
-const quillFormats = [
-  'header',
-  'bold',
-  'italic',
-  'underline',
-  'strike',
-  'list',
-  'bullet',
-  'link',
-  'image',
-];
+const PART_MAP_TO_EN: Record<string, string> = {
+  기획: 'PM',
+  디자인: 'DESIGN',
+  '프론트엔드 (웹)': 'WEB',
+  '프론트엔드 (모바일)': 'ANDROID',
+  백엔드: 'SERVER',
+  'AI/ML': 'AI',
+};
+
+// 디바운스 훅
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 interface TeamMember {
   id: number;
   name: string;
@@ -47,43 +73,89 @@ interface TeamMember {
 }
 
 const ProjectGalleryEdit: React.FC = () => {
+  const router = useRouter();
+
+  const projectId = router.isReady && router.query.id ? Number(router.query.id) : 0;
+
+  const { data: detailData, isLoading } = useProjectGalleryDetail(projectId, {
+    enabled: !!projectId,
+  });
+
+  const { mutate: updateProject } = useUpdateProjectGallery();
+
   const generationOptions = ['25-26', '24-25', '23-24'];
-  const [projectTitle, setProjectTitle] = useState('커피와 담소');
-  const [projectDescription, setProjectDescription] = useState('담소를 나누기 위해 사용하셍용');
+
+  const [projectTitle, setProjectTitle] = useState('');
+  const [projectDescription, setProjectDescription] = useState('');
   const [serviceStatus, setServiceStatus] = useState<'operating' | 'not-operating'>('operating');
+
+  const [isExhibited, setIsExhibited] = useState(true);
+
   const [projectDetail, setProjectDetail] = useState('');
+  const [thumbnailUrl, setThumbnailUrl] = useState('');
+
   const [generation, setGeneration] = useState<string[]>([generationOptions[0]]);
   const [leader, setLeader] = useState<TeamMember>({
-    id: 1,
-    name: '주현지',
-    school: '성공회대학교',
-    role: '백엔드',
-    tag: '25-26 Core',
+    id: 0,
+    name: '',
+    school: '',
+    role: ROLE_OPTIONS[0],
+    tag: '',
     isLeader: true,
   });
-  const [members, setMembers] = useState<TeamMember[]>([
-    {
-      id: 2,
-      name: '윤준석',
-      school: '성공회대학교',
-      role: '프론트엔드 (웹)',
-      tag: '25-26 Organizer',
-    },
-    {
-      id: 3,
-      name: '이솔',
-      school: '성공회대학교',
-      role: '디자인',
-      tag: '25-26 Core',
-    },
-    {
-      id: 4,
-      name: '이서영',
-      school: '성공회대학교',
-      role: 'AI/ML',
-      tag: '25-26 Core',
-    },
-  ]);
+  const [members, setMembers] = useState<TeamMember[]>([]);
+
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
+
+  const debouncedKeyword = useDebounce(searchKeyword, 300);
+
+  const { data: searchResults, isLoading: isSearching } = useSearchMembers(debouncedKeyword, {
+    enabled: isSearchModalOpen,
+  });
+
+  const formatTag = (member: ProjectMember) => {
+    const mainGen = member.generations.find(g => g.isMain) || member.generations[0];
+    return mainGen ? `${mainGen.generation} ${mainGen.position}` : '';
+  };
+
+  useEffect(() => {
+    if (detailData) {
+      setProjectTitle(detailData.projectName);
+      setProjectDescription(detailData.shortDescription);
+      setProjectDetail(detailData.description);
+      setGeneration([detailData.generation]);
+
+      setServiceStatus(detailData.serviceStatus === 'IN_SERVICE' ? 'operating' : 'not-operating');
+      setIsExhibited(detailData.exhibited);
+
+      // @ts-ignore
+      if (detailData.thumbnailUrl) setThumbnailUrl(detailData.thumbnailUrl);
+
+      if (detailData.leader) {
+        setLeader({
+          id: detailData.leader.userId,
+          name: detailData.leader.name,
+          school: detailData.leader.school,
+          role: PART_MAP_TO_KR[detailData.leader.part] || detailData.leader.part,
+          tag: formatTag(detailData.leader),
+          isLeader: true,
+        });
+      }
+
+      if (detailData.members) {
+        setMembers(
+          detailData.members.map(m => ({
+            id: m.userId,
+            name: m.name,
+            school: m.school,
+            role: PART_MAP_TO_KR[m.part] || m.part,
+            tag: formatTag(m),
+          }))
+        );
+      }
+    }
+  }, [detailData]);
 
   const selectedGeneration = generation[0] ?? generationOptions[0];
   const titleCountText = `${projectTitle.length}/${PROJECT_TITLE_MAX}`;
@@ -102,20 +174,31 @@ const ProjectGalleryEdit: React.FC = () => {
     setProjectDescription(e.target.value.slice(0, PROJECT_INTRO_MAX));
   };
 
-  const handleAddMember = () => {
-    setMembers(prev => {
-      const maxId = Math.max(leader.id, ...prev.map(member => member.id));
-      return [
-        ...prev,
-        {
-          id: maxId + 1,
-          name: `새 팀원 ${prev.length + 1}`,
-          school: '소속을 입력해주세요',
-          role: ROLE_OPTIONS[0],
-          tag: `${selectedGeneration} Core`,
-        },
-      ];
-    });
+  const handleOpenSearchModal = () => {
+    setSearchKeyword('');
+    setIsSearchModalOpen(true);
+  };
+
+  const handleSelectMember = (member: SearchMember) => {
+    const isAlreadyMember = members.some(m => m.id === member.userId);
+    const isLeader = leader.id === member.userId;
+
+    if (isAlreadyMember || isLeader) {
+      alert('이미 프로젝트에 등록된 멤버입니다.');
+      return;
+    }
+
+    setMembers(prev => [
+      ...prev,
+      {
+        id: member.userId,
+        name: member.name,
+        school: member.school,
+        role: ROLE_OPTIONS[0],
+        tag: member.generationAndPosition,
+      },
+    ]);
+    setIsSearchModalOpen(false);
   };
 
   const handleDeleteMember = (id: number) => {
@@ -136,24 +219,61 @@ const ProjectGalleryEdit: React.FC = () => {
     );
   };
 
-  const handleProjectDetailChange = (value: string) => {
-    setProjectDetail(value);
-  };
-
   const handleApply = () => {
-    const payload = {
-      projectTitle,
-      projectDescription,
+    if (!projectId) {
+      alert('프로젝트 ID를 찾을 수 없습니다.');
+      return;
+    }
+
+    if (!leader.id) {
+      alert('팀장 정보가 올바르지 않습니다.');
+      return;
+    }
+
+    const payload: UpdateProjectGalleryRequestDto = {
+      projectName: projectTitle,
       generation: selectedGeneration,
-      serviceStatus,
-      projectDetail,
-      leader,
-      members,
+      shortDescription: projectDescription,
+      serviceStatus: serviceStatus === 'operating' ? 'IN_SERVICE' : 'NOT_IN_SERVICE',
+      exhibited: isExhibited,
+      description: projectDetail,
+      leaderId: leader.id,
+      leaderPart: PART_MAP_TO_EN[leader.role] || leader.role,
+      members: members.map(m => ({
+        userId: m.id,
+        part: PART_MAP_TO_EN[m.role] || m.role,
+      })),
+      thumbnailUrl: thumbnailUrl || '',
     };
 
-    console.log('Apply changes', payload);
-    alert('변경 사항이 적용되었습니다.');
+    console.log('전송 데이터 확인:', payload);
+
+    updateProject(
+      { projectId, payload },
+      {
+        onSuccess: () => {
+          alert('변경 사항이 성공적으로 적용되었습니다.');
+          router.push('/AdminProjectGallery');
+        },
+        onError: (error: any) => {
+          console.error(error);
+          const errorMsg =
+            error?.response?.data?.message || '수정에 실패했습니다. 입력값을 확인해주세요.';
+          alert(`[Error] ${errorMsg}`);
+        },
+      }
+    );
   };
+
+  if (isLoading) {
+    return (
+      <Container>
+        <MainContent>
+          <LoadingText>데이터를 불러오는 중입니다...</LoadingText>
+        </MainContent>
+      </Container>
+    );
+  }
 
   return (
     <Container>
@@ -204,7 +324,7 @@ const ProjectGalleryEdit: React.FC = () => {
                     type="text"
                     value={projectTitle}
                     onChange={handleTitleChange}
-                    placeholder="커피와 담소"
+                    placeholder="프로젝트 제목을 입력하세요"
                   />
                 </FieldTitle>
 
@@ -217,7 +337,7 @@ const ProjectGalleryEdit: React.FC = () => {
                     type="text"
                     value={projectDescription}
                     onChange={handleIntroChange}
-                    placeholder="담소를 나누기 위해 사용하셍용"
+                    placeholder="한 줄 소개를 입력하세요"
                   />
                 </FieldTitle>
 
@@ -285,7 +405,7 @@ const ProjectGalleryEdit: React.FC = () => {
                       </MemberActions>
                     </MemberCard>
                   ))}
-                  <AddMemberButton onClick={handleAddMember}>+ 팀원 추가</AddMemberButton>
+                  <AddMemberButton onClick={handleOpenSearchModal}>+ 팀원 추가</AddMemberButton>
                 </FieldMember>
 
                 <FieldState>
@@ -309,22 +429,23 @@ const ProjectGalleryEdit: React.FC = () => {
                     </RadioOption>
                   </RadioGroup>
                 </FieldState>
+
                 <FieldState>
                   <FieldLabel>서비스 전시 여부</FieldLabel>
                   <RadioGroup>
                     <RadioOption>
                       <RadioInput
                         type="radio"
-                        checked={serviceStatus === 'operating'}
-                        onChange={() => setServiceStatus('operating')}
+                        checked={isExhibited === true}
+                        onChange={() => setIsExhibited(true)}
                       />
                       <span>활성화</span>
                     </RadioOption>
                     <RadioOption>
                       <RadioInput
                         type="radio"
-                        checked={serviceStatus === 'not-operating'}
-                        onChange={() => setServiceStatus('not-operating')}
+                        checked={isExhibited === false}
+                        onChange={() => setIsExhibited(false)}
                       />
                       <span>비활성화</span>
                     </RadioOption>
@@ -333,25 +454,66 @@ const ProjectGalleryEdit: React.FC = () => {
 
                 <FieldMarkdown>
                   <FieldLabel>프로젝트 설명</FieldLabel>
-                  <QuillContainer>
-                    <ReQuill
+                  <MarkdownContainer data-color-mode="light">
+                    <MDEditor
                       value={projectDetail}
-                      onChange={handleProjectDetailChange}
-                      placeholder={`프로젝트 설명을 입력해주세요`}
-                      modules={quillModules}
-                      formats={quillFormats}
+                      onChange={val => setProjectDetail(val || '')}
                       height={400}
+                      preview="live"
+                      hideToolbar={false}
+                      visibleDragbar={true}
+                      textareaProps={{
+                        placeholder: '프로젝트 설명을 마크다운으로 입력해주세요.',
+                      }}
                     />
-                  </QuillContainer>
+                  </MarkdownContainer>
                 </FieldMarkdown>
               </FieldList>
             </FormWrapper>
           </FormBlock>
         </ContentWrapper>
       </MainContent>
+
+      {isSearchModalOpen && (
+        <ModalOverlay onClick={() => setIsSearchModalOpen(false)}>
+          <ModalBox onClick={e => e.stopPropagation()}>
+            <ModalHeader>팀원 추가</ModalHeader>
+            <ModalSearchInput
+              placeholder="이름으로 검색..."
+              value={searchKeyword}
+              onChange={e => setSearchKeyword(e.target.value)}
+              autoFocus
+            />
+            <SearchResultList>
+              {isSearching && <EmptyResult>불러오는 중...</EmptyResult>}
+
+              {!isSearching && searchResults?.length === 0 && searchKeyword && (
+                <EmptyResult>검색 결과가 없습니다.</EmptyResult>
+              )}
+
+              {!isSearching &&
+                searchResults?.map(member => (
+                  <SearchResultItem key={member.userId} onClick={() => handleSelectMember(member)}>
+                    <ResultInfo>
+                      <ResultName>{member.name}</ResultName>
+                      <ResultDetail>
+                        {member.school} | {member.generationAndPosition}
+                      </ResultDetail>
+                    </ResultInfo>
+                    {/* AddText 컴포넌트는 사용되지 않으므로 제거 */}
+                  </SearchResultItem>
+                ))}
+            </SearchResultList>
+          </ModalBox>
+        </ModalOverlay>
+      )}
     </Container>
   );
 };
+
+export default ProjectGalleryEdit;
+
+/* ================= Styled Components ================= */
 
 const Container = styled.div`
   width: 1440px;
@@ -512,7 +674,7 @@ const ContentWrapper = styled.section`
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding-bottom: 100px; /* ⬅ 사진처럼 하단 여백 생김 */
+  padding-bottom: 100px;
   max-width: 100%;
   text-align: left;
   font-size: 36px;
@@ -679,13 +841,11 @@ const FieldLabel = styled.h3`
 
 const CharCount = styled.div`
   color: var(--grayscale-1000, #040405);
-
-  /* body/b4/b4 */
   font-family: Pretendard;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%; /* 25.6px */
+  line-height: 160%;
 `;
 
 const InputField = styled.input`
@@ -876,17 +1036,135 @@ const FieldMarkdown = styled.section`
   font-size: 20px;
   font-family: Pretendard;
   color: #040405;
-  margin-bottom: 100px;
+  margin-bottom: 10px;
 `;
 
-const QuillContainer = styled.div`
+const MarkdownContainer = styled.div`
   width: 1080px;
-  flex-shrink: 0;
+  border-radius: 8px;
+  background: #fff;
 
-  .ql-editor {
-    height: calc(400px - 48px) !important; /* 에디터 영역 정확히 352px */
-    overflow-y: auto;
+  .w-md-editor {
+    border-radius: 8px;
+    border: 1px solid var(--grayscale-400, #c3c6cb);
+    box-shadow: none;
+    background-color: #fff;
+  }
+
+  .w-md-editor-toolbar {
+    border-bottom: 1px solid #d0d7de;
+    background-color: #fff;
+    border-radius: 8px 8px 0 0;
+  }
+
+  .w-md-editor-text-pre {
+    font-family: 'Courier New', monospace;
+  }
+
+  .wmde-markdown {
+    font-family: 'Pretendard', sans-serif;
   }
 `;
 
-export default ProjectGalleryEdit;
+const LoadingText = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100vh;
+  font-size: 18px;
+  color: #666;
+`;
+
+/* ================= Modal Styles ================= */
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalBox = styled.div`
+  width: 500px;
+  height: 600px;
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+`;
+
+const ModalHeader = styled.h2`
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+`;
+
+const ModalSearchInput = styled.input`
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #c3c6cb;
+  font-size: 16px;
+  box-sizing: border-box;
+  outline: none;
+
+  &:focus {
+    border-color: #4285f4;
+  }
+`;
+
+const SearchResultList = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const SearchResultItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background-color: #f5f7fa;
+  }
+`;
+
+const ResultInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const ResultName = styled.span`
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+`;
+
+const ResultDetail = styled.span`
+  font-size: 14px;
+  color: #666;
+`;
+
+const EmptyResult = styled.div`
+  text-align: center;
+  color: #999;
+  margin-top: 20px;
+`;
