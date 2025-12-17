@@ -119,6 +119,14 @@ export const partEnumToUi = (part: string) => {
   }
 };
 
+export interface SearchedUser {
+  id: number;
+  name: string;
+  school: string;
+  generation: string;
+  part: string;
+};
+
 /* =========================================================
  * utils
  * ======================================================= */
@@ -228,3 +236,40 @@ export async function BanUser(userId: number, data: BanReason): Promise<void> {
 export async function UnbanUser(userId: number): Promise<void> {
   await api.post<void>(`/admin/approved/unban/${userId}`);
 }
+
+/* =========================================================
+ * API: Get Searched User
+ * ======================================================= */
+type FetchSearchedUserParams = {
+  schools?: string[];
+  generation?: string;
+};
+
+export const fetchSearchedUser = async ({
+  schools,
+  generation,
+}: FetchSearchedUserParams): Promise<SearchedUser[]> => {
+  const response = await api.get('/admin/users/search', {
+    params: {
+      schools,
+      generation,
+    },
+    paramsSerializer: {
+      serialize: params => {
+        const searchParams = new URLSearchParams();
+
+        params.schools?.forEach((school: string) =>
+          searchParams.append('schools', school)
+        );
+
+        if (params.generation) {
+          searchParams.append('generation', params.generation);
+        }
+
+        return searchParams.toString();
+      },
+    },
+  });
+
+  return response.data;
+};

@@ -10,7 +10,6 @@ import SelectBoxBasic from '../../../team-building/components/SelectBoxBasic';
 import { ArrowIcon, PageButton, PageInsertNum } from '../../styles/AdminIdeaProject';
 
 type SearchField = 'userName' | 'generation' | 'school' | 'part' | 'position';
-const SEARCH_FIELD_VALUES = ['name', 'generation', 'school', 'part', 'position'] as const;
 
 type Member = {
   id: number;
