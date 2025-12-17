@@ -224,6 +224,10 @@
   border-bottom: 1px solid #e0e4ea;
 }
 
+.accordionSection:last-child {
+  border-bottom: none;
+}
+
 .accordionHeader {
   display: flex;
   padding: 24px 8px;
@@ -536,6 +540,280 @@
 
 .saveButtonText {
   color: #f9f9fa;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+/* 주제 관리 스타일 */
+.topicListContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.topicItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+}
+
+.topicText {
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.topicDeleteButton {
+  display: flex;
+  width: 60px;
+  height: 40px;
+  padding: 8px 16px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #ea4335;
+  background: #fff;
+  cursor: pointer;
+}
+
+.topicDeleteButton:hover {
+  background: #fef2f1;
+}
+
+.topicDeleteButtonText {
+  color: #ea4335;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.addTopicButton {
+  display: flex;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #4285f4;
+  background: #fff;
+  cursor: pointer;
+}
+
+.addTopicButton:hover {
+  background: #e8f0fe;
+}
+
+.addTopicButtonText {
+  color: #4285f4;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+/* 팀 관리 스타일 */
+.teamManagementContainer {
+  display: flex;
+  width: 226px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 40px;
+}
+
+.teamSection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.teamSectionTitle {
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%;
+}
+
+.maxMembersRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.maxMembersInput {
+  display: flex;
+  width: 120px;
+  padding: 12px 16px;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #c3c6cb;
+  background: #fff;
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.maxMembersInput:focus {
+  outline: none;
+  border-color: #4285f4;
+}
+
+.maxMembersUnit {
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.partsCheckboxList {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.partCheckboxItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.partCheckbox {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  padding: 7.5px 6px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 3px;
+  background: #e0e2e5;
+}
+
+.partCheckbox:hover {
+  background: #c3c6cb;
+}
+
+.partCheckboxSelected {
+  background: #4285f4;
+}
+
+.partCheckboxSelected:hover {
+  background: #3367d6;
+}
+
+.partLabel {
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+/* 저장 완료 모달 */
+.saveModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.saveModalContainer {
+  display: flex;
+  width: 500px;
+  padding: 40px 20px 20px 20px;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 30px 0 rgba(0, 0, 0, 0.20);
+}
+
+.saveModalText {
+  color: #040405;
+  text-align: center;
+  font-family: Pretendard;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%;
+}
+
+.saveModalButton {
+  display: flex;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+  border-radius: 8px;
+  background: #4285f4;
+  border: none;
+  cursor: pointer;
+}
+
+.saveModalButton:hover {
+  background: #3367d6;
+}
+
+.saveModalButtonText {
+  color: #f9f9fa;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+.editButton {
+  display: flex;
+  width: 200px;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #4285f4;
+  background: #fff;
+  cursor: pointer;
+}
+
+.editButton:hover {
+  background: #e8f0fe;
+}
+
+.editButtonText {
+  color: #4285f4;
   font-family: Pretendard;
   font-size: 18px;
   font-style: normal;

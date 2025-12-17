@@ -1,0 +1,508 @@
+/* 참여자 관리 컨테이너 */
+.container {
+  display: flex;
+  width: 1100px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 40px;
+}
+
+/* 필터 영역 (기수 + 학교) */
+.filterRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+}
+
+/* 필터 그룹 (라벨 + 셀렉트박스) */
+.filterGroup {
+  display: flex;
+  width: 530px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.filterLabel {
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%;
+  align-self: stretch;
+}
+
+/* 셀렉트박스 */
+.selectBox {
+  position: relative;
+  display: flex;
+  padding: 4px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #c3c6cb;
+  background: #fff;
+  cursor: pointer;
+}
+
+.selectBox:hover {
+  border-color: #4285f4;
+}
+
+.selectHeader {
+  display: flex;
+  padding: 8px 12px;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+}
+
+.selectPlaceholder {
+  color: #979ca5;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.selectValue {
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.selectArrow {
+  transition: transform 0.2s ease;
+}
+
+.selectArrowOpen {
+  transform: rotate(180deg);
+}
+
+.selectDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #c3c6cb;
+  border-radius: 8px;
+  margin-top: 4px;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.selectOption {
+  padding: 12px 16px;
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 160%;
+  cursor: pointer;
+}
+
+.selectOption:hover {
+  background: #f5f7fa;
+}
+
+.selectOption:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.selectOption:last-child {
+  border-radius: 0 0 8px 8px;
+}
+
+/* 테이블 영역 */
+.tableRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  align-self: stretch;
+}
+
+.tableGroup {
+  display: flex;
+  width: 530px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+/* 테이블 제목 */
+.tableTitle {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.tableTitleText {
+  color: #040405;
+  text-align: center;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%;
+}
+
+.tableTitleCount {
+  color: #4285f4;
+  text-align: center;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+/* 테이블 */
+.table {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  border-radius: 0;
+  overflow: hidden;
+  border: none;
+}
+
+/* 테이블 헤더 - 왼쪽 (선택된 멤버) */
+.tableHeader {
+  display: flex;
+  height: 40px;
+  padding: 8px;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  background: #ededef;
+  border-radius: 0;
+}
+
+/* 테이블 헤더 - 오른쪽 (멤버 선택) */
+.tableHeaderRight {
+  display: flex;
+  height: 40px;
+  padding: 0 20px;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  background: #ededef;
+  border-radius: 0;
+}
+
+.headerText {
+  overflow: hidden;
+  color: #7e8590;
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+/* 셀 스타일 - 왼쪽 테이블 */
+.cellSchool {
+  display: flex;
+  width: 200px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.cellName {
+  display: flex;
+  width: 80px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.cellGeneration {
+  display: flex;
+  width: 80px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.cellPart {
+  display: flex;
+  width: 100px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+}
+
+/* 셀 스타일 - 오른쪽 테이블 */
+.cellNameRight {
+  display: flex;
+  width: 120px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.cellGenerationRight {
+  display: flex;
+  width: 120px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.cellPartRight {
+  display: flex;
+  width: 120px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.cellCheck {
+  display: flex;
+  width: 50px;
+  padding: 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+}
+
+/* 테이블 바디 */
+.tableBody {
+  display: flex;
+  flex-direction: column;
+}
+
+.tableBodyRow {
+  display: flex;
+  height: 64px;
+  padding: 8px;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  border-bottom: 1px solid #ededef;
+  cursor: pointer;
+}
+
+.tableBodyRow:hover {
+  background: #f5f7fa;
+}
+
+/* 오른쪽 테이블 바디 row - 바깥쪽 컨테이너 */
+.tableBodyRowRightOuter {
+  display: flex;
+  padding: 8px;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  border-bottom: 1px solid #e0e2e5;
+  cursor: pointer;
+}
+
+.tableBodyRowRightOuter:hover {
+  background: #f5f7fa;
+}
+
+/* 오른쪽 테이블 바디 row - 안쪽 컨테이너 */
+.tableBodyRowRightInner {
+  display: flex;
+  padding: 0 12px;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1 0 0;
+  border-radius: 4px;
+  min-height: 48px;
+}
+
+/* 선택된 상태 - 안쪽 컨테이너 */
+.tableBodyRowRightInnerSelected {
+  background: #d9e7fd;
+}
+
+.tableBodyRowEmpty {
+  display: flex;
+  height: 64px;
+  padding: 8px;
+  align-items: center;
+  align-self: stretch;
+  border-bottom: 1px solid #ededef;
+}
+
+.cellText {
+  overflow: hidden;
+  color: #040405;
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+/* 왼쪽 테이블 바디 셀 컨테이너 */
+.cellSchoolBody {
+  display: flex;
+  width: 200px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+}
+
+.cellNameBody {
+  display: flex;
+  width: 80px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+}
+
+.cellGenerationBody {
+  display: flex;
+  width: 80px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+}
+
+.cellPartBody {
+  display: flex;
+  width: 100px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 왼쪽 테이블 바디 텍스트 */
+.cellTextLeft {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  color: #040405;
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+/* 학교명 (max-width 적용) */
+.cellSchoolText {
+  display: -webkit-box;
+  max-width: 130px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  color: #040405;
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+/* 인원수 (회색) */
+.cellCountText {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  color: #979ca5;
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%;
+}
+
+/* 오른쪽 테이블 바디 셀 텍스트 */
+.cellTextRight {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  color: #040405;
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+/* 오른쪽 테이블 바디 셀 컨테이너 */
+.cellNameRightBody {
+  display: flex;
+  width: 120px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+}
+
+.cellGenerationRightBody {
+  display: flex;
+  width: 120px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+}
+
+.cellPartRightBody {
+  display: flex;
+  width: 120px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 체크박스 */
+.checkbox {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  padding: 7.5px 6px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 3px;
+  background: #e0e2e5;
+}
+
+.checkbox:hover {
+  background: #c3c6cb;
+}
+
+/* 선택된 체크박스 */
+.checkboxSelected {
+  background: #4285f4;
+}
+
+.checkboxSelected:hover {
+  background: #3367d6;
+}

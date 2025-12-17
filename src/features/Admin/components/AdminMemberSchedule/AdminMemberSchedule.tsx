@@ -2,12 +2,13 @@ import { useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
 
-import styles from '../../styles/AdminMemberSchedule.module.css';
+import styles from '../../styles/AdminProjectManage.module.css';
+import ScheduleRegisterModal from '../ScheduleRegisterModal/ScheduleRegisterModal';
 
 type ScheduleItem = {
   id: number;
   category: string;
-  status: '등록 전' | '진행 중' | '완료';
+  status: '등록 전' | '진행 전' | '진행 중' | '완료';
   period: string;
 };
 
@@ -23,15 +24,51 @@ const INITIAL_SCHEDULES: ScheduleItem[] = [
 
 const AdminProjectManagement: NextPage = () => {
   const [projectName] = useState('그로우톤');
-  const [schedules] = useState<ScheduleItem[]>(INITIAL_SCHEDULES);
+  const [schedules, setSchedules] = useState<ScheduleItem[]>(INITIAL_SCHEDULES);
 
   const [isScheduleOpen, setIsScheduleOpen] = useState(true);
   const [isTopicOpen, setIsTopicOpen] = useState(false);
   const [isParticipantOpen, setIsParticipantOpen] = useState(false);
   const [isTeamOpen, setIsTeamOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState<ScheduleItem | null>(null);
 
-  const handleRegister = (id: number) => {
-    console.log('Register schedule:', id);
+  // 등록하기/수정하기 버튼 클릭 → 모달 열기
+  const handleRegister = (schedule: ScheduleItem) => {
+    setSelectedSchedule(schedule);
+    setIsModalOpen(true);
+  };
+
+  // 모달 닫기 핸들러
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedSchedule(null);
+  };
+
+  // 모달 확인 → 일정 업데이트
+  const handleConfirm = (startDate: string, endDate?: string) => {
+    if (selectedSchedule) {
+      const periodText = endDate ? `${startDate} ~ ${endDate}` : startDate;
+      setSchedules(prev =>
+        prev.map(schedule =>
+          schedule.id === selectedSchedule.id
+            ? {
+                ...schedule,
+                status: '진행 전' as const,
+                period: periodText,
+              }
+            : schedule
+        )
+      );
+    }
+  };
+
+  // 카테고리에 따라 모달 타입 결정
+  const getModalType = (category: string): 'period' | 'single' => {
+    if (category.includes('결과 발표')) {
+      return 'single';
+    }
+    return 'period';
   };
 
   return (
@@ -140,10 +177,16 @@ const AdminProjectManagement: NextPage = () => {
                       <div className={styles.tableCellAction}>
                         <button
                           type="button"
-                          className={styles.registerButton}
-                          onClick={() => handleRegister(schedule.id)}
+                          className={schedule.period ? styles.editButton : styles.registerButton}
+                          onClick={() => handleRegister(schedule)}
                         >
-                          <span className={styles.registerButtonText}>등록하기</span>
+                          <span
+                            className={
+                              schedule.period ? styles.editButtonText : styles.registerButtonText
+                            }
+                          >
+                            {schedule.period ? '수정하기' : '등록하기'}
+                          </span>
                         </button>
                       </div>
                     </div>
@@ -164,7 +207,13 @@ const AdminProjectManagement: NextPage = () => {
               </div>
             </div>
 
-            {isTopicOpen && <div className={styles.accordionContent}>{/* 주제 관리 콘텐츠 */}</div>}
+            {isTopicOpen && (
+              <div className={styles.accordionContent}>
+                <button type="button" className={styles.addTopicButton}>
+                  <span className={styles.addTopicButtonText}>주제 추가</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* 참여자 관리 */}
@@ -210,6 +259,14 @@ const AdminProjectManagement: NextPage = () => {
           </button>
         </div>
       </main>
+
+      <ScheduleRegisterModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={selectedSchedule?.category || ''}
+        type={selectedSchedule ? getModalType(selectedSchedule.category) : 'period'}
+        onConfirm={handleConfirm}
+      />
     </div>
   );
 };
