@@ -1,6 +1,7 @@
-import { api } from './api';
-import type { AxiosRequestConfig } from 'axios';
 import { useMutation } from '@tanstack/react-query';
+import type { AxiosRequestConfig } from 'axios';
+
+import { api } from './api';
 
 // types/admin.ts
 export type AdminUserId = number;

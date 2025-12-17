@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { NextPage } from 'next';
-import styled from 'styled-components';
-
-import { api } from '../../../../lib/api';
-import { PageInsertNum } from '../../styles/AdminIdeaProject';
-import Toggle, { ScreeningTab } from './Toggle';
 import {
   useApproveUserSignup,
   useRejectUserSignup,
   useResetRejectedUserToWaiting,
 } from '@/lib/adminSubsScreening.api';
+import styled from 'styled-components';
+
+import { api } from '../../../../lib/api';
+import { PageInsertNum } from '../../styles/AdminIdeaProject';
+import Toggle, { ScreeningTab } from './Toggle';
 
 type TabKey = ScreeningTab;
 
@@ -541,27 +541,6 @@ const Container = styled.div`
   display: flex;
   line-height: normal;
   letter-spacing: normal;
-`;
-
-const MenuItem = styled.div`
-  align-self: stretch;
-  background-color: #454b54;
-  border-bottom: 1px solid #626873;
-  display: flex;
-  height: 50px;
-  align-items: center;
-  padding: 12px 28px;
-  line-height: 160%;
-  font-weight: 500;
-  cursor: pointer;
-
-  &:first-child {
-    border-top: 1px solid #626873;
-  }
-
-  &:hover {
-    background-color: #353a40;
-  }
 `;
 
 const MainContent = styled.main`
