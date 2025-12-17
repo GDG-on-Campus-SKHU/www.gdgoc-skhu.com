@@ -21,6 +21,7 @@ import SelectBoxBasic from '../SelectBoxBasic_Fix';
 import MemberSelectModal, { Member } from './MemberSelectModal';
 import ProjectDescriptionEditor from './ProjectDescriptionEditor';
 import ProjectMemberRow from './ProjectMemberRow';
+import { extractFirstImageUrl } from '../utils/extractFirstImageUrl';
 
 // 기수 / 파트 옵션
 const GENERATION_TABS: GenerationTab[] = ['25-26', '24-25', '이전 기수'];
@@ -161,6 +162,14 @@ export default function ProjectPostForm({
   const initKey = useMemo(() => getInitKey(initialValues), [initialValues]);
   const appliedInitKeyRef = useRef<string>('');
 
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(
+    initialValues?.thumbnailUrl ?? extractFirstImageUrl(initialValues?.description ?? '')
+  );
+
+  useEffect(() => {
+    setThumbnailUrl(extractFirstImageUrl(description));
+  }, [description]);
+
   useEffect(() => {
     if (!initialValues) return;
 
@@ -195,6 +204,9 @@ export default function ProjectPostForm({
     setServiceStatus(initialValues.serviceStatus ?? 'NOT_IN_SERVICE');
     setTeamMembers(initialValues.teamMembers ?? []);
     setDescription(initialValues.description ?? '');
+    setThumbnailUrl(
+      initialValues.thumbnailUrl ?? extractFirstImageUrl(initialValues.description ?? '')
+    );
 
     appliedInitKeyRef.current = initKey;
   }, [initKey, initialValues, defaultLeader]);
@@ -306,7 +318,7 @@ export default function ProjectPostForm({
         userId: m.userId,
         part: labelToPart(m.part?.[0] ?? ''),
       })),
-      thumbnailUrl: null,
+      thumbnailUrl: thumbnailUrl,
     };
   };
 
@@ -475,6 +487,7 @@ export default function ProjectPostForm({
         {/* 프로젝트 설명 */}
         <section css={fieldBlockCss}>
           <span css={labelCss}>프로젝트 설명</span>
+          <div css={noticeCss}>첫 번째 이미지가 갤러리 대표 이미지(썸네일)로 자동 등록됩니다.</div>
           <ProjectDescriptionEditor value={description} onChange={setDescription} />
         </section>
 
@@ -557,7 +570,7 @@ const labelRowCss = css`
 const labelCss = css`
   font-size: 20px;
   font-weight: 700;
-  line-height: 32px;
+  line-height: 17px;
 `;
 
 const counterCss = css`
@@ -629,4 +642,12 @@ const errorBoxCss = css`
   border-radius: 10px;
   background: ${colors.grayscale[100]};
   color: ${colors.point?.red ?? colors.grayscale[800]};
+`;
+
+const noticeCss = css`
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 25.6px;
+  word-wrap: break-word;
+  color: ${colors.grayscale[700]};
 `;
