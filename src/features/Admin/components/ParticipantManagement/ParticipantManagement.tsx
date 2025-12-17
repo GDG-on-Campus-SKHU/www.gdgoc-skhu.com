@@ -1,15 +1,9 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import {
-  addParticipant,
-  type ApprovedUser,
-  getApprovedUsers,
-  getModifiableProject,
-  type Participant,
-  removeParticipant,
-} from 'src/lib/adminProject.api';
+import { getModifiableProject, getSchools } from 'src/lib/adminProject.api';
 
 import styles from '../../styles/ParticipantManagement.module.css';
+import { fetchSearchedUser } from '@/lib/adminMember.api';
 
 type LocalMember = {
   id: number;
@@ -19,149 +13,244 @@ type LocalMember = {
   part: string;
 };
 
-// 더미 데이터 (API 실패 시 fallback)
-const DUMMY_MEMBERS: LocalMember[] = [
-  { id: 1, school: '성공회대학교', name: '강민정', generation: '25-26', part: 'Design' },
-  { id: 2, school: '성공회대학교', name: '강우혁', generation: '25-26', part: 'BE' },
-  { id: 3, school: '성공회대학교', name: '권지후', generation: '25-26', part: 'BE' },
-  { id: 4, school: '성공회대학교', name: '김규빈', generation: '25-26', part: 'Design' },
-  { id: 5, school: '성공회대학교', name: '김기웅', generation: '25-26', part: 'BE' },
-  { id: 6, school: '성공회대학교', name: '김보민', generation: '25-26', part: 'BE' },
-  { id: 7, school: '성공회대학교', name: '김석환', generation: '25-26', part: 'BE' },
-  { id: 8, school: '성공회대학교', name: '김선호', generation: '25-26', part: 'PM' },
-  { id: 9, school: '성공회대학교', name: '김태우', generation: '25-26', part: 'BE' },
-  { id: 10, school: '성공회대학교', name: '김다은', generation: '25-26', part: 'FE' },
-  { id: 11, school: '성신여자대학교', name: '주현지', generation: '25-26', part: 'Design' },
-  { id: 12, school: '성신여자대학교', name: '이서영', generation: '25-26', part: 'PM' },
-  { id: 13, school: '성신여자대학교', name: '이솔', generation: '25-26', part: 'PM' },
-  { id: 14, school: '서울과학기술대학교', name: '한시연', generation: '25-26', part: 'FE' },
-];
-
-const GENERATIONS = ['전체', '25-26', '24-25', '23-24'];
-const SCHOOLS = [
-  '전체',
-  '성공회대학교 외 4개',
-  '성공회대학교',
-  '성신여자대학교',
-  '서울과학기술대학교',
-  '한양대학교',
-  '서울대학교',
-];
+const GENERATIONS = ['25-26', '24-25', '23-24'];
 
 type ParticipantManagementProps = {
   projectId: number;
+  participantUserIds: number[];
+  onChangeParticipantUserIds: React.Dispatch<React.SetStateAction<number[]>>;
 };
 
-const ParticipantManagement = ({ projectId }: ParticipantManagementProps) => {
+const ParticipantManagement = ({
+  projectId,
+  participantUserIds,
+  onChangeParticipantUserIds,
+}: ParticipantManagementProps) => {
   // 로딩 상태
   const [isLoading, setIsLoading] = useState(true);
 
   // 필터 상태
-  const [selectedGeneration, setSelectedGeneration] = useState('25-26');
-  const [selectedSchool, setSelectedSchool] = useState('성공회대학교 외 4개');
+  const [schools, setSchools] = useState<string[]>([]);
+  const [selectedGeneration, setSelectedGeneration] = useState('');
+  const [selectedSchools, setSelectedSchools] = useState<string[]>([]);
   const [isGenerationOpen, setIsGenerationOpen] = useState(false);
   const [isSchoolOpen, setIsSchoolOpen] = useState(false);
 
   // 멤버 데이터
   const [allMembers, setAllMembers] = useState<LocalMember[]>([]);
+  const [memberMap, setMemberMap] = useState<Map<number, LocalMember>>(new Map());
   const [selectedMembers, setSelectedMembers] = useState<LocalMember[]>([]);
 
   // 데이터 로드
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-      try {
-        // 승인된 유저 목록 조회
-        try {
-          const usersData = await getApprovedUsers();
-          const mappedMembers: LocalMember[] = Array.isArray(usersData)
-            ? usersData.map((m: ApprovedUser) => ({
-                id: m.userId,
-                school: m.university,
-                name: m.name,
-                generation: m.generation,
-                part: m.part,
-              }))
-            : [];
-          setAllMembers(mappedMembers);
-        } catch (error) {
-          console.error('멤버 목록 조회 실패:', error);
-          setAllMembers(DUMMY_MEMBERS);
-        }
 
-        // 참여자 목록 조회 (getModifiableProject에서 participants 추출)
-        try {
-          const projectData = await getModifiableProject();
-          const mappedParticipants: LocalMember[] = projectData.participants.map(
-            (p: Participant) => ({
-              id: p.participantId,
-              school: p.school,
-              name: p.name,
-              generation: p.generation,
-              part: p.part,
-            })
-          );
-          setSelectedMembers(mappedParticipants);
-        } catch (error) {
-          console.error('참여자 목록 조회 실패:', error);
+      try {
+        // 1️⃣ 필터 조건이 있는 경우만 검색
+        if (selectedGeneration && selectedSchools.length > 0) {
+          const users = await fetchSearchedUser({
+            schools: selectedSchools,
+            generation: selectedGeneration,
+          });
+
+          const mappedMembers: LocalMember[] = users.map(u => ({
+            id: u.id,
+            school: u.school.trim(),
+            name: u.name.trim(),
+            generation: u.generation.trim(),
+            part: u.part.trim(),
+          }));
+
+          // 👉 멤버 선택 테이블용
+          setAllMembers(mappedMembers);
+
+          // 👉 선택된 멤버 보존용 캐시
+          setMemberMap(prev => {
+            const next = new Map(prev);
+            mappedMembers.forEach(m => {
+              if (!next.has(m.id)) {
+                next.set(m.id, m);
+              }
+            });
+            return next;
+          });
+        } else {
+          // 2️⃣ 필터 없으면 검색 결과만 비움 (선택된 멤버는 유지)
+          setAllMembers([]);
         }
+      } catch (error) {
+        console.error('검색 유저 조회 실패:', error);
+        setAllMembers([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
+  }, [projectId, selectedGeneration, selectedSchools]);
+
+  useEffect(() => {
+    const fetchInitialParticipants = async () => {
+      try {
+        const project = await getModifiableProject();
+
+        const mapped: LocalMember[] = project.participants.map(p => ({
+          id: p.userId, // 🔥 핵심
+          school: p.school,
+          name: p.name,
+          generation: p.generation,
+          part: p.part,
+        }));
+
+        setSelectedMembers(mapped);
+
+        // participantUserIds 동기화
+        onChangeParticipantUserIds(mapped.map(m => m.id));
+      } catch (e) {
+        console.error('참여자 조회 실패', e);
+      }
+    };
+
+    fetchInitialParticipants();
   }, [projectId]);
 
-  // 필터링된 멤버 목록
-  const filteredMembers = allMembers.filter(member => {
-    const matchGeneration =
-      !selectedGeneration ||
-      selectedGeneration === '전체' ||
-      member.generation === selectedGeneration;
-    // '성공회대학교 외 4개' 또는 '전체' 선택 시 모든 학교 멤버 표시
-    const matchSchool =
-      !selectedSchool ||
-      selectedSchool === '전체' ||
-      selectedSchool === '성공회대학교 외 4개' ||
-      member.school === selectedSchool;
-    return matchGeneration && matchSchool;
-  });
 
-  // 멤버 선택/해제 토글
-  const handleToggleMember = async (member: LocalMember) => {
-    const isSelected = selectedMembers.some(selected => selected.id === member.id);
+  useEffect(() => {
+    const fetchInitialSelectedMembers = async () => {
+      if (participantUserIds.length === 0) return;
 
-    try {
-      if (isSelected) {
-        // 참여자 제거 API 호출
-        await removeParticipant(projectId, member.id);
-        setSelectedMembers(prev => prev.filter(m => m.id !== member.id));
-      } else {
-        // 참여자 추가 API 호출
-        await addParticipant(projectId, member.id);
-        setSelectedMembers(prev => [...prev, member]);
+      try {
+        // 필터 없이 전체 조회 (가능하다는 전제)
+        const users = await fetchSearchedUser({ generation: undefined, schools: undefined });
+
+        setMemberMap(prev => {
+          const next = new Map(prev);
+          users.forEach(u => {
+            if (participantUserIds.includes(u.id)) {
+              next.set(u.id, {
+                id: u.id,
+                school: u.school.trim(),
+                name: u.name.trim(),
+                generation: u.generation?.trim(),
+                part: u.part.trim(),
+              });
+            }
+          });
+          return next;
+        });
+      } catch (e) {
+        console.error('초기 선택 멤버 조회 실패', e);
       }
-    } catch (error) {
-      console.error('참여자 업데이트 실패:', error);
-      alert('참여자 업데이트에 실패했습니다.');
-    }
+    };
+
+    fetchInitialSelectedMembers();
+    // ✅ participantUserIds가 처음 세팅될 때 한 번 채우고 싶으면 아래처럼 가드도 가능
+  }, [participantUserIds]);
+
+  // const selectedMembers = Array.from(memberMap.values()).filter(m =>
+  //   participantUserIds.includes(m.id)
+  // );
+
+  useEffect(() => {
+    const fetchSchools = async () => {
+      try {
+        const schoolData = await getSchools();
+        setSchools(schoolData.map(s => s.school));
+      } catch (e) {
+        console.error('학교 목록 조회 실패', e);
+      }
+    };
+
+    fetchSchools();
+  }, []);
+
+  const normalize = (v: string) => (v ?? '').trim();
+
+  const filterByCondition = (members: LocalMember[]) => {
+    // 🔥 기수 필수
+    if (!selectedGeneration || selectedGeneration === '전체') return [];
+
+    // 🔥 학교 최소 1개 필수
+    if (selectedSchools.length === 0) return [];
+
+    return members.filter(member => {
+      const gen = normalize(member.generation);
+      const sch = normalize(member.school);
+
+      const matchGeneration = gen === normalize(selectedGeneration);
+
+      const matchSchool = selectedSchools.some(selected => normalize(selected) === sch);
+
+      return matchGeneration && matchSchool;
+    });
   };
 
-  // 멤버가 선택되었는지 확인
+  const filteredAllMembers = filterByCondition(allMembers);
+
+  const allFilteredSelected =
+    filteredAllMembers.length > 0 &&
+    filteredAllMembers.every(m => participantUserIds.includes(m.id));
+
+  const handleToggleAllFilteredMembers = () => {
+    const filteredIds = filteredAllMembers.map(m => m.id);
+
+    onChangeParticipantUserIds(prev => {
+      const isAllSelected = filteredIds.every(id => prev.includes(id));
+
+      // 이미 전부 선택 → 전체 해제
+      if (isAllSelected) {
+        return prev.filter(id => !filteredIds.includes(id));
+      }
+
+      // 일부/전혀 선택 안 됨 → 전체 선택
+      return Array.from(new Set([...prev, ...filteredIds]));
+    });
+  };
+
+  const getSchoolDisplayLabel = () => {
+    if (selectedSchools.length === 0) {
+      return '학교 선택';
+    }
+
+    if (selectedSchools.length === 1) {
+      return selectedSchools[0];
+    }
+
+    return `${selectedSchools[0]} 외 ${selectedSchools.length - 1}개`;
+  };
+
+  const handleToggleSchool = (school: string) => {
+    if (school === '전체') {
+      setSelectedSchools([]);
+      return;
+    }
+
+    setSelectedSchools(prev =>
+      prev.includes(school) ? prev.filter(s => s !== school) : [...prev, school]
+    );
+  };
+
+  const handleToggleMember = (member: LocalMember) => {
+    onChangeParticipantUserIds(prev => {
+      const exists = prev.includes(member.id);
+
+      if (exists) {
+        setSelectedMembers(m => m.filter(x => x.id !== member.id));
+        return prev.filter(id => id !== member.id);
+      }
+
+      setSelectedMembers(m => [...m, member]);
+      return [...prev, member.id];
+    });
+  };
+
   const isMemberSelected = (memberId: number) => {
-    return selectedMembers.some(selected => selected.id === memberId);
+    return participantUserIds.includes(memberId);
   };
 
-  // 멤버 선택 해제
-  const handleDeselectMember = async (memberId: number) => {
-    try {
-      await removeParticipant(projectId, memberId);
-      setSelectedMembers(prev => prev.filter(m => m.id !== memberId));
-    } catch (error) {
-      console.error('참여자 제거 실패:', error);
-      alert('참여자 제거에 실패했습니다.');
-    }
+  const handleDeselectMember = (memberId: number) => {
+    onChangeParticipantUserIds(prev => prev.filter(id => id !== memberId));
   };
 
   if (isLoading) {
@@ -191,7 +280,7 @@ const ParticipantManagement = ({ projectId }: ParticipantManagementProps) => {
           <div className={styles.selectBox} onClick={() => setIsGenerationOpen(!isGenerationOpen)}>
             <div className={styles.selectHeader}>
               <span className={selectedGeneration ? styles.selectValue : styles.selectPlaceholder}>
-                {selectedGeneration || '선택'}
+                {selectedGeneration || '기수 선택'}
               </span>
               <Image
                 src="/dropdownarrow.svg"
@@ -226,8 +315,12 @@ const ParticipantManagement = ({ projectId }: ParticipantManagementProps) => {
           <span className={styles.filterLabel}>학교</span>
           <div className={styles.selectBox} onClick={() => setIsSchoolOpen(!isSchoolOpen)}>
             <div className={styles.selectHeader}>
-              <span className={selectedSchool ? styles.selectValue : styles.selectPlaceholder}>
-                {selectedSchool || '선택'}
+              <span
+                className={
+                  selectedSchools.length === 0 ? styles.selectPlaceholder : styles.selectValue
+                }
+              >
+                {getSchoolDisplayLabel()}
               </span>
               <Image
                 src="/dropdownarrow.svg"
@@ -239,14 +332,15 @@ const ParticipantManagement = ({ projectId }: ParticipantManagementProps) => {
             </div>
             {isSchoolOpen && (
               <div className={styles.selectDropdown}>
-                {SCHOOLS.map(school => (
+                {schools.map(school => (
                   <div
                     key={school}
-                    className={styles.selectOption}
+                    className={`${styles.selectOption} ${
+                      selectedSchools.includes(school) ? styles.optionSelected : ''
+                    }`}
                     onClick={e => {
                       e.stopPropagation();
-                      setSelectedSchool(school === '전체' ? '' : school);
-                      setIsSchoolOpen(false);
+                      handleToggleSchool(school);
                     }}
                   >
                     {school}
@@ -264,8 +358,9 @@ const ParticipantManagement = ({ projectId }: ParticipantManagementProps) => {
         <div className={styles.tableGroup}>
           <div className={styles.tableTitle}>
             <span className={styles.tableTitleText}>선택된 멤버</span>
-            <span className={styles.tableTitleCount}>{selectedMembers.length}명</span>
+            <span className={styles.tableTitleCount}>{participantUserIds.length}명</span>
           </div>
+
           <div className={styles.table}>
             <div className={styles.tableHeader}>
               <div className={styles.cellSchool}>
@@ -281,18 +376,20 @@ const ParticipantManagement = ({ projectId }: ParticipantManagementProps) => {
                 <span className={styles.headerText}>파트</span>
               </div>
             </div>
+
             <div className={styles.tableBody}>
               {(() => {
-                // 학교별로 정렬
                 const sortedMembers = [...selectedMembers].sort((a, b) =>
                   a.school.localeCompare(b.school)
                 );
+
                 let lastSchool = '';
 
                 return sortedMembers.map(member => {
                   const schoolCount = selectedMembers.filter(
                     m => m.school === member.school
                   ).length;
+
                   const isFirstOfSchool = member.school !== lastSchool;
                   lastSchool = member.school;
 
@@ -303,13 +400,14 @@ const ParticipantManagement = ({ projectId }: ParticipantManagementProps) => {
                       onClick={() => handleDeselectMember(member.id)}
                     >
                       <div className={styles.cellSchoolBody}>
-                        {isFirstOfSchool ? (
+                        {isFirstOfSchool && (
                           <>
                             <span className={styles.cellSchoolText}>{member.school}</span>
                             <span className={styles.cellCountText}>({schoolCount}명)</span>
                           </>
-                        ) : null}
+                        )}
                       </div>
+
                       <div className={styles.cellNameBody}>
                         <span className={styles.cellTextLeft}>{member.name}</span>
                       </div>
@@ -323,9 +421,12 @@ const ParticipantManagement = ({ projectId }: ParticipantManagementProps) => {
                   );
                 });
               })()}
-              {/* 빈 행 채우기 */}
-              {Array.from({ length: Math.max(0, 10 - selectedMembers.length) }).map((_, i) => (
-                <div key={`empty-selected-${i}`} className={styles.tableBodyRowEmpty} />
+
+              {/* 빈 행 */}
+              {Array.from({
+                length: Math.max(0, 10 - selectedMembers.length),
+              }).map((_, i) => (
+                <div key={i} className={styles.tableBodyRowEmpty} />
               ))}
             </div>
           </div>
@@ -336,6 +437,7 @@ const ParticipantManagement = ({ projectId }: ParticipantManagementProps) => {
           <div className={styles.tableTitle}>
             <span className={styles.tableTitleText}>멤버 선택</span>
           </div>
+
           <div className={styles.table}>
             <div className={styles.tableHeaderRight}>
               <div className={styles.cellNameRight}>
@@ -347,15 +449,27 @@ const ParticipantManagement = ({ projectId }: ParticipantManagementProps) => {
               <div className={styles.cellPartRight}>
                 <span className={styles.headerText}>파트</span>
               </div>
-              <div className={styles.cellCheck}>
-                <div className={styles.checkbox}>
+              <div
+                className={styles.cellCheck}
+                onClick={e => {
+                  e.stopPropagation();
+                  handleToggleAllFilteredMembers();
+                }}
+              >
+                <div
+                  className={`${styles.checkbox} ${
+                    allFilteredSelected ? styles.checkboxSelected : ''
+                  }`}
+                >
                   <Image src="/check_white.svg" alt="" width={12} height={9} />
                 </div>
               </div>
             </div>
+
             <div className={styles.tableBody}>
-              {filteredMembers.map(member => {
+              {filteredAllMembers.map(member => {
                 const isSelected = isMemberSelected(member.id);
+
                 return (
                   <div
                     key={member.id}
@@ -363,7 +477,9 @@ const ParticipantManagement = ({ projectId }: ParticipantManagementProps) => {
                     onClick={() => handleToggleMember(member)}
                   >
                     <div
-                      className={`${styles.tableBodyRowRightInner} ${isSelected ? styles.tableBodyRowRightInnerSelected : ''}`}
+                      className={`${styles.tableBodyRowRightInner} ${
+                        isSelected ? styles.tableBodyRowRightInnerSelected : ''
+                      }`}
                     >
                       <div className={styles.cellNameRightBody}>
                         <span className={styles.cellTextRight}>{member.name}</span>
@@ -376,7 +492,9 @@ const ParticipantManagement = ({ projectId }: ParticipantManagementProps) => {
                       </div>
                       <div className={styles.cellCheck}>
                         <div
-                          className={`${styles.checkbox} ${isSelected ? styles.checkboxSelected : ''}`}
+                          className={`${styles.checkbox} ${
+                            isSelected ? styles.checkboxSelected : ''
+                          }`}
                         >
                           <Image src="/check_white.svg" alt="" width={12} height={9} />
                         </div>
@@ -385,9 +503,12 @@ const ParticipantManagement = ({ projectId }: ParticipantManagementProps) => {
                   </div>
                 );
               })}
-              {/* 빈 행 채우기 */}
-              {Array.from({ length: Math.max(0, 10 - filteredMembers.length) }).map((_, i) => (
-                <div key={`empty-available-${i}`} className={styles.tableBodyRowRightOuter}>
+
+              {/* 빈 행 */}
+              {Array.from({
+                length: Math.max(0, 10 - filteredAllMembers.length),
+              }).map((_, i) => (
+                <div key={i} className={styles.tableBodyRowRightOuter}>
                   <div className={styles.tableBodyRowRightInner} />
                 </div>
               ))}

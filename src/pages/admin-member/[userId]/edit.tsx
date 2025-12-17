@@ -1,3 +1,4 @@
+import AdminLayout from '@/features/Admin/layout/AdminLayout';
 import dynamic from 'next/dynamic';
 
 const AdminMemberProfileEdit = dynamic(
@@ -5,4 +6,10 @@ const AdminMemberProfileEdit = dynamic(
   { ssr: false }
 );
 
-export default AdminMemberProfileEdit;
+export default function AdminMemberProfileEditPage() {
+  return (
+    <AdminLayout>
+      <AdminMemberProfileEdit/>
+    </AdminLayout>
+  )
+}
