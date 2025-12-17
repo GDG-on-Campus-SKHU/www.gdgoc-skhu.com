@@ -1,884 +1,416 @@
 import { useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
-import styled from 'styled-components';
 
-import downArrow from '../../../../../public/dropdownarrow.svg';
-import editIcon from '../../../../../public/edit.svg';
-import rightArrow from '../../../../../public/rightarrow_admin.svg';
-import closeButton from '../../../../../public/X.svg';
+import styles from '../../styles/AdminProjectManage.module.css';
+import ParticipantManagement from '../ParticipantManagement/ParticipantManagement';
+import ScheduleRegisterModal from '../ScheduleRegisterModal/ScheduleRegisterModal';
+import TopicRegisterModal from '../TopicRegisterModal/TopicRegisterModal';
 
-interface Project {
+type ScheduleItem = {
   id: number;
-  name: string;
-}
-type ProjectModalMode = 'create' | 'edit' | 'editSuccess' | 'deleteConfirm' | null;
+  category: string;
+  status: '등록 전' | '진행 전' | '진행 중' | '완료';
+  period: string;
+};
 
-const AdminProjectManage: NextPage = () => {
-  const [project, setProject] = useState<Project | null>(null);
-  const [projectName, setProjectName] = useState('');
-  const [modalMode, setModalMode] = useState<ProjectModalMode>(null);
+const INITIAL_SCHEDULES: ScheduleItem[] = [
+  { id: 1, category: '아이디어 등록', status: '등록 전', period: '' },
+  { id: 2, category: '1차 팀빌딩', status: '등록 전', period: '' },
+  { id: 3, category: '1차 팀빌딩 결과 발표', status: '등록 전', period: '' },
+  { id: 4, category: '2차 팀빌딩', status: '등록 전', period: '' },
+  { id: 5, category: '2차 팀빌딩 결과 발표', status: '등록 전', period: '' },
+  { id: 6, category: '3차 팀빌딩', status: '등록 전', period: '' },
+  { id: 7, category: '최종 결과 발표', status: '등록 전', period: '' },
+];
+
+const AdminProjectManagement: NextPage = () => {
+  const [projectName] = useState('그로우톤');
+  const [schedules, setSchedules] = useState<ScheduleItem[]>(INITIAL_SCHEDULES);
+
+  const [isScheduleOpen, setIsScheduleOpen] = useState(true);
+  const [isTopicOpen, setIsTopicOpen] = useState(false);
+  const [isParticipantOpen, setIsParticipantOpen] = useState(false);
+  const [isTeamOpen, setIsTeamOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState<ScheduleItem | null>(null);
+
+  // 주제 관련 state
+  const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
+  const [topics, setTopics] = useState<string[]>([]);
+
+  // 팀 관리 관련 state
+  const [maxMembers, setMaxMembers] = useState(7);
+  const [selectedParts, setSelectedParts] = useState<string[]>([]);
+
+  // 저장 완료 모달 state
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+
+  const PARTS = ['기획', '디자인', '프론트엔드 (웹)', '프론트엔드 (모바일)', '백엔드', 'AI/ML'];
+
+  // 파트 체크박스 토글
+  const handlePartToggle = (part: string) => {
+    setSelectedParts(prev =>
+      prev.includes(part) ? prev.filter(p => p !== part) : [...prev, part]
+    );
+  };
+
+  // 등록하기/수정하기 버튼 클릭 → 모달 열기
+  const handleRegister = (schedule: ScheduleItem) => {
+    setSelectedSchedule(schedule);
+    setIsModalOpen(true);
+  };
+
+  // 모달 닫기 핸들러
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedSchedule(null);
+  };
+
+  // 모달 확인 → 일정 업데이트
+  const handleConfirm = (startDate: string, endDate?: string) => {
+    if (selectedSchedule) {
+      const periodText = endDate ? `${startDate} ~ ${endDate}` : startDate;
+      setSchedules(prev =>
+        prev.map(schedule =>
+          schedule.id === selectedSchedule.id
+            ? {
+                ...schedule,
+                status: '진행 전' as const,
+                period: periodText,
+              }
+            : schedule
+        )
+      );
+    }
+  };
+
+  // 카테고리에 따라 모달 타입 결정
+  const getModalType = (category: string): 'period' | 'single' => {
+    if (category.includes('결과 발표')) {
+      return 'single';
+    }
+    return 'period';
+  };
+
+  // 주제 추가 버튼 클릭 → 주제 모달 열기
+  const handleAddTopicClick = () => {
+    setIsTopicModalOpen(true);
+  };
+
+  // 주제 모달 닫기
+  const handleCloseTopicModal = () => {
+    setIsTopicModalOpen(false);
+  };
+
+  // 주제 등록 확인
+  const handleTopicConfirm = (topic: string) => {
+    setTopics(prev => [...prev, topic]);
+  };
+
+  // 주제 삭제
+  const handleDeleteTopic = (index: number) => {
+    setTopics(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // 저장하기 버튼 클릭
+  const handleSave = () => {
+    // 실제 저장 로직 추가 가능
+    setIsSaveModalOpen(true);
+  };
+
+  // 저장 완료 모달 닫기
+  const handleCloseSaveModal = () => {
+    setIsSaveModalOpen(false);
+  };
 
   return (
-    <>
-      <Container>
-        <Sidebar>
-          <Logo>
-            <GdgocSkhuImage src="gdgoc_logo.svg" alt="" width={60} height={38} />
-            <LogoText>GDGoC SKHU</LogoText>
-          </Logo>
+    <div className={styles.container}>
+      <div className={styles.sidebar}>
+        <div className={styles.logo}>
+          <Image
+            className={styles.gdgocSkhuImage}
+            src="/gdgoc_skhu_admin.svg"
+            alt="GDGoC SKHU"
+            width={40}
+            height={26}
+          />
+          <h3 className={styles.logoText}>GDGoC SKHU</h3>
+        </div>
 
-          <LoginInfo>
-            <UserName>윤준석</UserName>
-            <Divider>님</Divider>
-          </LoginInfo>
+        <div className={styles.loginInfo}>
+          <h3 className={styles.userName}>윤준석</h3>
+          <div className={styles.divider}>님</div>
+        </div>
 
-          <MenuList>
-            <MenuItem>대시보드</MenuItem>
-            <MenuItem>가입 심사</MenuItem>
-            <MenuItem>멤버 관리</MenuItem>
-            <MenuItemActive>
-              <span>프로젝트 관리</span>
-              <ArrowIcon src={rightArrow.src} width={16} height={16} alt="" />
-            </MenuItemActive>
-            <MenuItem>아이디어 관리</MenuItem>
-            <MenuItem>프로젝트 갤러리 관리</MenuItem>
-            <MenuItem>액티비티 관리</MenuItem>
-            <MenuItem>홈 화면으로 나가기</MenuItem>
-          </MenuList>
-        </Sidebar>
+        <section className={styles.menuList}>
+          <div className={styles.menuItem}>대시보드</div>
+          <div className={styles.menuItem}>가입 심사</div>
+          <div className={styles.menuItem}>멤버 관리</div>
+          <div className={`${styles.menuItem} ${styles.menuItemActive}`}>
+            <span>프로젝트 관리</span>
+            <Image
+              className={styles.menuArrowIcon}
+              src="/rightarrow_admin.svg"
+              width={14}
+              height={14}
+              alt=""
+            />
+          </div>
+          <div className={styles.menuItem}>아이디어 관리</div>
+          <div className={styles.menuItem}>프로젝트 갤러리 관리</div>
+          <div className={styles.menuItem}>액티비티 관리</div>
+          <div className={styles.menuItem}>홈 화면으로 나가기</div>
+        </section>
+      </div>
 
-        <MainContent>
-          <ContentWrapper>
-            <HeaderBlock>
-              <HeaderRow>
-                <Header>
-                  <Title>프로젝트 관리</Title>
-                  <Subtitle>역대 프로젝트의 일정, 참여자, 팀 조정을 관리할 수 있습니다.</Subtitle>
-                </Header>
+      <main className={styles.mainContent}>
+        <div className={styles.headerSection}>
+          <div className={styles.headerLeft}>
+            <h1 className={styles.title}>프로젝트 관리</h1>
+            <h3 className={styles.headerSubtitle}>
+              역대 프로젝트의 일정, 참여자, 팀 조건을 관리할 수 있습니다.
+            </h3>
+          </div>
+          <button type="button" className={styles.endedProjectButton}>
+            <span className={styles.endedProjectButtonText}>종료 프로젝트 보기</span>
+          </button>
+        </div>
 
-                <SecondaryButton>종료 프로젝트 보기</SecondaryButton>
-              </HeaderRow>
-            </HeaderBlock>
+        <div className={styles.contentWrapper}>
+          <div className={styles.projectNameContainer}>
+            <h2 className={styles.projectName}>{projectName}</h2>
+            <Image className={styles.editIcon} src="/edit.svg" alt="편집" width={24} height={24} />
+          </div>
 
-            {!project ? (
-              <EmptyState>
-                <EmptyCard>
-                  <EmptyIntro>프로젝트를 생성하고 일정과 팀빌딩을 관리할 수 있습니다.</EmptyIntro>
+          {/* 프로젝트 일정 관리 */}
+          <div
+            className={`${styles.accordionSection} ${isScheduleOpen ? styles.accordionSectionOpen : ''}`}
+          >
+            <div
+              className={styles.accordionHeader}
+              onClick={() => setIsScheduleOpen(!isScheduleOpen)}
+            >
+              <span className={styles.accordionTitle}>프로젝트 일정 관리</span>
+              <div
+                className={`${styles.accordionArrow} ${isScheduleOpen ? styles.accordionArrowOpen : ''}`}
+              >
+                <Image src="/dropdownarrow.svg" alt="" width={24} height={24} />
+              </div>
+            </div>
 
-                  <ButtonDefault
-                    onClick={() => {
-                      setProjectName('');
-                      setModalMode('create');
-                    }}
-                  >
-                    프로젝트 생성
-                  </ButtonDefault>
-                </EmptyCard>
-              </EmptyState>
-            ) : (
-              <>
-                <ProjectContent>
-                  <ProjectHeader>
-                    <ProjectName>{project.name}</ProjectName>
-                    <IconWrapper
-                      onClick={() => {
-                        if (!project) return;
-                        setProjectName(project.name);
-                        setModalMode('edit');
-                      }}
-                    >
-                      <EditIcon src={editIcon.src} alt="수정 아이콘" />
-                    </IconWrapper>
-                  </ProjectHeader>
-                  <ProjectBody>
-                    <SectionRow>
-                      <SectionTitle>프로젝트 일정 관리</SectionTitle>
-                      <IconWrapper>
-                        <ArrowIcon src={downArrow.src} />
-                      </IconWrapper>
-                    </SectionRow>
-
-                    <SectionRow>
-                      <SectionTitle>주제 관리</SectionTitle>
-                      <IconWrapper>
-                        <ArrowIcon src={downArrow.src} />
-                      </IconWrapper>
-                    </SectionRow>
-
-                    <SectionRow>
-                      <SectionTitle>참여자 관리</SectionTitle>
-                      <IconWrapper>
-                        <ArrowIcon src={downArrow.src} />
-                      </IconWrapper>
-                    </SectionRow>
-
-                    <SectionRow>
-                      <SectionTitle>팀 관리</SectionTitle>
-                      <IconWrapper>
-                        <ArrowIcon src={downArrow.src} />
-                      </IconWrapper>
-                    </SectionRow>
-                  </ProjectBody>
-                </ProjectContent>
-
-                <BottomActions>
-                  <DeleteButton
-                    onClick={() => {
-                      setModalMode('deleteConfirm');
-                    }}
-                  >
-                    프로젝트 삭제하기
-                  </DeleteButton>
-
-                  <SaveButton
-                    disabled={false}
-                    onClick={() => {
-                      // TODO: 프로젝트 저장 API
-                    }}
-                  >
-                    저장하기
-                  </SaveButton>
-                </BottomActions>
-              </>
+            {isScheduleOpen && (
+              <div className={styles.scheduleTable}>
+                <div className={styles.tableHeader}>
+                  <div className={styles.tableHeaderCategoryCell}>
+                    <span className={styles.tableHeaderCategoryText}>구분</span>
+                  </div>
+                  <div className={styles.tableHeaderStatusCell}>
+                    <span className={styles.tableHeaderStatusText}>상태</span>
+                  </div>
+                  <div className={styles.tableHeaderPeriodCell}>
+                    <span className={styles.tableHeaderPeriodText}>기간</span>
+                  </div>
+                  <div className={styles.tableHeaderActionCell}>
+                    <span className={styles.tableHeaderActionText}>등록/수정</span>
+                  </div>
+                </div>
+                <div className={styles.tableBody}>
+                  {schedules.map(schedule => (
+                    <div key={schedule.id} className={styles.tableRow}>
+                      <div className={styles.tableCellCategory}>
+                        <span className={styles.tableCellCategoryText}>{schedule.category}</span>
+                      </div>
+                      <div className={styles.tableCellStatus}>
+                        <span className={styles.tableCellStatusText}>{schedule.status}</span>
+                      </div>
+                      <div className={styles.tableCellPeriod}>
+                        <span className={styles.tableCellPeriodText}>
+                          {schedule.period || '기간을 등록해주세요.'}
+                        </span>
+                      </div>
+                      <div className={styles.tableCellAction}>
+                        <button
+                          type="button"
+                          className={schedule.period ? styles.editButton : styles.registerButton}
+                          onClick={() => handleRegister(schedule)}
+                        >
+                          <span
+                            className={
+                              schedule.period ? styles.editButtonText : styles.registerButtonText
+                            }
+                          >
+                            {schedule.period ? '수정하기' : '등록하기'}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
-          </ContentWrapper>
-        </MainContent>
-      </Container>
+          </div>
 
-      {modalMode && (
-        <Dimmed onClick={() => setModalMode(null)}>
-          <Modal $mode={modalMode} onClick={e => e.stopPropagation()}>
-            {modalMode === 'deleteConfirm' ? (
-              <>
-                <DeleteModalContent>
-                  <DeleteModalTitle>프로젝트를 삭제하시겠습니까?</DeleteModalTitle>
-                  <DeleteDescription>삭제된 데이터는 복구할 수 없습니다.</DeleteDescription>
-                </DeleteModalContent>
+          {/* 주제 관리 */}
+          <div
+            className={`${styles.accordionSection} ${isTopicOpen ? styles.accordionSectionOpen : ''}`}
+          >
+            <div className={styles.accordionHeader} onClick={() => setIsTopicOpen(!isTopicOpen)}>
+              <span className={styles.accordionTitle}>주제 관리</span>
+              <div
+                className={`${styles.accordionArrow} ${isTopicOpen ? styles.accordionArrowOpen : ''}`}
+              >
+                <Image src="/dropdownarrow.svg" alt="" width={24} height={24} />
+              </div>
+            </div>
 
-                <DeleteActions>
-                  <DeleteConfirmButton
-                    onClick={() => {
-                      setProject(null);
-                      setModalMode(null);
-                    }}
-                  >
-                    예
-                  </DeleteConfirmButton>
-
-                  <DeleteCancelButton onClick={() => setModalMode(null)}>아니오</DeleteCancelButton>
-                </DeleteActions>
-              </>
-            ) : modalMode === 'editSuccess' ? (
-              <>
-                <SuccessModalTitle>수정이 완료되었습니다.</SuccessModalTitle>
-                <SuccessConfirmButton onClick={() => setModalMode(null)}>확인</SuccessConfirmButton>
-              </>
-            ) : (
-              <>
-                <ModalHeader $mode={modalMode}>
-                  <ModalTitle $mode={modalMode}>
-                    {
-                      {
-                        create: '프로젝트 등록',
-                        edit: '프로젝트 수정',
-                      }[modalMode as 'create' | 'edit']
-                    }
-                  </ModalTitle>
-
-                  {(modalMode === 'create' || modalMode === 'edit') && (
-                    <CloseButton
-                      src={closeButton.src}
-                      alt="닫기"
-                      onClick={() => setModalMode(null)}
-                    />
-                  )}
-                </ModalHeader>
-
-                {(modalMode === 'create' || modalMode === 'edit') && (
-                  <FormSection>
-                    <Field>
-                      <Input
-                        value={projectName}
-                        maxLength={30}
-                        placeholder="프로젝트명을 입력해주세요."
-                        onChange={e => setProjectName(e.target.value)}
-                      />
-                    </Field>
-
-                    <Actions>
-                      <PrimaryButton
-                        disabled={projectName.trim().length === 0}
-                        onClick={() => {
-                          if (modalMode === 'create') {
-                            setProject({
-                              id: Date.now(),
-                              name: projectName.trim(),
-                            });
-                            setModalMode(null);
-                            return;
-                          }
-
-                          if (modalMode === 'edit' && project) {
-                            setProject({
-                              ...project,
-                              name: projectName.trim(),
-                            });
-                            setModalMode('editSuccess');
-                          }
-                        }}
+            {isTopicOpen && (
+              <div className={styles.accordionContent}>
+                <div className={styles.topicListContainer}>
+                  {/* 등록된 주제 목록 */}
+                  {topics.map((topic, index) => (
+                    <div key={index} className={styles.topicItem}>
+                      <span className={styles.topicText}>{topic}</span>
+                      <button
+                        type="button"
+                        className={styles.topicDeleteButton}
+                        onClick={() => handleDeleteTopic(index)}
                       >
-                        확인
-                      </PrimaryButton>
-                    </Actions>
-                  </FormSection>
-                )}
-              </>
+                        <span className={styles.topicDeleteButtonText}>삭제</span>
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* 주제 추가 버튼 */}
+                  <button
+                    type="button"
+                    className={styles.addTopicButton}
+                    onClick={handleAddTopicClick}
+                  >
+                    <span className={styles.addTopicButtonText}>주제 추가</span>
+                  </button>
+                </div>
+              </div>
             )}
-          </Modal>
-        </Dimmed>
+          </div>
+
+          {/* 참여자 관리 */}
+          <div
+            className={`${styles.accordionSection} ${isParticipantOpen ? styles.accordionSectionOpen : ''}`}
+          >
+            <div
+              className={styles.accordionHeader}
+              onClick={() => setIsParticipantOpen(!isParticipantOpen)}
+            >
+              <span className={styles.accordionTitle}>참여자 관리</span>
+              <div
+                className={`${styles.accordionArrow} ${isParticipantOpen ? styles.accordionArrowOpen : ''}`}
+              >
+                <Image src="/dropdownarrow.svg" alt="" width={24} height={24} />
+              </div>
+            </div>
+
+            {isParticipantOpen && (
+              <div className={styles.accordionContent}>
+                <ParticipantManagement projectId={1} />
+              </div>
+            )}
+          </div>
+
+          {/* 팀 관리 */}
+          <div
+            className={`${styles.accordionSection} ${isTeamOpen ? styles.accordionSectionOpen : ''}`}
+          >
+            <div className={styles.accordionHeader} onClick={() => setIsTeamOpen(!isTeamOpen)}>
+              <span className={styles.accordionTitle}>팀 관리</span>
+              <div
+                className={`${styles.accordionArrow} ${isTeamOpen ? styles.accordionArrowOpen : ''}`}
+              >
+                <Image src="/dropdownarrow.svg" alt="" width={24} height={24} />
+              </div>
+            </div>
+
+            {isTeamOpen && (
+              <div className={styles.accordionContent}>
+                <div className={styles.teamManagementContainer}>
+                  {/* 최대 인원 */}
+                  <div className={styles.teamSection}>
+                    <span className={styles.teamSectionTitle}>최대 인원</span>
+                    <div className={styles.maxMembersRow}>
+                      <input
+                        type="number"
+                        min="1"
+                        value={maxMembers}
+                        onChange={e => setMaxMembers(Number(e.target.value))}
+                        className={styles.maxMembersInput}
+                      />
+                      <span className={styles.maxMembersUnit}>명</span>
+                    </div>
+                  </div>
+
+                  {/* 모집 파트 */}
+                  <div className={styles.teamSection}>
+                    <span className={styles.teamSectionTitle}>모집 파트</span>
+                    <div className={styles.partsCheckboxList}>
+                      {PARTS.map(part => (
+                        <div
+                          key={part}
+                          className={styles.partCheckboxItem}
+                          onClick={() => handlePartToggle(part)}
+                        >
+                          <div
+                            className={`${styles.partCheckbox} ${selectedParts.includes(part) ? styles.partCheckboxSelected : ''}`}
+                          >
+                            <Image src="/check_white.svg" alt="" width={12} height={9} />
+                          </div>
+                          <span className={styles.partLabel}>{part}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className={styles.actionRow}>
+          <button type="button" className={styles.deleteButton}>
+            <span className={styles.deleteButtonText}>프로젝트 삭제하기</span>
+          </button>
+          <button type="button" className={styles.saveButton} onClick={handleSave}>
+            <span className={styles.saveButtonText}>저장하기</span>
+          </button>
+        </div>
+      </main>
+
+      <ScheduleRegisterModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={selectedSchedule?.category || ''}
+        type={selectedSchedule ? getModalType(selectedSchedule.category) : 'period'}
+        onConfirm={handleConfirm}
+      />
+
+      <TopicRegisterModal
+        isOpen={isTopicModalOpen}
+        onClose={handleCloseTopicModal}
+        onConfirm={handleTopicConfirm}
+      />
+
+      {/* 저장 완료 모달 */}
+      {isSaveModalOpen && (
+        <div className={styles.saveModalOverlay} onClick={handleCloseSaveModal}>
+          <div className={styles.saveModalContainer} onClick={e => e.stopPropagation()}>
+            <span className={styles.saveModalText}>저장이 완료되었습니다.</span>
+            <button type="button" className={styles.saveModalButton} onClick={handleCloseSaveModal}>
+              <span className={styles.saveModalButtonText}>확인</span>
+            </button>
+          </div>
+        </div>
       )}
-    </>
+    </div>
   );
 };
 
-export default AdminProjectManage;
-
-const Container = styled.div`
-  width: 100%;
-  min-height: 100vh;
-  background-color: #fff;
-  display: flex;
-  line-height: normal;
-  letter-spacing: normal;
-`;
-
-const Sidebar = styled.div`
-  width: 255px;
-  min-height: 100vh;
-  background-color: #454b54;
-  overflow: hidden;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-`;
-
-const Logo = styled.div`
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 40px 28px 20px;
-  gap: 12px;
-  text-align: center;
-  color: #fff;
-  font-family: Pretendard;
-`;
-
-const GdgocSkhuImage = styled(Image)`
-  width: 60px;
-  max-height: 100%;
-  object-fit: cover;
-`;
-
-const LogoText = styled.h3`
-  margin: 0;
-  font-size: 20px;
-  line-height: 160%;
-  font-weight: 400;
-
-  @media screen and (max-width: 450px) {
-    font-size: 16px;
-    line-height: 26px;
-  }
-`;
-
-const LoginInfo = styled.div`
-  align-self: stretch;
-  border-top: 1px solid #626873;
-  display: flex;
-  align-items: center;
-  padding: 18px 28px 20px;
-  gap: 8px;
-  color: #fff;
-  font-family: Pretendard;
-`;
-
-const UserName = styled.h3`
-  margin: 0;
-  font-size: 20px;
-  line-height: 160%;
-  font-weight: 700;
-
-  @media screen and (max-width: 450px) {
-    font-size: 16px;
-    line-height: 26px;
-  }
-`;
-
-const Divider = styled.div`
-  font-size: 16px;
-  line-height: 160%;
-  font-weight: 500;
-`;
-
-const MenuList = styled.section`
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: center;
-  font-size: 16px;
-  color: #fff;
-  font-family: Pretendard;
-`;
-
-const MenuItem = styled.div`
-  align-self: stretch;
-  background-color: #454b54;
-  border-bottom: 1px solid #626873;
-  display: flex;
-  align-items: center;
-  padding: 12px 28px;
-  line-height: 160%;
-  font-weight: 500;
-  cursor: pointer;
-
-  &:first-child {
-    border-top: 1px solid #626873;
-  }
-
-  &:hover {
-    background-color: #353a40;
-  }
-`;
-
-const MenuItemActive = styled.div`
-  align-self: stretch;
-  background: linear-gradient(#353a40, #353a40), #25282c;
-  border-bottom: 1px solid #626873;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 28px;
-  gap: 20px;
-  font-weight: 700;
-  line-height: 160%;
-  cursor: pointer;
-`;
-
-const ArrowIcon = styled.img`
-  width: 24px;
-  height: 24px;
-`;
-
-const MainContent = styled.main`
-  flex: 1;
-  margin: 0 40px 0;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  max-width: 100%;
-`;
-
-const ContentWrapper = styled.section`
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  max-width: 100%;
-  text-align: left;
-  font-size: 36px;
-  color: #000;
-  font-family: Pretendard;
-`;
-
-const HeaderRow = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-`;
-
-const HeaderBlock = styled.div`
-  width: 100%;
-  margin-top: 91px;
-`;
-
-const Header = styled.div`
-  width: 100%;
-  max-width: 70%;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-`;
-
-const Title = styled.h1`
-  margin: 0;
-  align-self: stretch;
-  font-size: 36px;
-  line-height: 160%;
-  font-weight: 700;
-
-  @media screen and (max-width: 800px) {
-    font-size: 29px;
-    line-height: 46px;
-  }
-
-  @media screen and (max-width: 450px) {
-    font-size: 22px;
-    line-height: 35px;
-  }
-`;
-
-const Subtitle = styled.h3`
-  margin: 0;
-  align-self: stretch;
-  font-size: 20px;
-  line-height: 160%;
-  font-weight: 500;
-  color: #626873;
-
-  @media screen and (max-width: 450px) {
-    font-size: 16px;
-    line-height: 26px;
-  }
-`;
-
-const EmptyIntro = styled.div`
-  color: var(--grayscale-1000, #040405);
-  font-family: Pretendard;
-  font-size: 24px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 160%;
-`;
-
-const ButtonDefault = styled.button`
-  cursor: pointer;
-  border: 0;
-  padding: 10px 8px;
-  background-color: #4285f4;
-  width: 200px;
-  height: 50px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  font-size: 18px;
-  line-height: 160%;
-  font-weight: 500;
-  font-family: Pretendard;
-  color: #f9f9fa;
-  z-index: 2;
-
-  &:hover {
-    background-color: #3367d6;
-  }
-`;
-
-const EmptyState = styled.section`
-  width: 100%;
-  margin-top: 257px;
-  display: flex;
-  justify-content: center;
-`;
-
-const EmptyCard = styled.div`
-  display: flex;
-  width: 538px;
-  flex-direction: column;
-  align-items: center;
-  gap: 40px;
-`;
-
-const FormSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 40px;
-`;
-
-const Field = styled.div`
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  width: 100%;
-`;
-
-const Input = styled.input`
-  display: flex;
-  width: 560px;
-  padding: 12px 16px;
-  align-items: center;
-  border-radius: 8px;
-  border: 1px solid var(--grayscale-400, #c3c6cb);
-  background: #fff;
-  color: var(--grayscale-1000, #040405);
-  font-family: Pretendard;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 160%;
-`;
-
-const Actions = styled.div`
-  display: flex;
-  width: 100%;
-  height: 50px;
-  padding: 10px 8px;
-  justify-content: flex-end;
-  align-items: center;
-`;
-
-const PrimaryButton = styled.button<{ disabled: boolean }>`
-  display: flex;
-  width: 200px;
-  height: 50px;
-  padding: 10px 8px;
-  justify-content: center;
-  align-items: center;
-  border-radius: 8px;
-  border: none;
-  font-family: Pretendard;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 160%;
-
-  background: ${({ disabled }) => (disabled ? 'var(--grayscale-300, #e0e2e5)' : '#4285f4')};
-  color: ${({ disabled }) => (disabled ? '#c3c6cb' : '#ffffff')};
-
-  cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
-
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
-
-  &:hover {
-    background: ${({ disabled }) => (disabled ? 'var(--grayscale-300, #e0e2e5)' : '#3367d6')};
-  }
-`;
-
-const SecondaryButton = styled.button`
-  display: flex;
-  width: 200px;
-  height: 50px;
-  padding: 10px 8px;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
-  border-radius: 8px;
-  border: 1px solid var(--primary-600-main, #4285f4);
-  background: #fff;
-  color: var(--primary-600-main, #4285f4);
-  font-family: Pretendard;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 160%;
-  cursor: pointer;
-
-  &:hover {
-    background: #f0f7ff;
-  }
-`;
-
-const Dimmed = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-`;
-
-const Modal = styled.div<{ $mode: ProjectModalMode }>`
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-
-  ${({ $mode }) =>
-    $mode === 'deleteConfirm' || $mode === 'editSuccess'
-      ? `
-    width: 500px;
-    padding: 40px 20px 20px 20px;
-    align-items: center;
-    gap: 40px;
-    border-radius: 12px;
-    box-shadow: 0 0 30px 0 rgba(0, 0, 0, 0.20);
-  `
-      : `
-    width: 600px;
-    padding: 20px;
-    align-items: flex-end;
-    gap: 20px;
-    border-radius: 8px;
-  `}
-`;
-
-const ModalHeader = styled.div<{ $mode: ProjectModalMode }>`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  align-self: stretch;
-`;
-
-const ModalTitle = styled.h3<{ $mode: ProjectModalMode }>`
-  margin: 0;
-  color: var(--grayscale-1000, #040405);
-  font-family: Pretendard;
-  font-size: 24px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 160%;
-  text-align: left;
-`;
-
-const CloseButton = styled.img`
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-
-  &:hover {
-    opacity: 0.7;
-  }
-`;
-
-const ProjectName = styled.span`
-  color: var(--grayscale-1000, #040405);
-  font-family: Pretendard;
-  font-size: 24px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 160%;
-`;
-
-const SectionTitle = styled.span`
-  color: var(--grayscale-1000, #040405);
-  text-align: center;
-  font-family: Pretendard;
-  font-size: 20px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 160%;
-`;
-
-const IconWrapper = styled.div`
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-`;
-
-const ProjectContent = styled.div`
-  display: flex;
-  width: 1105px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 20px;
-  margin-top: 66px;
-`;
-
-const ProjectHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const SectionRow = styled.div`
-  display: flex;
-  padding: 24px 8px;
-  justify-content: space-between;
-  align-items: center;
-  align-self: stretch;
-  border-bottom: 1px solid var(--grayscale-300, #e0e2e5);
-`;
-
-const ProjectBody = styled.div`
-  width: 100%;
-`;
-
-const EditIcon = styled.img`
-  width: 100%;
-  height: 100%;
-  position: relative;
-  overflow: hidden;
-`;
-
-const BottomActions = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  margin-top: 305px;
-`;
-
-const DeleteButton = styled.button`
-  display: flex;
-  width: 300px;
-  height: 50px;
-  padding: 10px 8px;
-  justify-content: center;
-  align-items: center;
-  border-radius: 8px;
-  border: 1px solid var(--point-red, #ea4335);
-  background: #fff;
-  color: var(--point-red, #ea4335);
-  font-family: Pretendard;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 160%;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background-color: #fff1f1;
-  }
-`;
-
-const SaveButton = styled(PrimaryButton)`
-  width: 300px;
-`;
-
-/* Delete Modal Styles */
-const DeleteModalContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  align-self: stretch;
-`;
-
-const DeleteModalTitle = styled.h3`
-  margin: 0;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
-  align-self: stretch;
-  overflow: hidden;
-  color: var(--grayscale-1000, #040405);
-  text-align: center;
-  text-overflow: ellipsis;
-  font-family: Pretendard;
-  font-size: 24px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 160%;
-`;
-
-const DeleteDescription = styled.p`
-  margin: 0;
-  overflow: hidden;
-  color: var(--grayscale-600, #7e8590);
-  text-align: center;
-  text-overflow: ellipsis;
-  font-family: Pretendard;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 160%;
-`;
-
-const DeleteActions = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  align-self: stretch;
-`;
-
-const DeleteConfirmButton = styled.button`
-  display: flex;
-  flex: 1;
-  height: 50px;
-  padding: 10px 8px;
-  justify-content: center;
-  align-items: center;
-  border-radius: 8px;
-  border: none;
-  background: #4285f4;
-  color: #ffffff;
-  font-family: Pretendard;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 160%;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background: #3367d6;
-  }
-`;
-
-const DeleteCancelButton = styled.button`
-  display: flex;
-  flex: 1;
-  height: 50px;
-  padding: 10px 8px;
-  justify-content: center;
-  align-items: center;
-  border-radius: 8px;
-  border: 1px solid var(--primary-600-main, #4285f4);
-  background: #fff;
-  color: var(--primary-600-main, #4285f4);
-  font-family: Pretendard;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 160%;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background: #f0f7ff;
-  }
-`;
-
-/* Edit Success Modal Styles */
-const SuccessModalTitle = styled.h3`
-  margin: 0;
-  color: var(--grayscale-1000, #040405);
-  text-align: center;
-  font-family: Pretendard;
-  font-size: 24px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 160%;
-`;
-
-const SuccessConfirmButton = styled.button`
-  display: flex;
-  height: 50px;
-  padding: 10px 8px;
-  justify-content: center;
-  align-items: center;
-  align-self: stretch;
-  border-radius: 8px;
-  border: none;
-  background: var(--primary-600-main, #4285f4);
-  color: #ffffff;
-  font-family: Pretendard;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 160%;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background: #3367d6;
-  }
-`;
+export default AdminProjectManagement;
