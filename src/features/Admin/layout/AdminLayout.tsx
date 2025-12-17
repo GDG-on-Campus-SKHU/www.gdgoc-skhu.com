@@ -32,7 +32,7 @@ type Props = {
 const NAV_ITEMS: NavItem[] = [
   { label: '대시보드', path: '/admin' },
   { label: '가입 심사', path: '/AdminSubsScreening' },
-  { label: '멤버 관리', path: '/AdminMember' },
+  { label: '멤버 관리', path: '/admin-member/list' },
   { label: '프로젝트 관리', path: '/AdminProjectManage' },
   { label: '아이디어 관리', path: '/AdminIdea' },
   { label: '프로젝트 갤러리 관리', path: '/AdminProjectGallery' },
