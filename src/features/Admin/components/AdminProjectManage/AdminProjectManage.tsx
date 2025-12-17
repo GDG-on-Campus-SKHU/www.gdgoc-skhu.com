@@ -1,52 +1,322 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
+import {
+  createProject,
+  getModifiableProject,
+  type ModifiableProject,
+  type Part,
+  type Schedule,
+  type ScheduleType,
+  updateProject,
+  updateProjectName,
+} from 'src/lib/adminProject.api';
 
 import styles from '../../styles/AdminProjectManage.module.css';
 import ParticipantManagement from '../ParticipantManagement/ParticipantManagement';
 import ScheduleRegisterModal from '../ScheduleRegisterModal/ScheduleRegisterModal';
 import TopicRegisterModal from '../TopicRegisterModal/TopicRegisterModal';
 
+// ScheduleType을 한글 카테고리로 변환
+const SCHEDULE_TYPE_TO_CATEGORY: Record<ScheduleType, string> = {
+  IDEA_REGISTRATION: '아이디어 등록',
+  FIRST_TEAM_BUILDING: '1차 팀빌딩',
+  FIRST_TEAM_BUILDING_ANNOUNCEMENT: '1차 팀빌딩 결과 발표',
+  SECOND_TEAM_BUILDING: '2차 팀빌딩',
+  SECOND_TEAM_BUILDING_ANNOUNCEMENT: '2차 팀빌딩 결과 발표',
+  THIRD_TEAM_BUILDING: '3차 팀빌딩',
+  FINAL_RESULT_ANNOUNCEMENT: '최종 결과 발표',
+};
+
+// Part를 한글로 변환
+const PART_TO_KOREAN: Record<Part, string> = {
+  PM: '기획',
+  DESIGN: '디자인',
+  WEB: '프론트엔드 (웹)',
+  MOBILE: '프론트엔드 (모바일)',
+  BACKEND: '백엔드',
+  AI: 'AI/ML',
+};
+
+const KOREAN_TO_PART: Record<string, Part> = {
+  기획: 'PM',
+  디자인: 'DESIGN',
+  '프론트엔드 (웹)': 'WEB',
+  '프론트엔드 (모바일)': 'MOBILE',
+  백엔드: 'BACKEND',
+  'AI/ML': 'AI',
+};
+
 type ScheduleItem = {
-  id: number;
+  scheduleType: ScheduleType;
   category: string;
   status: '등록 전' | '진행 전' | '진행 중' | '완료';
   period: string;
+  startAt: string | null;
+  endAt: string | null;
+};
+
+// 일정 상태 계산
+const getScheduleStatus = (
+  startAt: string | null,
+  endAt: string | null
+): '등록 전' | '진행 전' | '진행 중' | '완료' => {
+  if (!startAt) return '등록 전';
+  const now = new Date();
+  const start = new Date(startAt);
+  const end = endAt ? new Date(endAt) : start;
+  if (now < start) return '진행 전';
+  if (now > end) return '완료';
+  return '진행 중';
+};
+
+// 날짜 포맷팅 (ISO → YYYY.MM.DD HH:mm)
+const formatDateTime = (isoString: string | null): string => {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}.${month}.${day} ${hours}:${minutes}`;
 };
 
 const INITIAL_SCHEDULES: ScheduleItem[] = [
-  { id: 1, category: '아이디어 등록', status: '등록 전', period: '' },
-  { id: 2, category: '1차 팀빌딩', status: '등록 전', period: '' },
-  { id: 3, category: '1차 팀빌딩 결과 발표', status: '등록 전', period: '' },
-  { id: 4, category: '2차 팀빌딩', status: '등록 전', period: '' },
-  { id: 5, category: '2차 팀빌딩 결과 발표', status: '등록 전', period: '' },
-  { id: 6, category: '3차 팀빌딩', status: '등록 전', period: '' },
-  { id: 7, category: '최종 결과 발표', status: '등록 전', period: '' },
+  {
+    scheduleType: 'IDEA_REGISTRATION',
+    category: '아이디어 등록',
+    status: '등록 전',
+    period: '',
+    startAt: null,
+    endAt: null,
+  },
+  {
+    scheduleType: 'FIRST_TEAM_BUILDING',
+    category: '1차 팀빌딩',
+    status: '등록 전',
+    period: '',
+    startAt: null,
+    endAt: null,
+  },
+  {
+    scheduleType: 'FIRST_TEAM_BUILDING_ANNOUNCEMENT',
+    category: '1차 팀빌딩 결과 발표',
+    status: '등록 전',
+    period: '',
+    startAt: null,
+    endAt: null,
+  },
+  {
+    scheduleType: 'SECOND_TEAM_BUILDING',
+    category: '2차 팀빌딩',
+    status: '등록 전',
+    period: '',
+    startAt: null,
+    endAt: null,
+  },
+  {
+    scheduleType: 'SECOND_TEAM_BUILDING_ANNOUNCEMENT',
+    category: '2차 팀빌딩 결과 발표',
+    status: '등록 전',
+    period: '',
+    startAt: null,
+    endAt: null,
+  },
+  {
+    scheduleType: 'THIRD_TEAM_BUILDING',
+    category: '3차 팀빌딩',
+    status: '등록 전',
+    period: '',
+    startAt: null,
+    endAt: null,
+  },
+  {
+    scheduleType: 'FINAL_RESULT_ANNOUNCEMENT',
+    category: '최종 결과 발표',
+    status: '등록 전',
+    period: '',
+    startAt: null,
+    endAt: null,
+  },
 ];
 
-const AdminProjectManagement: NextPage = () => {
-  const [projectName] = useState('그로우톤');
-  const [schedules, setSchedules] = useState<ScheduleItem[]>(INITIAL_SCHEDULES);
+// 프로젝트 등록 모달 컴포넌트
+type ProjectRegisterModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (projectName: string) => void;
+  isLoading?: boolean;
+};
 
+const ProjectRegisterModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  isLoading,
+}: ProjectRegisterModalProps) => {
+  const [projectName, setProjectName] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleConfirm = () => {
+    if (projectName.trim()) {
+      onConfirm(projectName.trim());
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && projectName.trim()) {
+      handleConfirm();
+    }
+  };
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalContainer} onClick={e => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <span className={styles.modalTitle}>프로젝트 등록</span>
+          <button type="button" className={styles.modalCloseButton} onClick={onClose}>
+            <Image src="/close.svg" alt="닫기" width={24} height={24} />
+          </button>
+        </div>
+        <div className={styles.modalContent}>
+          <input
+            type="text"
+            className={styles.modalInput}
+            placeholder="프로젝트명을 입력해주세요."
+            value={projectName}
+            onChange={e => setProjectName(e.target.value)}
+            onKeyDown={handleKeyDown}
+            autoFocus
+          />
+        </div>
+        <div className={styles.modalFooter}>
+          <button
+            type="button"
+            className={`${styles.modalConfirmButton} ${!projectName.trim() ? styles.modalConfirmButtonDisabled : ''}`}
+            onClick={handleConfirm}
+            disabled={!projectName.trim() || isLoading}
+          >
+            <span className={styles.modalConfirmButtonText}>
+              {isLoading ? '생성 중...' : '확인'}
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AdminProjectManagement: NextPage = () => {
+  // 로딩/저장 상태
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+
+  // 프로젝트 존재 여부
+  const [hasProject, setHasProject] = useState<boolean | null>(null);
+
+  // 프로젝트 데이터
+  const [projectId, setProjectId] = useState<number | null>(null);
+  const [projectName, setProjectName] = useState('');
+  const [initialProjectName, setInitialProjectName] = useState(''); // 초기 이름 (변경 감지용)
+  const [schedules, setSchedules] = useState<ScheduleItem[]>(INITIAL_SCHEDULES);
+  const [topics, setTopics] = useState<string[]>([]);
+  const [maxMembers, setMaxMembers] = useState(7);
+  const [selectedParts, setSelectedParts] = useState<string[]>([]);
+  const [participantUserIds, setParticipantUserIds] = useState<number[]>([]); // 참여자 ID 목록
+
+  // 아코디언 상태
   const [isScheduleOpen, setIsScheduleOpen] = useState(true);
   const [isTopicOpen, setIsTopicOpen] = useState(false);
   const [isParticipantOpen, setIsParticipantOpen] = useState(false);
   const [isTeamOpen, setIsTeamOpen] = useState(false);
+
+  // 모달 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleItem | null>(null);
-
-  // 주제 관련 state
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
-  const [topics, setTopics] = useState<string[]>([]);
-
-  // 팀 관리 관련 state
-  const [maxMembers, setMaxMembers] = useState(7);
-  const [selectedParts, setSelectedParts] = useState<string[]>([]);
-
-  // 저장 완료 모달 state
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [isProjectRegisterModalOpen, setIsProjectRegisterModalOpen] = useState(false);
 
   const PARTS = ['기획', '디자인', '프론트엔드 (웹)', '프론트엔드 (모바일)', '백엔드', 'AI/ML'];
+
+  // 데이터 로드
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const projectData: ModifiableProject = await getModifiableProject();
+        setHasProject(true);
+        setProjectId(projectData.projectId);
+        setProjectName(projectData.projectName);
+        setInitialProjectName(projectData.projectName); // 초기 이름 저장
+
+        // 일정 매핑
+        if (projectData.schedules && projectData.schedules.length > 0) {
+          const mappedSchedules: ScheduleItem[] = projectData.schedules.map(
+            (schedule: Schedule) => ({
+              scheduleType: schedule.scheduleType,
+              category: SCHEDULE_TYPE_TO_CATEGORY[schedule.scheduleType] || schedule.scheduleType,
+              status: getScheduleStatus(schedule.startAt, schedule.endAt),
+              period: schedule.startAt
+                ? schedule.endAt
+                  ? `${formatDateTime(schedule.startAt)} ~ ${formatDateTime(schedule.endAt)}`
+                  : formatDateTime(schedule.startAt)
+                : '',
+              startAt: schedule.startAt,
+              endAt: schedule.endAt,
+            })
+          );
+          setSchedules(mappedSchedules);
+        }
+
+        setTopics(projectData.topics || []);
+        setMaxMembers(projectData.maxMemberCount || 7);
+
+        // 참여자 ID 목록 저장
+        if (projectData.participants && projectData.participants.length > 0) {
+          const userIds = projectData.participants.map(p => p.participantId);
+          setParticipantUserIds(userIds);
+        }
+
+        const activeParts = projectData.availableParts
+          .filter(p => p.available)
+          .map(p => PART_TO_KOREAN[p.part]);
+        setSelectedParts(activeParts);
+      } catch (error: any) {
+        if (error?.response?.status === 404) {
+          setHasProject(false);
+        } else {
+          console.error('프로젝트 정보 조회 실패:', error);
+          setHasProject(false);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // 프로젝트 생성
+  const handleCreateProject = async (newProjectName: string) => {
+    setIsCreating(true);
+    try {
+      const newProject = await createProject({ projectName: newProjectName });
+      setHasProject(true);
+      setProjectId(newProject.projectId);
+      setProjectName(newProject.projectName);
+      setIsProjectRegisterModalOpen(false);
+      window.location.reload();
+    } catch (error) {
+      console.error('프로젝트 생성 실패:', error);
+      alert('프로젝트 생성에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   // 파트 체크박스 토글
   const handlePartToggle = (part: string) => {
@@ -68,16 +338,21 @@ const AdminProjectManagement: NextPage = () => {
   };
 
   // 모달 확인 → 일정 업데이트
-  const handleConfirm = (startDate: string, endDate?: string) => {
+  const handleConfirm = (startAt: string, endAt?: string) => {
     if (selectedSchedule) {
-      const periodText = endDate ? `${startDate} ~ ${endDate}` : startDate;
+      const periodText = endAt
+        ? `${formatDateTime(startAt)} ~ ${formatDateTime(endAt)}`
+        : formatDateTime(startAt);
+
       setSchedules(prev =>
         prev.map(schedule =>
-          schedule.id === selectedSchedule.id
+          schedule.scheduleType === selectedSchedule.scheduleType
             ? {
                 ...schedule,
                 status: '진행 전' as const,
                 period: periodText,
+                startAt,
+                endAt: endAt || null,
               }
             : schedule
         )
@@ -104,8 +379,12 @@ const AdminProjectManagement: NextPage = () => {
   };
 
   // 주제 등록 확인
-  const handleTopicConfirm = (topic: string) => {
-    setTopics(prev => [...prev, topic]);
+  const handleTopicConfirm = (topicName: string) => {
+    if (topics.includes(topicName)) {
+      alert('이미 등록된 주제입니다.');
+      return;
+    }
+    setTopics(prev => [...prev, topicName]);
   };
 
   // 주제 삭제
@@ -114,9 +393,40 @@ const AdminProjectManagement: NextPage = () => {
   };
 
   // 저장하기 버튼 클릭
-  const handleSave = () => {
-    // 실제 저장 로직 추가 가능
-    setIsSaveModalOpen(true);
+  const handleSave = async () => {
+    if (!projectId) return;
+    setIsSaving(true);
+    try {
+      // 프로젝트 이름이 변경되었으면 별도 API 호출
+      if (projectName !== initialProjectName) {
+        await updateProjectName(projectId, { projectName });
+        setInitialProjectName(projectName); // 업데이트 후 초기값 갱신
+      }
+
+      // 선택된 파트만 Part[] 형태로 변환
+      const availableParts: Part[] = selectedParts.map(koreanPart => KOREAN_TO_PART[koreanPart]);
+
+      const schedulesData: Schedule[] = schedules.map(s => ({
+        scheduleType: s.scheduleType,
+        startAt: s.startAt,
+        endAt: s.scheduleType.includes('ANNOUNCEMENT') ? null : s.endAt,
+      }));
+
+      await updateProject(projectId, {
+        maxMemberCount: maxMembers,
+        availableParts,
+        topics,
+        participantUserIds,
+        schedules: schedulesData,
+      });
+
+      setIsSaveModalOpen(true);
+    } catch (error) {
+      console.error('저장 실패:', error);
+      alert('저장에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // 저장 완료 모달 닫기
@@ -124,6 +434,132 @@ const AdminProjectManagement: NextPage = () => {
     setIsSaveModalOpen(false);
   };
 
+  // 로딩 중
+  if (isLoading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.sidebar}>
+          <div className={styles.logo}>
+            <Image
+              className={styles.gdgocSkhuImage}
+              src="/gdgoc_skhu_admin.svg"
+              alt="GDGoC SKHU"
+              width={40}
+              height={26}
+            />
+            <h3 className={styles.logoText}>GDGoC SKHU</h3>
+          </div>
+          <div className={styles.loginInfo}>
+            <h3 className={styles.userName}>윤준석</h3>
+            <div className={styles.divider}>님</div>
+          </div>
+          <section className={styles.menuList}>
+            <div className={styles.menuItem}>대시보드</div>
+            <div className={styles.menuItem}>가입 심사</div>
+            <div className={styles.menuItem}>멤버 관리</div>
+            <div className={`${styles.menuItem} ${styles.menuItemActive}`}>
+              <span>프로젝트 관리</span>
+              <Image
+                className={styles.menuArrowIcon}
+                src="/rightarrow_admin.svg"
+                width={14}
+                height={14}
+                alt=""
+              />
+            </div>
+            <div className={styles.menuItem}>아이디어 관리</div>
+            <div className={styles.menuItem}>프로젝트 갤러리 관리</div>
+            <div className={styles.menuItem}>액티비티 관리</div>
+            <div className={styles.menuItem}>홈 화면으로 나가기</div>
+          </section>
+        </div>
+        <main className={styles.mainContent}>
+          <div className={styles.loadingContainer}>
+            <span>로딩 중...</span>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // 프로젝트가 없을 때 - 초기 화면
+  if (!hasProject) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.sidebar}>
+          <div className={styles.logo}>
+            <Image
+              className={styles.gdgocSkhuImage}
+              src="/gdgoc_skhu_admin.svg"
+              alt="GDGoC SKHU"
+              width={40}
+              height={26}
+            />
+            <h3 className={styles.logoText}>GDGoC SKHU</h3>
+          </div>
+          <div className={styles.loginInfo}>
+            <h3 className={styles.userName}>윤준석</h3>
+            <div className={styles.divider}>님</div>
+          </div>
+          <section className={styles.menuList}>
+            <div className={styles.menuItem}>대시보드</div>
+            <div className={styles.menuItem}>가입 심사</div>
+            <div className={styles.menuItem}>멤버 관리</div>
+            <div className={`${styles.menuItem} ${styles.menuItemActive}`}>
+              <span>프로젝트 관리</span>
+              <Image
+                className={styles.menuArrowIcon}
+                src="/rightarrow_admin.svg"
+                width={14}
+                height={14}
+                alt=""
+              />
+            </div>
+            <div className={styles.menuItem}>아이디어 관리</div>
+            <div className={styles.menuItem}>프로젝트 갤러리 관리</div>
+            <div className={styles.menuItem}>액티비티 관리</div>
+            <div className={styles.menuItem}>홈 화면으로 나가기</div>
+          </section>
+        </div>
+
+        <main className={styles.mainContent}>
+          <div className={styles.headerSection}>
+            <div className={styles.headerLeft}>
+              <h1 className={styles.title}>프로젝트 관리</h1>
+              <h3 className={styles.headerSubtitle}>
+                역대 프로젝트의 일정, 참여자, 팀 조건을 관리할 수 있습니다.
+              </h3>
+            </div>
+            <button type="button" className={styles.endedProjectButton}>
+              <span className={styles.endedProjectButtonText}>종료 프로젝트 보기</span>
+            </button>
+          </div>
+
+          <div className={styles.emptyContainer}>
+            <p className={styles.emptyText}>
+              프로젝트를 생성하고 일정과 팀빌딩을 관리할 수 있습니다.
+            </p>
+            <button
+              type="button"
+              className={styles.createProjectButton}
+              onClick={() => setIsProjectRegisterModalOpen(true)}
+            >
+              <span className={styles.createProjectButtonText}>프로젝트 생성</span>
+            </button>
+          </div>
+        </main>
+
+        <ProjectRegisterModal
+          isOpen={isProjectRegisterModalOpen}
+          onClose={() => setIsProjectRegisterModalOpen(false)}
+          onConfirm={handleCreateProject}
+          isLoading={isCreating}
+        />
+      </div>
+    );
+  }
+
+  // 프로젝트가 있을 때 - 편집 화면
   return (
     <div className={styles.container}>
       <div className={styles.sidebar}>
@@ -217,7 +653,7 @@ const AdminProjectManagement: NextPage = () => {
                 </div>
                 <div className={styles.tableBody}>
                   {schedules.map(schedule => (
-                    <div key={schedule.id} className={styles.tableRow}>
+                    <div key={schedule.scheduleType} className={styles.tableRow}>
                       <div className={styles.tableCellCategory}>
                         <span className={styles.tableCellCategoryText}>{schedule.category}</span>
                       </div>
@@ -267,7 +703,6 @@ const AdminProjectManagement: NextPage = () => {
             {isTopicOpen && (
               <div className={styles.accordionContent}>
                 <div className={styles.topicListContainer}>
-                  {/* 등록된 주제 목록 */}
                   {topics.map((topic, index) => (
                     <div key={index} className={styles.topicItem}>
                       <span className={styles.topicText}>{topic}</span>
@@ -281,7 +716,6 @@ const AdminProjectManagement: NextPage = () => {
                     </div>
                   ))}
 
-                  {/* 주제 추가 버튼 */}
                   <button
                     type="button"
                     className={styles.addTopicButton}
@@ -312,7 +746,7 @@ const AdminProjectManagement: NextPage = () => {
 
             {isParticipantOpen && (
               <div className={styles.accordionContent}>
-                <ParticipantManagement projectId={1} />
+                {projectId && <ParticipantManagement projectId={projectId} />}
               </div>
             )}
           </div>
@@ -333,7 +767,6 @@ const AdminProjectManagement: NextPage = () => {
             {isTeamOpen && (
               <div className={styles.accordionContent}>
                 <div className={styles.teamManagementContainer}>
-                  {/* 최대 인원 */}
                   <div className={styles.teamSection}>
                     <span className={styles.teamSectionTitle}>최대 인원</span>
                     <div className={styles.maxMembersRow}>
@@ -348,7 +781,6 @@ const AdminProjectManagement: NextPage = () => {
                     </div>
                   </div>
 
-                  {/* 모집 파트 */}
                   <div className={styles.teamSection}>
                     <span className={styles.teamSectionTitle}>모집 파트</span>
                     <div className={styles.partsCheckboxList}>
@@ -378,8 +810,13 @@ const AdminProjectManagement: NextPage = () => {
           <button type="button" className={styles.deleteButton}>
             <span className={styles.deleteButtonText}>프로젝트 삭제하기</span>
           </button>
-          <button type="button" className={styles.saveButton} onClick={handleSave}>
-            <span className={styles.saveButtonText}>저장하기</span>
+          <button
+            type="button"
+            className={styles.saveButton}
+            onClick={handleSave}
+            disabled={isSaving}
+          >
+            <span className={styles.saveButtonText}>{isSaving ? '저장 중...' : '저장하기'}</span>
           </button>
         </div>
       </main>

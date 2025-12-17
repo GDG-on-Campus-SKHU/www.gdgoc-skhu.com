@@ -13,7 +13,7 @@ const api = axios.create({
 api.interceptors.request.use(
   config => {
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('accessToken');
+      const token = sessionStorage.getItem('accessToken');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -38,7 +38,7 @@ api.interceptors.response.use(
   }
 );
 
-// ==================== 타입 정의  ====================
+// ==================== 타입 정의 (Swagger 스키마 기반) ====================
 
 // 파트 타입
 export type Part = 'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI';
@@ -103,6 +103,12 @@ export const getModifiableProject = async (): Promise<ModifiableProject> => {
   return response.data;
 };
 
+// POST /admin/projects - 새 프로젝트 생성
+export const createProject = async (data: { projectName: string }): Promise<ModifiableProject> => {
+  const response = await api.post('/admin/projects', data);
+  return response.data;
+};
+
 // PUT /admin/projects/{projectId}/name - 프로젝트 이름 수정
 export const updateProjectName = async (
   projectId: number,
@@ -121,10 +127,10 @@ export const deleteProject = async (projectId: number): Promise<void> => {
 // 발표 일정(ANNOUNCEMENT)의 endAt 값은 null이어야 함
 // 발표 일정 수정시 초기화되므로 해당 일정에 대한 팀빌딩 지원을 다시 처리할 수 있음
 export type ProjectUpdateRequest = {
-  projectName: string;
   maxMemberCount: number;
+  availableParts: Part[];
   topics: string[];
-  availableParts: AvailablePart[];
+  participantUserIds: number[];
   schedules: Schedule[];
 };
 
@@ -163,6 +169,20 @@ export const getParts = async (): Promise<string[]> => {
 // GET /constants/generations - 기수 목록 조회
 export const getGenerations = async (): Promise<string[]> => {
   const response = await api.get('/constants/generations');
+  return response.data;
+};
+
+// ==================== 학교 조회 API ====================
+
+// 학교 응답 타입
+export type SchoolResponse = {
+  school: string;
+};
+
+// GET /admin/projects/schools - 학교 목록 조회
+// 회원이 존재하는 모든 학교 목록을 조회합니다.
+export const getSchools = async (): Promise<SchoolResponse[]> => {
+  const response = await api.get('/admin/projects/schools');
   return response.data;
 };
 
