@@ -18,10 +18,10 @@ import Field from '../Field';
 import Modal from '../Modal_Fix';
 import Radio from '../Radio_Fix';
 import SelectBoxBasic from '../SelectBoxBasic_Fix';
+import { extractFirstImageUrl } from '../utils/extractFirstImageUrl';
 import MemberSelectModal, { Member } from './MemberSelectModal';
 import ProjectDescriptionEditor from './ProjectDescriptionEditor';
 import ProjectMemberRow from './ProjectMemberRow';
-import { extractFirstImageUrl } from '../utils/extractFirstImageUrl';
 
 // 기수 / 파트 옵션
 const GENERATION_TABS: GenerationTab[] = ['25-26', '24-25', '이전 기수'];
