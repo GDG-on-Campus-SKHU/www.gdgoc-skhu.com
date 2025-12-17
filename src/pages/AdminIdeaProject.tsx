@@ -1,7 +1,5 @@
 import dynamic from 'next/dynamic';
 
-import AdminLayout from '../features/Admin/layout/AdminLayout';
-
 const AdminIdeaProject = dynamic(
   () => import('../features/Admin/components/AdminIdeaProject/AdminIdeaProject'),
   { ssr: false }
@@ -9,8 +7,6 @@ const AdminIdeaProject = dynamic(
 
 export default function AdminIdeaProjectPage() {
   return (
-    <AdminLayout>
-      <AdminIdeaProject />
-    </AdminLayout>
+    <AdminIdeaProject />
   );
 }

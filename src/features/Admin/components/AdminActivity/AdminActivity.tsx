@@ -40,32 +40,6 @@ const AdminActivity: NextPage = () => {
 
   return (
     <Container>
-      <Sidebar>
-        <Logo>
-          <GdgocSkhuImage src="/gdgoc_skhu_admin.svg" alt="" width={60} height={38} />
-          <LogoText>GDGoC SKHU</LogoText>
-        </Logo>
-
-        <LoginInfo>
-          <UserName>윤준석</UserName>
-          <Divider>님</Divider>
-        </LoginInfo>
-
-        <MenuList>
-          <MenuItem>대시보드</MenuItem>
-          <MenuItem>가입 심사</MenuItem>
-          <MenuItem>멤버 관리</MenuItem>
-          <MenuItem>프로젝트 관리</MenuItem>
-          <MenuItem>아이디어 관리</MenuItem>
-          <MenuItem>프로젝트 갤러리 관리</MenuItem>
-          <MenuItemActive>
-            <span>액티비티 관리</span>
-            <ArrowIcon src="/rightarrow_admin.svg" width={16} height={16} alt="" />
-          </MenuItemActive>
-          <MenuItem>홈 화면으로 나가기</MenuItem>
-        </MenuList>
-      </Sidebar>
-
       <MainContent>
         <ContentWrapper>
           <HeaderBlock>
@@ -170,7 +144,7 @@ const AdminActivity: NextPage = () => {
 
 export default AdminActivity;
 
-/* ================== layout & sidebar (from ProjectGalleryEdit) ================== */
+/* ================== layout (from ProjectGalleryEdit) ================== */
 
 const Container = styled.div`
   width: 100%;
@@ -179,128 +153,6 @@ const Container = styled.div`
   display: flex;
   line-height: normal;
   letter-spacing: normal;
-`;
-
-const Sidebar = styled.div`
-  width: 255px;
-  min-height: 100vh;
-  background-color: #454b54;
-  overflow: hidden;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-`;
-
-const Logo = styled.div`
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 40px 28px 20px;
-  gap: 12px;
-  text-align: center;
-  color: #fff;
-  font-family: Pretendard;
-`;
-
-const GdgocSkhuImage = styled(Image)`
-  width: 60px;
-  max-height: 100%;
-  object-fit: cover;
-`;
-
-const LogoText = styled.h3`
-  margin: 0;
-  font-size: 20px;
-  line-height: 160%;
-  font-weight: 400;
-
-  @media screen and (max-width: 450px) {
-    font-size: 16px;
-    line-height: 26px;
-  }
-`;
-
-const LoginInfo = styled.div`
-  align-self: stretch;
-  border-top: 1px solid #626873;
-  display: flex;
-  align-items: center;
-  padding: 18px 28px 20px;
-  gap: 8px;
-  color: #fff;
-  font-family: Pretendard;
-`;
-
-const UserName = styled.h3`
-  margin: 0;
-  font-size: 20px;
-  line-height: 160%;
-  font-weight: 700;
-
-  @media screen and (max-width: 450px) {
-    font-size: 16px;
-    line-height: 26px;
-  }
-`;
-
-const Divider = styled.div`
-  font-size: 16px;
-  line-height: 160%;
-  font-weight: 500;
-`;
-
-const MenuList = styled.section`
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: center;
-  font-size: 16px;
-  color: #fff;
-  font-family: Pretendard;
-`;
-
-const MenuItem = styled.div`
-  align-self: stretch;
-  background-color: #454b54;
-  border-bottom: 1px solid #626873;
-  display: flex;
-  align-items: center;
-  padding: 12px 28px;
-  line-height: 160%;
-  font-weight: 500;
-  cursor: pointer;
-
-  &:first-child {
-    border-top: 1px solid #626873;
-  }
-
-  &:hover {
-    background-color: #353a40;
-  }
-`;
-
-const MenuItemActive = styled.div`
-  align-self: stretch;
-  background: linear-gradient(#353a40, #353a40), #25282c;
-  border-bottom: 1px solid #626873;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 28px;
-  gap: 20px;
-  font-weight: 700;
-  line-height: 160%;
-  cursor: pointer;
-`;
-
-const ArrowIcon = styled.img`
-  width: 16px;
-  max-height: 100%;
-  object-fit: contain;
 `;
 
 const MainContent = styled.main`

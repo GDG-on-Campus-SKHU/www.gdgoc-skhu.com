@@ -438,41 +438,6 @@ const AdminProjectManagement: NextPage = () => {
   if (isLoading) {
     return (
       <div className={styles.container}>
-        <div className={styles.sidebar}>
-          <div className={styles.logo}>
-            <Image
-              className={styles.gdgocSkhuImage}
-              src="/gdgoc_skhu_admin.svg"
-              alt="GDGoC SKHU"
-              width={40}
-              height={26}
-            />
-            <h3 className={styles.logoText}>GDGoC SKHU</h3>
-          </div>
-          <div className={styles.loginInfo}>
-            <h3 className={styles.userName}>윤준석</h3>
-            <div className={styles.divider}>님</div>
-          </div>
-          <section className={styles.menuList}>
-            <div className={styles.menuItem}>대시보드</div>
-            <div className={styles.menuItem}>가입 심사</div>
-            <div className={styles.menuItem}>멤버 관리</div>
-            <div className={`${styles.menuItem} ${styles.menuItemActive}`}>
-              <span>프로젝트 관리</span>
-              <Image
-                className={styles.menuArrowIcon}
-                src="/rightarrow_admin.svg"
-                width={14}
-                height={14}
-                alt=""
-              />
-            </div>
-            <div className={styles.menuItem}>아이디어 관리</div>
-            <div className={styles.menuItem}>프로젝트 갤러리 관리</div>
-            <div className={styles.menuItem}>액티비티 관리</div>
-            <div className={styles.menuItem}>홈 화면으로 나가기</div>
-          </section>
-        </div>
         <main className={styles.mainContent}>
           <div className={styles.loadingContainer}>
             <span>로딩 중...</span>
@@ -486,41 +451,6 @@ const AdminProjectManagement: NextPage = () => {
   if (!hasProject) {
     return (
       <div className={styles.container}>
-        <div className={styles.sidebar}>
-          <div className={styles.logo}>
-            <Image
-              className={styles.gdgocSkhuImage}
-              src="/gdgoc_skhu_admin.svg"
-              alt="GDGoC SKHU"
-              width={40}
-              height={26}
-            />
-            <h3 className={styles.logoText}>GDGoC SKHU</h3>
-          </div>
-          <div className={styles.loginInfo}>
-            <h3 className={styles.userName}>윤준석</h3>
-            <div className={styles.divider}>님</div>
-          </div>
-          <section className={styles.menuList}>
-            <div className={styles.menuItem}>대시보드</div>
-            <div className={styles.menuItem}>가입 심사</div>
-            <div className={styles.menuItem}>멤버 관리</div>
-            <div className={`${styles.menuItem} ${styles.menuItemActive}`}>
-              <span>프로젝트 관리</span>
-              <Image
-                className={styles.menuArrowIcon}
-                src="/rightarrow_admin.svg"
-                width={14}
-                height={14}
-                alt=""
-              />
-            </div>
-            <div className={styles.menuItem}>아이디어 관리</div>
-            <div className={styles.menuItem}>프로젝트 갤러리 관리</div>
-            <div className={styles.menuItem}>액티비티 관리</div>
-            <div className={styles.menuItem}>홈 화면으로 나가기</div>
-          </section>
-        </div>
 
         <main className={styles.mainContent}>
           <div className={styles.headerSection}>
@@ -562,43 +492,6 @@ const AdminProjectManagement: NextPage = () => {
   // 프로젝트가 있을 때 - 편집 화면
   return (
     <div className={styles.container}>
-      <div className={styles.sidebar}>
-        <div className={styles.logo}>
-          <Image
-            className={styles.gdgocSkhuImage}
-            src="/gdgoc_skhu_admin.svg"
-            alt="GDGoC SKHU"
-            width={40}
-            height={26}
-          />
-          <h3 className={styles.logoText}>GDGoC SKHU</h3>
-        </div>
-
-        <div className={styles.loginInfo}>
-          <h3 className={styles.userName}>윤준석</h3>
-          <div className={styles.divider}>님</div>
-        </div>
-
-        <section className={styles.menuList}>
-          <div className={styles.menuItem}>대시보드</div>
-          <div className={styles.menuItem}>가입 심사</div>
-          <div className={styles.menuItem}>멤버 관리</div>
-          <div className={`${styles.menuItem} ${styles.menuItemActive}`}>
-            <span>프로젝트 관리</span>
-            <Image
-              className={styles.menuArrowIcon}
-              src="/rightarrow_admin.svg"
-              width={14}
-              height={14}
-              alt=""
-            />
-          </div>
-          <div className={styles.menuItem}>아이디어 관리</div>
-          <div className={styles.menuItem}>프로젝트 갤러리 관리</div>
-          <div className={styles.menuItem}>액티비티 관리</div>
-          <div className={styles.menuItem}>홈 화면으로 나가기</div>
-        </section>
-      </div>
 
       <main className={styles.mainContent}>
         <div className={styles.headerSection}>

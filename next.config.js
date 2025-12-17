@@ -19,6 +19,7 @@ const nextConfig = {
 
   compiler: {
     emotion: true,
+    styledComponents: true, // ← 추가
   },
 
   webpack: config => {
