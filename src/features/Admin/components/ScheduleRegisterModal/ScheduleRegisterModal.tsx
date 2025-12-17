@@ -12,7 +12,10 @@ type ScheduleRegisterModalProps = {
   onClose: () => void;
   title: string;
   type?: 'period' | 'single';
-  onConfirm: (startDate: string, endDate?: string) => void;
+  onConfirm: (startDate: Date, endDate?: Date) => void;
+
+  initialStartAt?: string | null;
+  initialEndAt?: string | null;
 };
 
 const formattingDate = (date: Date): string => {
@@ -31,6 +34,8 @@ const ScheduleRegisterModal = ({
   title,
   type = 'period',
   onConfirm,
+  initialStartAt,
+  initialEndAt
 }: ScheduleRegisterModalProps) => {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -38,19 +43,22 @@ const ScheduleRegisterModal = ({
 
   // 모달이 닫힐 때 상태 초기화
   useEffect(() => {
-    if (!isOpen) {
-      setStartDate(null);
-      setEndDate(null);
-      setSingleDate(null);
+    if (!isOpen) return;
+
+    if (type === 'single') {
+      setSingleDate(initialStartAt ? new Date(initialStartAt) : null);
+    } else {
+      setStartDate(initialStartAt ? new Date(initialStartAt) : null);
+      setEndDate(initialEndAt ? new Date(initialEndAt) : null);
     }
-  }, [isOpen]);
+  }, [isOpen, type, initialStartAt, initialEndAt]);
 
   const handleConfirm = () => {
     if (type === 'single' && singleDate) {
-      onConfirm(formattingDate(singleDate));
+      onConfirm(singleDate);
       onClose();
     } else if (type === 'period' && startDate && endDate) {
-      onConfirm(formattingDate(startDate), formattingDate(endDate));
+      onConfirm(startDate, endDate);
       onClose();
     }
   };
