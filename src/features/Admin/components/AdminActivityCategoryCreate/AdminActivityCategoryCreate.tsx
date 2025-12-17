@@ -422,7 +422,6 @@ const AdminActivityCategoryCreate: NextPage = () => {
 export default AdminActivityCategoryCreate;
 
 const Page = styled.div`
-  display: grid;
   grid-template-columns: 255px 1fr;
   grid-template-rows: auto;
   min-height: 100vh;

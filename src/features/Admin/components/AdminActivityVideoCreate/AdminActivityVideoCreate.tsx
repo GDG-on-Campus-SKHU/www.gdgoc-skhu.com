@@ -233,7 +233,6 @@ const AdminActivityVideoCreate: NextPage = () => {
 export default AdminActivityVideoCreate;
 
 const Page = styled.div`
-  display: grid;
   grid-template-columns: 255px 1fr;
   min-height: 100vh;
   background: #ffffff;
