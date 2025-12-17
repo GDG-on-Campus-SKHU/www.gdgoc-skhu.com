@@ -166,7 +166,6 @@ export const getParts = async (): Promise<string[]> => {
   return response.data;
 };
 
-
 // GET /constants/generations - 기수 목록 조회
 export const getGenerations = async (): Promise<string[]> => {
   const response = await api.get('/constants/generations');
