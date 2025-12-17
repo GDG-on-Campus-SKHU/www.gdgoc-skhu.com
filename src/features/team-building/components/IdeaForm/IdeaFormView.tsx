@@ -21,7 +21,6 @@ import {
   PreferredHeading,
   PreferredSection,
   PreviewButton,
-  QuillWrapper,
   RadioGroup,
   SectionTitle,
   SelectWrapper,
@@ -36,7 +35,6 @@ import {
   TeamRow,
   TeamSection,
   TeamTitle,
-  TextAreaWrapper,
 } from '../../styles/IdeaForm';
 import Radio from '../Radio';
 import SelectBoxBasic from '../SelectBoxBasic';
@@ -49,10 +47,10 @@ import {
   TOPIC_OPTIONS,
   TOPIC_PLACEHOLDER,
 } from './constants';
+import IdeaDescriptionEditor from './IdeaDescriptionEditor';
 import { PREFERRED_OPTIONS, TEAM_ROLES, TeamRole } from './IdeaFormUtils';
 
 import 'react-quill/dist/quill.snow.css';
-import IdeaDescriptionEditor from './IdeaDescriptionEditor';
 
 type ModalState = 'idle' | 'confirm' | 'success';
 

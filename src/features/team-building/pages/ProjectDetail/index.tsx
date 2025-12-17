@@ -1,10 +1,10 @@
 // * ui 확인을 위해 일단 본인이 팀장이라 가정
 import { useMemo } from 'react';
 import { useRouter } from 'next/router';
+import { useMyProfile } from '@/lib/mypageProfile.api';
 
 import { useProjectGalleryDetail } from '../../../../lib/projectGallery.api';
 import ProjectDetailView from '../../components/ProjectDetail/ProjectDetailView';
-import { useMyProfile } from '@/lib/mypageProfile.api';
 
 export default function ProjectDetailPage() {
   const router = useRouter();

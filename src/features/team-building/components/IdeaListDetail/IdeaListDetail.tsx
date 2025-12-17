@@ -4,9 +4,9 @@ import axios from 'axios';
 import styled from 'styled-components';
 
 import { fetchCurrentTeamBuildingProject, fetchIdeaDetail } from '../../api/ideas';
+import { partToLabel } from '../MyTeam/ApplyStatusSection';
 import { createEmptyTeamCounts, Idea } from '../store/IdeaStore';
 import { sanitizeDescription } from '../utils/sanitizeDescription';
-import { partToLabel } from '../MyTeam/ApplyStatusSection';
 
 const SMALL_BREAKPOINT = '600px';
 const TEAM_ROLES = [

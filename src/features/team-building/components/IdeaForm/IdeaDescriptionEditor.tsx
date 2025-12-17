@@ -1,6 +1,6 @@
 import dynamic from 'next/dynamic';
-import type React from 'react';
 import { useUploadImage } from '@/lib/image.api';
+import type React from 'react';
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor').then(mod => mod.default), {
   ssr: false,

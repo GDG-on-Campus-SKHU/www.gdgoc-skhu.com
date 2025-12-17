@@ -11,12 +11,12 @@ import {
   fetchIdeaDetail,
   GetEnrollmentAvailabilityResponse,
 } from '../../api/ideas';
-import Button from '../Button';
-import Radio from '../Radio';
-import { Idea, resolveTotalMembers, useIdeaStore } from '../store/IdeaStore';
-import { partToLabel } from '../MyTeam/ApplyStatusSection';
 import { EnrollmentChoice } from '../../types/applyStatusData';
 import { Part } from '../../types/gallery';
+import Button from '../Button';
+import { partToLabel } from '../MyTeam/ApplyStatusSection';
+import Radio from '../Radio';
+import { Idea, resolveTotalMembers, useIdeaStore } from '../store/IdeaStore';
 
 const MOBILE_BREAKPOINT = '900px';
 
@@ -122,12 +122,6 @@ const MentorPart = styled.p`
   font-size: 0.98rem;
   color: #030213;
   font-weight: 300;
-`;
-const Mentor = styled.p`
-  margin: 0;
-  font-size: 0.98rem;
-  color: #030213;
-  font-weight: 600;
 `;
 
 const FormSection = styled.section`

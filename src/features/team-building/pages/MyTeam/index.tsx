@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 import { useCurrentTeam } from '@/lib/myTeam.api';
 import { css } from '@emotion/react';
 
@@ -9,7 +10,6 @@ import CurrentTeamEmpty from '../../components/MyTeam/CurrentTeamEmpty';
 import CurrentTeamSection from '../../components/MyTeam/CurrentTeamSection';
 import MemberApplyStatusSection from '../../components/MyTeam/MemberApplyStatusSection';
 import TabBar from '../../components/TabBar';
-import { useRouter } from 'next/router';
 
 type MyTeamTabKey = 'currentMembers' | 'applications';
 
