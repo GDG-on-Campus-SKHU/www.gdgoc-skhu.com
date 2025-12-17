@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactQuill, { ReactQuillProps } from 'react-quill';
 
 import {
   AutoSaveStatus,
@@ -40,7 +39,6 @@ import {
   TextAreaWrapper,
 } from '../../styles/IdeaForm';
 import Radio from '../Radio';
-import ReQuill from '../ReQuill';
 import SelectBoxBasic from '../SelectBoxBasic';
 import type { TeamCounts } from '../store/IdeaStore';
 import {
@@ -54,6 +52,7 @@ import {
 import { PREFERRED_OPTIONS, TEAM_ROLES, TeamRole } from './IdeaFormUtils';
 
 import 'react-quill/dist/quill.snow.css';
+import IdeaDescriptionEditor from './IdeaDescriptionEditor';
 
 type ModalState = 'idle' | 'confirm' | 'success';
 
@@ -83,12 +82,6 @@ interface IdeaFormViewProps {
   onConfirmSubmit: () => void;
   onCloseModal: () => void;
   onModalDone: () => void;
-  quillRef: React.MutableRefObject<ReactQuill | null>;
-  pageRef: React.MutableRefObject<HTMLDivElement | null>;
-  imageInputRef: React.MutableRefObject<HTMLInputElement | null>;
-  onImageFileChange: React.ChangeEventHandler<HTMLInputElement>;
-  quillModules: ReactQuillProps['modules'];
-  quillFormats: ReactQuillProps['formats'];
   isSubmitDisabled: boolean;
   modalState: ModalState;
   isDraftModalOpen: boolean;
@@ -114,12 +107,6 @@ export default function IdeaFormView({
   onConfirmSubmit,
   onCloseModal,
   onModalDone,
-  quillRef,
-  pageRef,
-  imageInputRef,
-  onImageFileChange,
-  quillModules,
-  quillFormats,
   isSubmitDisabled,
   modalState,
   isDraftModalOpen,
@@ -144,30 +131,8 @@ export default function IdeaFormView({
       ? `임시저장 완료 ${autoSaveSavedAt}`
       : AUTO_SAVE_PLACEHOLDER;
 
-  React.useEffect(() => {
-    // Occasionally ReactQuill renders an extra toolbar; trim to the active one.
-    const cleanUpDuplicateToolbars = () => {
-      const toolbarModule = quillRef.current?.getEditor?.().getModule?.('toolbar');
-      const activeToolbar = toolbarModule?.container as HTMLElement | undefined;
-      const pageEl = pageRef.current;
-
-      if (!pageEl || !activeToolbar) return;
-
-      const toolbars = Array.from(pageEl.querySelectorAll('.ql-toolbar'));
-      toolbars.forEach(toolbar => {
-        if (toolbar !== activeToolbar) {
-          toolbar.remove();
-        }
-      });
-    };
-
-    cleanUpDuplicateToolbars();
-    const timer = window.setTimeout(cleanUpDuplicateToolbars, 0);
-    return () => window.clearTimeout(timer);
-  }, [pageRef, quillRef]);
-
   return (
-    <PageContainer ref={pageRef} $isModalOpen={modalState !== 'idle' || isDraftModalOpen}>
+    <PageContainer $isModalOpen={modalState !== 'idle' || isDraftModalOpen}>
       <FormContainer>
         <HeaderRow>
           <SectionTitle>아이디어 작성</SectionTitle>
@@ -297,26 +262,7 @@ export default function IdeaFormView({
 
         <FieldSet>
           <FieldLabel htmlFor="description">아이디어 설명</FieldLabel>
-          <TextAreaWrapper>
-            <QuillWrapper>
-              <input
-                type="file"
-                accept="image/*"
-                ref={imageInputRef}
-                style={{ display: 'none' }}
-                onChange={onImageFileChange}
-              />
-              <ReQuill
-                ref={quillRef}
-                value={form.description}
-                onChange={onDescriptionChange}
-                modules={quillModules}
-                formats={quillFormats}
-                placeholder="Github README 작성에 쓰이는 ‘markdown’을 이용해 작성해보세요."
-                height="100%"
-              />
-            </QuillWrapper>
-          </TextAreaWrapper>
+          <IdeaDescriptionEditor value={form.description ?? ''} onChange={onDescriptionChange} />
         </FieldSet>
 
         <ButtonGroup>

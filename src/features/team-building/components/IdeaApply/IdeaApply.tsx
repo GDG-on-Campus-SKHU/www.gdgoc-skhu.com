@@ -4,10 +4,19 @@ import { useRouter } from 'next/router';
 import axios from 'axios';
 import styled from 'styled-components';
 
-import { applyToIdea, fetchIdeaDetail } from '../../api/ideas';
+import {
+  applyToIdea,
+  fetchCurrentTeamBuildingProject,
+  fetchEnrollmentAvailability,
+  fetchIdeaDetail,
+  GetEnrollmentAvailabilityResponse,
+} from '../../api/ideas';
 import Button from '../Button';
 import Radio from '../Radio';
 import { Idea, resolveTotalMembers, useIdeaStore } from '../store/IdeaStore';
+import { partToLabel } from '../MyTeam/ApplyStatusSection';
+import { EnrollmentChoice } from '../../types/applyStatusData';
+import { Part } from '../../types/gallery';
 
 const MOBILE_BREAKPOINT = '900px';
 
@@ -291,8 +300,21 @@ const ModalButton = styled(Button)`
   line-height: 160%;
 `;
 
+function scheduleTypeToKorean(scheduleType?: string) {
+  switch (scheduleType) {
+    case 'FIRST_TEAM_BUILDING':
+      return '1차 지원';
+    case 'SECOND_TEAM_BUILDING':
+      return '2차 지원';
+    case 'THIRD_TEAM_BUILDING':
+      return '3차 지원';
+    default:
+      return '';
+  }
+}
+
 // 파트 옵션 및 API 파트 코드 매핑
-const PART_OPTIONS: Array<{ key: keyof Idea['team']; label: string; apiCode: string }> = [
+const PART_OPTIONS: Array<{ key: keyof Idea['team']; label: string; apiCode: Part }> = [
   { key: 'planning', label: '기획', apiCode: 'PM' },
   { key: 'design', label: '디자인', apiCode: 'DESIGN' },
   { key: 'frontendWeb', label: '프론트엔드(웹)', apiCode: 'WEB' },
@@ -304,6 +326,12 @@ const PART_OPTIONS: Array<{ key: keyof Idea['team']; label: string; apiCode: str
 const PRIORITY_OPTIONS = ['1지망', '2지망', '3지망'] as const;
 
 type PriorityOption = (typeof PRIORITY_OPTIONS)[number];
+
+const PRIORITY_TO_CHOICE: Record<PriorityOption, EnrollmentChoice> = {
+  '1지망': 'FIRST',
+  '2지망': 'SECOND',
+  '3지망': 'THIRD',
+};
 
 // 지망 라벨을 숫자로 변환
 const priorityToNumber = (priority: PriorityOption): number => {
@@ -421,6 +449,9 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
     return null;
   }, [id, ideaId]);
 
+  const [applyInfo, setApplyInfo] = useState<GetEnrollmentAvailabilityResponse | null>(null);
+  const [projectId, setProjectId] = useState<number | null>(null);
+
   // 로컬 스토어 (폴백용)
   const hasHydratedIdeas = useIdeaStore(state => state.hasHydrated);
   const hydrateIdeas = useIdeaStore(state => state.hydrateFromStorage);
@@ -449,6 +480,22 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
 
   const [modalState, setModalState] = useState<'closed' | 'confirm' | 'success'>('closed');
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    (async () => {
+      try {
+        const resp = await fetchCurrentTeamBuildingProject({ signal: controller.signal });
+        const next = Number(resp.data?.project?.projectId);
+        setProjectId(Number.isFinite(next) ? next : null);
+      } catch {
+        setProjectId(null);
+      }
+    })();
+
+    return () => controller.abort();
+  }, []);
+
   // API에서 아이디어 상세 정보 가져오기
   const loadIdeaDetail = useCallback(async () => {
     if (resolvedIdeaId === null) {
@@ -456,9 +503,11 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
       return;
     }
 
+    if (!projectId) return;
+
     setIsLoading(true);
     try {
-      const response = await fetchIdeaDetail(DEFAULT_PROJECT_ID, resolvedIdeaId);
+      const response = await fetchIdeaDetail(projectId, resolvedIdeaId);
       const data = response.data as IdeaApiResponse;
       const normalized = normalizeApiIdea(data);
       setApiIdea(normalized);
@@ -468,16 +517,71 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [resolvedIdeaId]);
+  }, [resolvedIdeaId, projectId]);
 
   useEffect(() => {
     loadIdeaDetail();
   }, [loadIdeaDetail]);
 
+  // enrollment availability 로드
+  useEffect(() => {
+    if (resolvedIdeaId === null) return;
+
+    (async () => {
+      try {
+        const resp = await fetchEnrollmentAvailability(resolvedIdeaId);
+        setApplyInfo(resp.data);
+      } catch (err) {
+        console.warn('지원하기 정보 조회 실패:', err);
+        setApplyInfo(null);
+      }
+    })();
+  }, [resolvedIdeaId]);
+
+  // 서버 availability map
+  const choiceAvailabilityMap = useMemo(() => {
+    const map: Record<EnrollmentChoice, boolean> = { FIRST: true, SECOND: true, THIRD: true };
+    applyInfo?.choiceAvailabilities?.forEach(v => {
+      map[v.choice] = !!v.available;
+    });
+    return map;
+  }, [applyInfo]);
+
+  const partAvailabilityMap = useMemo(() => {
+    const map: Record<Part, boolean> = {
+      PM: true,
+      DESIGN: true,
+      WEB: true,
+      MOBILE: true,
+      BACKEND: true,
+      AI: true,
+    };
+    applyInfo?.partAvailabilities?.forEach(v => {
+      map[v.part] = !!v.available;
+    });
+    return map;
+  }, [applyInfo]);
+
+  // priorityOptions (로컬락 + 서버 availability)
+  const priorityOptions = useMemo(
+    () =>
+      PRIORITY_OPTIONS.map(option => {
+        const locked = priorityLocks[option] !== null;
+        const choice = PRIORITY_TO_CHOICE[option];
+        const serverDisabled = choiceAvailabilityMap[choice] === false;
+        return { value: option, disabled: locked || serverDisabled };
+      }),
+    [priorityLocks, choiceAvailabilityMap]
+  );
+
   const partOptions = useMemo(() => {
     if (!idea) {
-      return PART_OPTIONS.map(option => ({ ...option, disabled: false }));
+      return PART_OPTIONS.map(option => ({
+        ...option,
+        disabled: partAvailabilityMap[option.apiCode] === false,
+      }));
     }
+
     const team = idea.team ?? ZERO_TEAM;
     const filled = idea.filledTeam ?? ZERO_TEAM;
     const totalLimit = resolveTotalMembers(idea.totalMembers, team);
@@ -486,16 +590,17 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
       Object.values(filled).reduce((sum, count) => sum + (count ?? 0), 0)
     );
     const totalAtCapacity = totalLimit > 0 && totalFilled >= totalLimit;
+
     return PART_OPTIONS.map(option => {
       const count = team[option.key] ?? 0;
       const taken = filled[option.key] ?? 0;
       const partAtCapacity = count > 0 && taken >= count;
-      return {
-        ...option,
-        disabled: totalAtCapacity || count <= 0 || partAtCapacity,
-      };
+      const byCapacity = totalAtCapacity || count <= 0 || partAtCapacity;
+      const byServer = partAvailabilityMap[option.apiCode] === false;
+
+      return { ...option, disabled: byCapacity || byServer };
     });
-  }, [idea]);
+  }, [idea, partAvailabilityMap]);
 
   const selectedPartLabel = useMemo(() => {
     const match = partOptions.find(option => option.key === part);
@@ -507,18 +612,37 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
     return match?.apiCode ?? 'PM';
   }, [part]);
 
-  const priorityOptions = useMemo(
-    () =>
-      PRIORITY_OPTIONS.map(option => {
-        if (!idea) {
-          return { value: option, disabled: false };
-        }
-        const assignedId = priorityLocks[option];
-        const disabled = assignedId !== null;
-        return { value: option, disabled };
-      }),
-    [idea, priorityLocks]
-  );
+  // 지원하기 상단 정보 로드
+  const loadApplyInfo = useCallback(async () => {
+    if (resolvedIdeaId === null) return;
+
+    try {
+      const resp = await fetchEnrollmentAvailability(resolvedIdeaId);
+      setApplyInfo(resp.data);
+    } catch (err) {
+      console.warn('지원하기 정보 조회 실패:', err);
+      setApplyInfo(null);
+    }
+  }, [resolvedIdeaId]);
+
+  useEffect(() => {
+    loadApplyInfo();
+  }, [loadApplyInfo]);
+
+  // 상단 제목/우측 정보 문자열 만들기
+  const applyTitleText = useMemo(() => {
+    const projectName = applyInfo?.projectName ?? '그로우톤';
+    const phase = scheduleTypeToKorean(applyInfo?.scheduleType);
+    return phase ? `${projectName} ${phase} 지원` : `${projectName} 지원`;
+  }, [applyInfo]);
+
+  const creatorInfoText = useMemo(() => {
+    if (!applyInfo) return '';
+    const partLabel = partToLabel(applyInfo.creatorPart);
+    return `${applyInfo.creatorSchool} ${partLabel} ${applyInfo.creatorName}`;
+  }, [applyInfo]);
+
+  // ... (로딩/idea 없음 처리 그대로)
 
   const isModalOpen = modalState !== 'closed';
 
@@ -731,16 +855,14 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
         <ApplyCanvas>
           <ApplyContainer>
             <GrowTitle>
-              <ApplyTitle>그로우톤 1차 지원</ApplyTitle>
+              <ApplyTitle>{applyTitleText}</ApplyTitle>
             </GrowTitle>
             <ApplyInfoRow>
               <IdeaInfo>
                 <TitleContainer>
                   <IdeaTitle>{idea.title}</IdeaTitle>
                   <MentorContainer>
-                    <MentorPart>
-                      {idea.preferredPart} <Mentor as="span">{idea.intro}</Mentor>
-                    </MentorPart>
+                    <MentorPart>{creatorInfoText}</MentorPart>
                   </MentorContainer>
                 </TitleContainer>
                 <IdeaSubtitle>{idea.intro || '아이디어 한줄소개'}</IdeaSubtitle>

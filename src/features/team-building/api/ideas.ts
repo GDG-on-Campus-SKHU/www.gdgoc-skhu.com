@@ -87,3 +87,66 @@ export const deleteIdea = (projectId: number, ideaId: number, config?: AxiosRequ
 
 export const deleteIdeaMember = (ideaId: number, memberId: number, config?: AxiosRequestConfig) =>
   teamBuildingApi.delete(`/ideas/${ideaId}/members/${memberId}`, config);
+
+export type EnrollmentAvailabilityChoice = {
+  choice: 'FIRST' | 'SECOND' | 'THIRD';
+  available: boolean;
+};
+
+export type EnrollmentAvailabilityPart = {
+  part: 'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI';
+  available: boolean;
+};
+
+export type GetEnrollmentAvailabilityResponse = {
+  projectName: string;
+  scheduleType:
+    | 'IDEA_REGISTRATION'
+    | 'FIRST_TEAM_BUILDING'
+    | 'FIRST_TEAM_BUILDING_ANNOUNCEMENT'
+    | 'SECOND_TEAM_BUILDING'
+    | 'SECOND_TEAM_BUILDING_ANNOUNCEMENT'
+    | 'THIRD_TEAM_BUILDING'
+    | 'FINAL_RESULT_ANNOUNCEMENT';
+  ideaTitle: string;
+  ideaIntroduction: string;
+  creatorSchool: string;
+  creatorPart: 'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI';
+  creatorName: string;
+  choiceAvailabilities: EnrollmentAvailabilityChoice[];
+  partAvailabilities: EnrollmentAvailabilityPart[];
+};
+
+export const fetchEnrollmentAvailability = (ideaId: number, config?: AxiosRequestConfig) =>
+  teamBuildingApi.get<GetEnrollmentAvailabilityResponse>(
+    `/enrollments/availability/ideas/${ideaId}`,
+    config
+  );
+
+export type TeamBuildingScheduleType =
+  | 'IDEA_REGISTRATION'
+  | 'FIRST_TEAM_BUILDING'
+  | 'FIRST_TEAM_BUILDING_ANNOUNCEMENT'
+  | 'SECOND_TEAM_BUILDING'
+  | 'SECOND_TEAM_BUILDING_ANNOUNCEMENT'
+  | 'THIRD_TEAM_BUILDING'
+  | 'FINAL_RESULT_ANNOUNCEMENT';
+
+export type CurrentProjectSchedule = {
+  scheduleType: TeamBuildingScheduleType;
+  startAt: string;
+  endAt: string;
+};
+
+export type CurrentProjectResponse = {
+  project: {
+    projectId: number;
+    projectName: string;
+    maxMemberCount: number;
+    topics: Array<{ topicId: number; topic: string }>;
+    availableParts: Array<{ part: IdeaPartCode; available: boolean }>;
+    schedules: CurrentProjectSchedule[];
+  };
+  registrable: boolean;
+  canEnroll: boolean;
+};

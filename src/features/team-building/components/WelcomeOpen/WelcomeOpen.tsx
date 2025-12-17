@@ -1,8 +1,14 @@
 // WelcomeView.tsx 수정 (API 연동 + 일정 모달 + 개별 조회)
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 
-import { fetchCurrentTeamBuildingProject, fetchIdeaDetail, fetchIdeas } from '../../api/ideas';
+import {
+  CurrentProjectSchedule,
+  fetchCurrentTeamBuildingProject,
+  fetchIdeaDetail,
+  fetchIdeas,
+  TeamBuildingScheduleType,
+} from '../../api/ideas';
 import {
   ApplyCTNR,
   ArrowIcon,
@@ -52,24 +58,16 @@ import IdeaItem from '../IdeaItem/IdeaItem';
 import { Idea } from '../store/IdeaStore';
 import Toggle from '../Toggle';
 
-const TOPIC_FILTER_OPTIONS = ['전체', '디자인', '프론트엔드', '백엔드'];
 const IDEAS_PER_PAGE = 10;
 
-// 기본값 상수
-const DEFAULT_PROJECT_ID = 2;
-const DEFAULT_TOPIC_ID_MAP: Record<string, number> = {
-  주제1: 3,
-  주제2: 4,
+const SCHEDULE_LABEL: Partial<Record<TeamBuildingScheduleType, string>> = {
+  IDEA_REGISTRATION: '아이디어 등록 기간',
+  FIRST_TEAM_BUILDING: '1차 팀빌딩 지원 기간',
+  FIRST_TEAM_BUILDING_ANNOUNCEMENT: '1차 팀빌딩 결과 발표',
+  SECOND_TEAM_BUILDING: '2차 팀빌딩 지원 기간',
+  SECOND_TEAM_BUILDING_ANNOUNCEMENT: '2차 팀빌딩 결과 발표',
+  FINAL_RESULT_ANNOUNCEMENT: '최종 팀빌딩 결과 발표',
 };
-
-const TEAM_BUILDING_SCHEDULES = [
-  { title: '아이디어 등록 기간', period: '2025.11.01 9AM ~ 11.04 8PM' },
-  { title: '1차 팀빌딩 지원 기간', period: '2025.11.01 9AM ~ 11.04 8PM' },
-  { title: '1차 팀빌딩 결과 발표', period: '2025.11.01 9AM' },
-  { title: '2차 팀빌딩 지원 기간', period: '2025.11.01 9AM ~ 11.04 8PM' },
-  { title: '2차 팀빌딩 결과 발표', period: '2025.11.01 9AM' },
-  { title: '최종 팀빌딩 결과 발표', period: '2025.11.01 9AM' },
-] as const;
 
 const SCHEDULE_MODAL_STORAGE_KEY = 'welcomeOpenScheduleModalSeen';
 const SCHEDULE_MODAL_BODY_CLASS = 'schedule-modal-open';
@@ -170,10 +168,12 @@ export default function WelcomeView() {
   const [currentPage, setCurrentPage] = useState(1);
   const [topicFilter, setTopicFilter] = useState('전체');
   const [excludeClosed, setExcludeClosed] = useState(false);
-  const [projectId, setProjectId] = useState<number>(DEFAULT_PROJECT_ID);
-  const [topicIdMap, setTopicIdMap] = useState<Record<string, number>>(DEFAULT_TOPIC_ID_MAP);
+  const [projectId, setProjectId] = useState<number | null>(null);
+  const [topicIdMap, setTopicIdMap] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [projectName, setProjectName] = useState<string>('');
+  const [schedules, setSchedules] = useState<CurrentProjectSchedule[]>([]);
 
   // 일정 모달 초기화
   useEffect(() => {
@@ -223,27 +223,34 @@ export default function WelcomeView() {
         const data = resp.data;
         const project = data?.project;
 
-        if (project?.projectId) {
-          const parsedId = Number(project.projectId);
-          if (!Number.isNaN(parsedId)) setProjectId(parsedId);
+        setSchedules(Array.isArray(project?.schedules) ? project.schedules : []);
+
+        const nextProjectId = Number(project?.projectId);
+        if (!Number.isNaN(nextProjectId) && nextProjectId > 0) {
+          setProjectId(nextProjectId);
+        } else {
+          setProjectId(null);
         }
 
-        if (Array.isArray(project?.topics) && project.topics.length > 0) {
+        if (typeof project?.projectName === 'string') {
+          setProjectName(project.projectName);
+        }
+
+        if (Array.isArray(project?.topics)) {
           const nextMap: Record<string, number> = {};
           project.topics.forEach((topic: any) => {
             if (typeof topic?.topic === 'string' && typeof topic?.topicId === 'number') {
               nextMap[topic.topic] = topic.topicId;
             }
           });
-          if (Object.keys(nextMap).length > 0) {
-            setTopicIdMap(nextMap);
-          }
+          setTopicIdMap(nextMap);
         }
       } catch (err) {
         const isCanceled =
           (err as any)?.code === 'ERR_CANCELED' || (err as Error).name === 'CanceledError';
         if (!isCanceled) {
-          console.warn('프로젝트 정보 조회 실패, 기본값을 사용합니다.');
+          console.warn('프로젝트 정보 조회 실패');
+          setProjectId(null);
         }
       }
     };
@@ -262,7 +269,7 @@ export default function WelcomeView() {
       const topicId = topicFilter !== '전체' ? topicIdMap[topicFilter] : undefined;
 
       const params = {
-        page: currentPage - 1,
+        page: Math.max(0, currentPage - 1),
         size: IDEAS_PER_PAGE,
         sortBy: 'id',
         order: 'DESC' as const,
@@ -334,6 +341,35 @@ export default function WelcomeView() {
   const startIndex = (currentPage - 1) * IDEAS_PER_PAGE;
   const visibleIdeasCount = ideas.length;
 
+  const topicOptions = useMemo(() => {
+    const dynamic = Object.keys(topicIdMap);
+    return ['전체', ...dynamic];
+  }, [topicIdMap]);
+
+  const visibleSchedules = useMemo(() => {
+    return schedules
+      .filter(s => s.scheduleType !== 'THIRD_TEAM_BUILDING')
+      .filter(s => Boolean(SCHEDULE_LABEL[s.scheduleType]));
+  }, [schedules]);
+
+  const formatDateTime = (iso: string) => {
+    const d = new Date(iso);
+    // 필요하면 로케일/AMPM 맞춰 커스텀
+    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
+
+  if (projectId === null) {
+    return (
+      <Container>
+        <Wrapper>
+          <EmptyCard>
+            <EmptyMessage>프로젝트 정보를 불러오는 중...</EmptyMessage>
+          </EmptyCard>
+        </Wrapper>
+      </Container>
+    );
+  }
+
   return (
     <>
       {showScheduleModal && (
@@ -357,17 +393,23 @@ export default function WelcomeView() {
             </ScheduleModalHeader>
 
             <ScheduleSteps>
-              {TEAM_BUILDING_SCHEDULES.map((schedule, idx) => {
-                const isLast = idx === TEAM_BUILDING_SCHEDULES.length - 1;
+              {visibleSchedules.map((s, idx) => {
+                const isLast = idx === visibleSchedules.length - 1;
+                const title = SCHEDULE_LABEL[s.scheduleType] ?? s.scheduleType;
+
+                const isAnnouncement = s.scheduleType.includes('ANNOUNCEMENT');
+                const period = isAnnouncement
+                  ? formatDateTime(s.startAt)
+                  : `${formatDateTime(s.startAt)} ~ ${formatDateTime(s.endAt)}`;
+
                 return (
-                  <ScheduleStep key={schedule.title} $isLast={isLast}>
+                  <ScheduleStep key={s.scheduleType} $isLast={isLast}>
                     <ScheduleMarker $isLast={isLast}>
                       <ScheduleDot />
                     </ScheduleMarker>
-
                     <div>
-                      <ScheduleStepTitle>{schedule.title}</ScheduleStepTitle>
-                      <ScheduleStepDate>{schedule.period}</ScheduleStepDate>
+                      <ScheduleStepTitle>{title}</ScheduleStepTitle>
+                      <ScheduleStepDate>{period}</ScheduleStepDate>
                     </div>
                   </ScheduleStep>
                 );
@@ -384,13 +426,15 @@ export default function WelcomeView() {
 
             <ProjectTitleRow>
               <Subtitle>
-                그로우톤
+                {projectName || '프로젝트'}
                 <GrowthonLogo
                   src="/GrowthonScheduleIcon.svg"
                   alt="그로우톤 로고"
                   width={36}
                   height={36}
                   priority
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setShowScheduleModal(true)}
                 />
               </Subtitle>
             </ProjectTitleRow>
@@ -430,7 +474,7 @@ export default function WelcomeView() {
 
           <FilterContainer>
             <TopicSelectBox
-              options={TOPIC_FILTER_OPTIONS}
+              options={topicOptions}
               placeholder={topicFilter || '주제를 선택해주세요.'}
               multiple={false}
               searchable={false}

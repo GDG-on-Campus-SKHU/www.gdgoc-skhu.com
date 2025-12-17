@@ -9,11 +9,13 @@ import CurrentTeamEmpty from '../../components/MyTeam/CurrentTeamEmpty';
 import CurrentTeamSection from '../../components/MyTeam/CurrentTeamSection';
 import MemberApplyStatusSection from '../../components/MyTeam/MemberApplyStatusSection';
 import TabBar from '../../components/TabBar';
+import { useRouter } from 'next/router';
 
 type MyTeamTabKey = 'currentMembers' | 'applications';
 
 export default function MyTeamPage() {
   const [activeTab, setActiveTab] = useState<MyTeamTabKey>('currentMembers');
+  const router = useRouter();
 
   const {
     data: currentTeam,
@@ -24,6 +26,17 @@ export default function MyTeamPage() {
     enabled: true,
     retry: false,
   });
+
+  const handleGoIdeaDetail = () => {
+    if (!currentTeam?.ideaId) return;
+
+    router.push({
+      pathname: '/IdeaListDetail',
+      query: {
+        id: currentTeam.ideaId,
+      },
+    });
+  };
 
   // fetchCurrentTeam이 404에서 null을 반환하므로, "팀 없음"은 null로 판별
   const hasMatchedTeam = !!currentTeam;
@@ -62,6 +75,7 @@ export default function MyTeamPage() {
                   type="button"
                   variant="secondary"
                   title="내 아이디어 보러가기"
+                  onClick={handleGoIdeaDetail}
                   style={{
                     height: '50px',
                     width: '200px',
@@ -103,6 +117,7 @@ export default function MyTeamPage() {
                 type="button"
                 variant="secondary"
                 title="아이디어 보러가기"
+                onClick={handleGoIdeaDetail}
                 style={{
                   height: '50px',
                   width: '200px',

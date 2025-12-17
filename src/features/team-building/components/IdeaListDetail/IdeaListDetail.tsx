@@ -3,9 +3,10 @@ import { useRouter } from 'next/router';
 import axios from 'axios';
 import styled from 'styled-components';
 
-import { fetchIdeaDetail } from '../../api/ideas';
+import { fetchCurrentTeamBuildingProject, fetchIdeaDetail } from '../../api/ideas';
 import { createEmptyTeamCounts, Idea } from '../store/IdeaStore';
 import { sanitizeDescription } from '../utils/sanitizeDescription';
+import { partToLabel } from '../MyTeam/ApplyStatusSection';
 
 const SMALL_BREAKPOINT = '600px';
 const TEAM_ROLES = [
@@ -397,9 +398,33 @@ export default function IdeaListPage() {
 
   // 프로젝트 ID 가져오기 (URL 쿼리 또는 다른 소스에서)
   React.useEffect(() => {
-    // 예: localStorage나 다른 방법으로 projectId 가져오기
-    // 임시로 2로 설정 (실제로는 적절한 방법으로 가져와야 함)
-    setProjectId(2);
+    const controller = new AbortController();
+
+    const loadProjectId = async () => {
+      try {
+        const resp = await fetchCurrentTeamBuildingProject({ signal: controller.signal });
+        const project = resp.data?.project;
+        const nextProjectId = Number(project?.projectId);
+
+        if (Number.isFinite(nextProjectId) && nextProjectId > 0) {
+          setProjectId(nextProjectId);
+        } else {
+          setProjectId(null);
+          setError('프로젝트 정보를 불러오지 못했습니다.');
+        }
+      } catch (err) {
+        const isCanceled =
+          (err as any)?.code === 'ERR_CANCELED' || (err as Error).name === 'CanceledError';
+        if (!isCanceled) {
+          console.warn('프로젝트 정보 조회 실패:', err);
+          setProjectId(null);
+          setError('프로젝트 정보를 불러오지 못했습니다.');
+        }
+      }
+    };
+
+    loadProjectId();
+    return () => controller.abort();
   }, []);
 
   // API에서 아이디어 상세 정보 로드
@@ -534,7 +559,7 @@ export default function IdeaListPage() {
               {creatorInfo && (
                 <MentorContainer>
                   <MentorPart>
-                    {creatorInfo.school} {creatorInfo.part}{' '}
+                    {creatorInfo.school} {partToLabel(creatorInfo.part)}{' '}
                     <Mentor as="span">{creatorInfo.creatorName}</Mentor>
                   </MentorPart>
                 </MentorContainer>

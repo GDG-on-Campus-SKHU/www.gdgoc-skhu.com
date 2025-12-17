@@ -3,7 +3,6 @@ import { useRouter } from 'next/router';
 
 import useAutosaveDraft from '../../hooks/useAutosaveDraft';
 import usePreferredSync from '../../hooks/usePreferredSync';
-import useQuillImages from '../../hooks/useQuillImages';
 import { useIdeaStore } from '../store/IdeaStore';
 import { DEFAULT_TEAM_COUNTS, INTRO_MAX_LENGTH, TITLE_MAX_LENGTH } from './constants';
 import { TeamRole } from './IdeaFormUtils';
@@ -108,21 +107,6 @@ export default function IdeaForm(props: Props) {
     isSaving,
   });
 
-  // 3) Quill + 이미지 업로드(툴바/드랍/붙여넣기)
-  const {
-    quillRef,
-    imageInputRef,
-    pageRef,
-    quillModules,
-    quillFormats,
-    handleImageFileChange,
-    handleDescriptionChange,
-    plainDescription,
-  } = useQuillImages({
-    description: form.description ?? '',
-    onDescriptionChange,
-  });
-
   const title = form.title ?? '';
   const intro = form.intro ?? '';
   const topic = form.topic ?? '';
@@ -132,7 +116,7 @@ export default function IdeaForm(props: Props) {
     !title.trim() ||
     !intro.trim() ||
     !topic.trim() ||
-    plainDescription.length === 0 ||
+    (form.description ?? '').trim().length === 0 ||
     title.length > TITLE_MAX_LENGTH ||
     intro.length > INTRO_MAX_LENGTH;
 
@@ -221,19 +205,12 @@ export default function IdeaForm(props: Props) {
       onTopicSelect={(selected: any[]) => emitFieldChange('topic', selected[0] ?? '')}
       onPreferredPartSelect={handlePreferredPartSelect}
       onTeamAdjust={(key: any, next: any) => emitFieldChange(`team.${key}`, String(next))}
-      onDescriptionChange={handleDescriptionChange}
+      onDescriptionChange={onDescriptionChange}
       onPreview={handlePreviewClick}
       onOpenSubmitModal={() => setModalState('confirm')}
       onConfirmSubmit={() => setModalState('success')}
       onCloseModal={() => setModalState('idle')}
       onModalDone={handleModalDone}
-      // quill
-      quillRef={quillRef}
-      pageRef={pageRef}
-      imageInputRef={imageInputRef}
-      onImageFileChange={handleImageFileChange}
-      quillModules={quillModules}
-      quillFormats={quillFormats}
       // ui state
       isSubmitDisabled={isSubmitDisabled}
       modalState={modalState}
