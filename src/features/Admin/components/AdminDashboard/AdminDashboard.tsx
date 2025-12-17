@@ -102,29 +102,64 @@ export default function AdminDashboard({ summaryStats = [], projects = [] }: Adm
     };
 
     const normalizeProjects = (data: DashboardResponse): ProjectOverview[] => {
-      if (!Array.isArray(data.activeProjects)) {
-        return [];
+  if (!Array.isArray(data.activeProjects)) {
+    return [];
+  }
+
+  return data.activeProjects.map(project => {
+    const metrics: ProjectMetric[] = [
+      {
+        id: 'ideas',
+        label: '아이디어',
+        value: project.ideaCount,
+        unit: '개',
+      },
+      {
+        id: 'participants',
+        label: '참여 인원',
+        value: `${project.currentParticipants}/${project.maxMemberCount}`,
+        unit: '명',
+      },
+    ];
+
+    // 1차 팀빌딩 마감까지 남은 시간 계산
+    if (project.currentScheduleDeadline) {
+      const now = new Date();
+      const deadline = new Date(project.currentScheduleDeadline);
+      const diffMs = deadline.getTime() - now.getTime();
+
+      let timeRemaining = '';
+      
+      if (diffMs > 0) {
+        const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+        if (days > 0) {
+          timeRemaining = `${days}일 ${hours}시간 ${minutes}분`;
+        } else if (hours > 0) {
+          timeRemaining = `${hours}시간 ${minutes}분`;
+        } else {
+          timeRemaining = `${minutes}분`;
+        }
+      } else {
+        timeRemaining = '마감됨';
       }
 
-      return data.activeProjects.map(project => ({
-        id: String(project.id),
-        name: project.projectName,
-        metrics: [
-          {
-            id: 'ideas',
-            label: '아이디어',
-            value: project.ideaCount,
-            unit: '개',
-          },
-          {
-            id: 'participants',
-            label: '참여 인원',
-            value: `${project.currentParticipants}/${project.maxMemberCount}`,
-            unit: '명',
-          },
-        ],
-      }));
+      metrics.push({
+        id: 'deadline',
+        label: '1차 팀빌딩 마감',
+        value: timeRemaining,
+      });
+    }
+
+    return {
+      id: String(project.id),
+      name: project.projectName,
+      metrics,
     };
+  });
+};
 
     const fetchDashboard = async () => {
       try {
