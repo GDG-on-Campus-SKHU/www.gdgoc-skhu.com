@@ -1,6 +1,7 @@
 // * ui 확인을 위해 일단 본인이 팀장이라 가정
 import { useMemo } from 'react';
 import { useRouter } from 'next/router';
+import { useMyProfile } from '@/lib/mypageProfile.api';
 
 import { useProjectGalleryDetail } from '../../../../lib/projectGallery.api';
 import ProjectDetailView from '../../components/ProjectDetail/ProjectDetailView';
@@ -19,11 +20,20 @@ export default function ProjectDetailPage() {
     enabled: projectId !== null,
   });
 
+  const { data: myProfile } = useMyProfile({
+    enabled: true, // 로그인 되어있지 않으면 여기서 에러/undefined 가능
+  });
+
   if (!router.isReady) return null;
   if (projectId === null) return null;
 
   if (isLoading) return null; // 원하면 로딩 UI
   if (isError || !data) return null; // 원하면 에러 UI
+
+  const leaderUserId = data.leader?.userId;
+  const myUserId = myProfile?.userId;
+
+  const canEdit = Boolean(myUserId && leaderUserId && myUserId === leaderUserId);
 
   // meta 컴포넌트가 기대하는 형태로 가공
   const leader = data.leader
@@ -47,7 +57,7 @@ export default function ProjectDetailPage() {
       generation={data.generation}
       leader={leader}
       members={members}
-      canEdit
+      canEdit={canEdit}
       onClickEdit={handleClickEdit}
     />
   );

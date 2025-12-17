@@ -88,6 +88,7 @@ export const FieldLabel = styled.label`
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
+  padding-bottom: 10px;
   line-height: 160%; /* 32px */
 `;
 
