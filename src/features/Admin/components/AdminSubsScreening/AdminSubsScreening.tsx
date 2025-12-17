@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { NextPage } from 'next';
-import Image from 'next/image';
 import styled from 'styled-components';
 
 import { api } from '../../../../lib/api';
 import { PageInsertNum } from '../../styles/AdminIdeaProject';
 import Toggle, { ScreeningTab } from './Toggle';
+import {
+  useApproveUserSignup,
+  useRejectUserSignup,
+  useResetRejectedUserToWaiting,
+} from '@/lib/adminSubsScreening.api';
 
 type TabKey = ScreeningTab;
 
@@ -69,11 +73,16 @@ const AdminSubsScreening: NextPage = () => {
   const [historyList, setHistoryList] = useState<Applicant[]>([]);
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
   const [confirmName, setConfirmName] = useState<string | null>(null);
-  const [confirmAction, setConfirmAction] = useState<'approve' | 'reject'>('approve');
+  const [confirmAction, setConfirmAction] = useState<'approve' | 'reject' | 'reset'>('approve');
   const [showConfirm, setShowConfirm] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const approveMut = useApproveUserSignup();
+  const rejectMut = useRejectUserSignup();
+  const resetMut = useResetRejectedUserToWaiting();
+  const isDeciding = approveMut.isPending || rejectMut.isPending;
 
   // API 응답 데이터를 Applicant 형태로 변환
   const normalizeUser = (user: ApiUser): Applicant => {
@@ -200,37 +209,77 @@ const AdminSubsScreening: NextPage = () => {
     setShowComplete(false);
   };
 
-  const handleApproveConfirm = () => {
+  const openResetConfirm = (applicant: Applicant) => {
+    setSelectedApplicant(applicant);
+    setConfirmName(applicant.name);
+    setConfirmAction('reset');
+    setShowConfirm(true);
+    setShowComplete(false);
+  };
+
+  const handleConfirmAction = async () => {
     if (!selectedApplicant) return;
 
-    const statusToSet: Applicant['status'] = confirmAction === 'approve' ? 'approved' : 'rejected';
-    let moved = false;
+    try {
+      setError(null);
 
-    setPendingList(prev => {
-      const targetIndex = prev.findIndex(
-        applicant =>
-          applicant.id === selectedApplicant.id && applicant.email === selectedApplicant.email
-      );
-
-      if (targetIndex === -1) {
-        return prev;
+      // 1) API 호출
+      if (confirmAction === 'approve') {
+        await approveMut.mutateAsync(selectedApplicant.id);
+      } else if (confirmAction === 'reject') {
+        await rejectMut.mutateAsync(selectedApplicant.id);
+      } else {
+        // reset
+        await resetMut.mutateAsync(selectedApplicant.id);
       }
 
-      moved = true;
-      const nextPending = [...prev];
-      const [removedApplicant] = nextPending.splice(targetIndex, 1);
+      // 2) UI 리스트 이동
+      if (confirmAction === 'approve' || confirmAction === 'reject') {
+        const statusToSet: Applicant['status'] =
+          confirmAction === 'approve' ? 'approved' : 'rejected';
 
-      setHistoryList(prevHistory =>
-        dedupeApplicants([...prevHistory, { ...removedApplicant, status: statusToSet }])
-      );
+        // pending -> history
+        setPendingList(prev => {
+          const idx = prev.findIndex(
+            a => a.id === selectedApplicant.id && a.email === selectedApplicant.email
+          );
+          if (idx === -1) return prev;
 
-      return nextPending;
-    });
+          const next = [...prev];
+          const [removed] = next.splice(idx, 1);
 
-    if (moved) {
+          setHistoryList(prevHistory =>
+            dedupeApplicants([...prevHistory, { ...removed, status: statusToSet }])
+          );
+
+          return next;
+        });
+      } else {
+        // reset: history(REJECTED) -> pending(WAITING)
+        setHistoryList(prev =>
+          prev.filter(a => !(a.id === selectedApplicant.id && a.email === selectedApplicant.email))
+        );
+
+        setPendingList(prev => {
+          const exists = prev.some(
+            a => a.id === selectedApplicant.id && a.email === selectedApplicant.email
+          );
+          if (exists) return prev;
+          return [{ ...selectedApplicant, status: 'pending' }, ...prev];
+        });
+
+        // UX: pending 탭으로 이동
+        setActiveTab('pending');
+        setCurrentPage(1);
+      }
+
+      // 3) 모달 처리
       setShowConfirm(false);
       setShowComplete(true);
       setSelectedApplicant(null);
+    } catch (e: any) {
+      setError(e?.response?.data?.message ?? '처리에 실패했습니다.');
+      setShowConfirm(false);
     }
   };
 
@@ -243,32 +292,6 @@ const AdminSubsScreening: NextPage = () => {
 
   return (
     <Container>
-      <Sidebar>
-        <Logo>
-          <GdgocSkhuImage src="gdgoc_skhu_admin.svg" alt="" width={60} height={38} />
-          <LogoText>GDGoC SKHU</LogoText>
-        </Logo>
-
-        <LoginInfo>
-          <UserName>윤준석</UserName>
-          <Divider>님</Divider>
-        </LoginInfo>
-
-        <MenuList>
-          <MenuItem>대시보드</MenuItem>
-          <MenuItemActive>
-            <span>가입 심사</span>
-            <MenuArrowIcon src="/rightarrow_admin.svg" width={16} height={16} alt="" />
-          </MenuItemActive>
-          <MenuItem>멤버 관리</MenuItem>
-          <MenuItem>프로젝트 관리</MenuItem>
-          <MenuItem>아이디어 관리</MenuItem>
-          <MenuItem>프로젝트 갤러리 관리</MenuItem>
-          <MenuItem>액티비티 관리</MenuItem>
-          <MenuItem>홈 화면으로 나가기</MenuItem>
-        </MenuList>
-      </Sidebar>
-
       <MainContent>
         <HeaderBlock>
           <Header>
@@ -373,7 +396,11 @@ const AdminSubsScreening: NextPage = () => {
                           {applicant.status === 'rejected' && (
                             <RefuseWrapper>
                               <StatusRejectedText>거절됨</StatusRejectedText>
-                              <ReapplyButton type="button">
+                              <ReapplyButton
+                                type="button"
+                                onClick={() => openResetConfirm(applicant)}
+                                disabled={isDeciding}
+                              >
                                 <ReapplyButtonText>재심사</ReapplyButtonText>
                               </ReapplyButton>
                             </RefuseWrapper>
@@ -437,21 +464,41 @@ const AdminSubsScreening: NextPage = () => {
             <ModalCard>
               <ModalText>
                 <ModalTitle>
-                  <ModalHighlight>{confirmName ?? '이름'}</ModalHighlight>의 가입을{' '}
-                  <ModalHighlight>{confirmAction === 'approve' ? '승인' : '거절'}</ModalHighlight>
-                  할까요?
+                  {confirmAction === 'reset' ? (
+                    <>
+                      <ModalHighlight>{confirmName ?? '이름'}</ModalHighlight>의 가입 거절을{' '}
+                      <ModalHighlight>반려</ModalHighlight>할까요?
+                    </>
+                  ) : (
+                    <>
+                      <ModalHighlight>{confirmName ?? '이름'}</ModalHighlight>의 가입을{' '}
+                      <ModalHighlight>
+                        {confirmAction === 'approve' ? '승인' : '거절'}
+                      </ModalHighlight>
+                      할까요?
+                    </>
+                  )}
                 </ModalTitle>
+
                 <ModalNote>
                   {confirmAction === 'approve'
                     ? '이 작업은 되돌릴 수 없습니다.'
-                    : '거절한 후에 반려할 수 있습니다.'}
+                    : confirmAction === 'reject'
+                      ? '거절한 후에 반려할 수 있습니다.'
+                      : '다시 대기 상태로 되돌립니다.'}
                 </ModalNote>
               </ModalText>
+
               <ModalActions>
-                <PrimaryButton type="button" onClick={handleApproveConfirm}>
-                  {confirmAction === 'approve' ? '승인하기' : '거절하기'}
+                <PrimaryButton type="button" onClick={handleConfirmAction} disabled={isDeciding}>
+                  {confirmAction === 'approve'
+                    ? '승인하기'
+                    : confirmAction === 'reject'
+                      ? '거절하기'
+                      : '반려하기'}
                 </PrimaryButton>
-                <SecondaryButton type="button" onClick={closeModals}>
+
+                <SecondaryButton type="button" onClick={closeModals} disabled={isDeciding}>
                   취소
                 </SecondaryButton>
               </ModalActions>
@@ -465,8 +512,11 @@ const AdminSubsScreening: NextPage = () => {
               <ModalHighlight>
                 {confirmAction === 'approve'
                   ? '가입 승인이 완료되었습니다.'
-                  : '가입 거절이 완료되었습니다.'}
+                  : confirmAction === 'reject'
+                    ? '가입 거절이 완료되었습니다.'
+                    : '가입 거절 반려가 완료되었습니다.'}
               </ModalHighlight>
+
               <PrimarySuccessButton
                 type="button"
                 onClick={closeModals}
@@ -484,8 +534,6 @@ const AdminSubsScreening: NextPage = () => {
 
 export default AdminSubsScreening;
 
-// Styled Components (기존 코드 유지)
-
 const Container = styled.div`
   width: 100%;
   min-height: 100vh;
@@ -493,94 +541,6 @@ const Container = styled.div`
   display: flex;
   line-height: normal;
   letter-spacing: normal;
-`;
-
-const Sidebar = styled.div`
-  width: 255px;
-  min-height: 100vh;
-  background-color: #454b54;
-  overflow: hidden;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-`;
-
-const Logo = styled.div`
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 40px 28px 20px;
-  gap: 12px;
-  text-align: center;
-  color: #fff;
-  font-family: Pretendard;
-`;
-
-const GdgocSkhuImage = styled(Image)`
-  width: 60px;
-  max-height: 100%;
-  object-fit: cover;
-`;
-
-const MenuArrowIcon = styled(Image)`
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
-`;
-
-const LogoText = styled.h3`
-  margin: 0;
-  font-size: 20px;
-  line-height: 160%;
-  font-weight: 400;
-
-  @media screen and (max-width: 450px) {
-    font-size: 16px;
-    line-height: 26px;
-  }
-`;
-
-const LoginInfo = styled.div`
-  align-self: stretch;
-  border-top: 1px solid #626873;
-  display: flex;
-  align-items: center;
-  padding: 18px 28px 20px;
-  gap: 8px;
-  color: #fff;
-  font-family: Pretendard;
-`;
-
-const UserName = styled.h3`
-  margin: 0;
-  font-size: 20px;
-  line-height: 160%;
-  font-weight: 700;
-
-  @media screen and (max-width: 450px) {
-    font-size: 16px;
-    line-height: 26px;
-  }
-`;
-
-const Divider = styled.div`
-  font-size: 16px;
-  line-height: 160%;
-  font-weight: 500;
-`;
-
-const MenuList = styled.section`
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: center;
-  font-size: 16px;
-  color: #fff;
-  font-family: Pretendard;
 `;
 
 const MenuItem = styled.div`
@@ -602,12 +562,6 @@ const MenuItem = styled.div`
   &:hover {
     background-color: #353a40;
   }
-`;
-
-const MenuItemActive = styled(MenuItem)`
-  background: linear-gradient(#353a40, #353a40), #25282c;
-  font-weight: 700;
-  justify-content: space-between;
 `;
 
 const MainContent = styled.main`
@@ -1144,7 +1098,7 @@ const ModalOverlay = styled.div`
 const ModalCard = styled.div`
   display: flex;
   width: 500px;
-  height: 226px;
+  height: 236px;
   padding: 40px 20px 20px 20px;
   flex-direction: column;
   align-items: center;
@@ -1217,6 +1171,7 @@ const ModalActions = styled.div`
   align-items: flex-start;
   gap: 16px;
   align-self: stretch;
+  margin-top: 20px;
 `;
 
 const PrimarySuccessButton = styled.button`
