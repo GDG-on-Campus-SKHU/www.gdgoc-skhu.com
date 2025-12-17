@@ -67,7 +67,7 @@ interface _UpdateMyProfileRequest {
  * Domain Types
  * ======================================================= */
 export interface Generation {
-  id: number;
+  id?: number;
   generation: string;
   position: string;
   isMain: boolean;

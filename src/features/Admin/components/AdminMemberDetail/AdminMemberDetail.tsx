@@ -1,66 +1,59 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
+import {
+  BanUser,
+  DeleteUserGeneration,
+  fetchUserInfo,
+  UnbanUser,
+  updateUserInfo,
+  UpdateUserInfoData,
+  UserStatus,
+} from '@/lib/adminMember.api';
+import { Generation } from '@/lib/mypageProfile.api';
 import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 
 import SelectBoxBasic from '../../../team-building/components/SelectBoxBasic';
-
-type RoleItem = {
-  id: string;
-  generation: string;
-  role: string;
-  isPrimary?: boolean;
-};
-
-type StatusHistoryItem = {
-  status: string;
-  date: string;
-};
 
 type MemberDetail = {
   name: string;
   school: string;
   part: string;
   email: string;
-  phone: string;
-  joinedAt: string;
-  status: string;
-  softbanDate?: string;
-  softbanReason?: string;
-  statusHistory: StatusHistoryItem[];
-  roles: RoleItem[];
+  phoneNum: string;
+  approveAt: string;
+
+  status: UserStatus;
+
+  bannedAt?: string;
+  unbannedAt?: string;
+  deletedAt?: string;
+
+  banReason?: string;
+
+  generations: Generation[];
 };
 
-const PART_OPTIONS = ['Design', 'PM', 'FE', 'BE', 'iOS', 'Android'];
-const STATUS_OPTIONS = ['정상', '소프트밴', '하드밴'];
+const PART_OPTIONS = ['Design', 'PM', 'AI', 'Backend', 'Web', 'Mobile'];
 const GENERATION_OPTIONS = ['24-25', '25-26', '26-27'];
-const ROLE_OPTIONS = ['Member', 'Core', 'Organizer'];
-
-const MOCK_MEMBER: MemberDetail = {
-  name: '주현지',
-  school: '성공회대학교',
-  part: 'Design',
-  email: 'hyeonji443@office.skhu.ac.kr',
-  phone: '010-1234-5678',
-  joinedAt: '2025년 12월 1일',
-  status: '정상',
-  statusHistory: [],
-  roles: [
-    { id: 'role-24-25-member', generation: '24-25', role: 'Member', isPrimary: true },
-    { id: 'role-25-26-core', generation: '25-26', role: 'Core' },
-  ],
-};
+const POSITION_OPTIONS = ['Member', 'Core', 'Organizer'];
 
 const AdminMemberDetail: NextPage = () => {
+  const router = useRouter();
+  const userIdParam = router.query.userId;
+
+  const parsedUserId = typeof userIdParam === 'string' ? Number(userIdParam) : null;
+
   const [showSoftbanReleaseModal, setShowSoftbanReleaseModal] = useState(false);
   const [showSoftbanCompleteModal, setShowSoftbanCompleteModal] = useState(false);
-  const [member, setMember] = useState<MemberDetail>(MOCK_MEMBER);
+  const [member, setMember] = useState<MemberDetail | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showSoftbanModal, setShowSoftbanModal] = useState(false);
-  const [softbanReason, setSoftbanReason] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [softBanReason, setSoftBanReason] = useState('');
   const isModalOpen =
     showConfirmModal ||
     showCompleteModal ||
@@ -68,108 +61,22 @@ const AdminMemberDetail: NextPage = () => {
     showSoftbanCompleteModal ||
     showSoftbanReleaseModal;
 
-  const setField = <K extends keyof MemberDetail>(key: K, value: MemberDetail[K]) => {
-    setMember(prev => ({ ...prev, [key]: value }));
-  };
+  useEffect(() => {
+    if (!parsedUserId) return;
 
-  const handleRoleChange = (
-    id: string,
-    key: 'generation' | 'role' | 'isPrimary',
-    value: string | boolean
-  ) => {
-    setMember(prev => {
-      let updatedRoles = prev.roles.map(role =>
-        role.id === id ? { ...role, [key]: value } : role
-      );
-      if (key === 'isPrimary' && value) {
-        updatedRoles = updatedRoles.map(role =>
-          role.id === id ? { ...role, isPrimary: true } : { ...role, isPrimary: false }
-        );
-      }
-      return { ...prev, roles: updatedRoles };
-    });
-  };
+    const fetchData = async () => {
+      const member = await fetchUserInfo(parsedUserId);
+      setMember(member);
+    };
 
-  const handleAddRole = () => {
-    setMember(prev => ({
-      ...prev,
-      roles: [
-        {
-          id: `role-${Date.now()}`,
-          generation: '',
-          role: '',
-        },
-        ...prev.roles,
-      ],
-    }));
-  };
+    fetchData();
+  }, [parsedUserId]);
 
-  const handleRemoveRole = (id: string) => {
-    setMember(prev => {
-      const filtered = prev.roles.filter(role => role.id !== id);
-      if (filtered.length === 0) return prev;
-      const hasPrimary = filtered.some(role => role.isPrimary);
-      if (!hasPrimary) {
-        filtered[0] = { ...filtered[0], isPrimary: true };
-      }
-      return { ...prev, roles: filtered };
-    });
-  };
+  const statusDisplay = useMemo(() => {
+    if (!member) return [];
+    return getStatusDisplay(member);
+  }, [member]);
 
-  const handleSaveClick = () => {
-    setShowSoftbanModal(false);
-    setShowConfirmModal(true);
-    setShowCompleteModal(false);
-  };
-
-  const handleConfirmSave = () => {
-    setShowConfirmModal(false);
-    setShowCompleteModal(true);
-  };
-
-  const handleCloseModals = () => {
-    setShowConfirmModal(false);
-    setShowCompleteModal(false);
-    setShowSoftbanModal(false);
-    setShowSoftbanCompleteModal(false);
-    setShowSoftbanReleaseModal(false);
-    setSoftbanReason('');
-  };
-
-  const handleOpenSoftbanModal = () => {
-    setShowSoftbanModal(true);
-    setShowConfirmModal(false);
-    setShowCompleteModal(false);
-  };
-
-  const handleApplySoftban = () => {
-    const today = new Date();
-    const formattedDate = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
-
-    setMember(prev => ({
-      ...prev,
-      status: '소프트밴',
-      softbanDate: formattedDate,
-      softbanReason: softbanReason,
-      statusHistory: [{ status: '소프트밴', date: formattedDate }, ...prev.statusHistory],
-    }));
-    setShowSoftbanModal(false);
-    setShowSoftbanCompleteModal(true);
-    setSoftbanReason('');
-  };
-  const handleReleaseSoftban = () => {
-    const today = new Date();
-    const formattedDate = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
-
-    setMember(prev => ({
-      ...prev,
-      status: '정상',
-      softbanDate: undefined,
-      softbanReason: undefined,
-      statusHistory: [{ status: '정상', date: formattedDate }, ...prev.statusHistory],
-    }));
-    setShowSoftbanReleaseModal(true);
-  };
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -181,6 +88,270 @@ const AdminMemberDetail: NextPage = () => {
       document.body.style.overflow = '';
     };
   }, [isModalOpen, mounted]);
+
+  const sortedGenerations = useMemo(() => {
+    if (!member) return [];
+
+    return [...member.generations].sort((a, b) => {
+      if (a.isMain === b.isMain) return 0;
+      return a.isMain ? -1 : 1;
+    });
+  }, [member]);
+
+  if (!parsedUserId || !member) {
+    return <div>로딩 중...</div>;
+  }
+
+  function getStatusDisplay(member: MemberDetail): string[] {
+    const result: string[] = [];
+
+    if (member.status === 'DELETED') {
+      result.push('탈퇴');
+      return result;
+    }
+
+    if (member.bannedAt) {
+      result.push(`소프트밴 (${member.bannedAt})`);
+    }
+
+    if (member.bannedAt && member.unbannedAt) {
+      result.push(`정상 (${member.unbannedAt})`);
+    }
+
+    if (!member.bannedAt && member.status === 'ACTIVE') {
+      result.push('정상');
+    }
+
+    return result;
+  }
+
+  const setField = <K extends keyof MemberDetail>(key: K, value: MemberDetail[K]) => {
+    setMember(prev => (prev ? { ...prev, [key]: value } : prev));
+  };
+
+  const handleMainGenerationChange = (index: number) => {
+    setMember(prev =>
+      prev
+        ? {
+            ...prev,
+            generations: prev.generations.map((gen, i) => ({
+              ...gen,
+              isMain: i === index,
+            })),
+          }
+        : prev
+    );
+  };
+
+  const handleGenerationChange = (index: number, value: string) => {
+    setMember(prev =>
+      prev
+        ? {
+            ...prev,
+            generations: prev.generations.map((gen, i) =>
+              i === index ? { ...gen, generation: value } : gen
+            ),
+          }
+        : prev
+    );
+  };
+
+  const handlePositionChange = (index: number, value: string) => {
+    setMember(prev =>
+      prev
+        ? {
+            ...prev,
+            generations: prev.generations.map((gen, i) =>
+              i === index ? { ...gen, position: value } : gen
+            ),
+          }
+        : prev
+    );
+  };
+
+  const handleAddGeneration = () => {
+    setMember(prev =>
+      prev
+        ? {
+            ...prev,
+            generations: [
+              ...prev.generations,
+              {
+                generation: '',
+                position: 'MEMBER',
+                isMain: prev.generations.length === 0,
+                _tempId: crypto.randomUUID(), // ⭐️ 핵심
+              } as any,
+            ],
+          }
+        : prev
+    );
+  };
+
+  const buildUpdatePayload = (member: MemberDetail): UpdateUserInfoData => ({
+    school: member.school,
+    part: partUiToEnum(member.part),
+    generations: member.generations
+      .filter(gen => gen.generation.trim() !== '')
+      .map(gen => ({
+        ...(gen.id != null && { id: gen.id }),
+        generation: gen.generation,
+        position: positionToEnum(gen.position),
+        isMain: gen.isMain,
+      })),
+  });
+
+  const handleSaveClick = () => {
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmSave = async () => {
+    if (!member || !parsedUserId) return;
+    console.log(member.generations);
+    try {
+      const payload = buildUpdatePayload(member);
+
+      console.log('UPDATE PAYLOAD', payload); // 디버깅용
+      await updateUserInfo(parsedUserId, payload);
+
+      setShowConfirmModal(false);
+      setShowCompleteModal(true);
+    } catch (error) {
+      console.error(error);
+      alert('저장에 실패했습니다.');
+    }
+  };
+
+  const positionToEnum = (position: string) => {
+    if (['MEMBER', 'CORE', 'ORGANIZER'].includes(position)) {
+      return position;
+    }
+
+    switch (position) {
+      case 'Member':
+        return 'MEMBER';
+      case 'Core':
+        return 'CORE';
+      case 'Organizer':
+        return 'ORGANIZER';
+      default:
+        throw new Error(`Invalid position: ${position}`);
+    }
+  };
+
+  const partUiToEnum = (part: string) => {
+    switch (part) {
+      case 'Design':
+        return 'DESIGN';
+      case 'PM':
+        return 'PM';
+      case 'AI':
+        return 'AI';
+      case 'Backend':
+        return 'BACKEND';
+      case 'Web':
+        return 'WEB';
+      case 'Mobile':
+        return 'MOBILE';
+      default:
+        throw new Error(`Invalid part: ${part}`);
+    }
+  };
+
+  const enumToPosition = (value: string): 'Member' | 'Core' | 'Organizer' => {
+    switch (value) {
+      case 'MEMBER':
+        return 'Member';
+      case 'CORE':
+        return 'Core';
+      case 'ORGANIZER':
+        return 'Organizer';
+      default:
+        throw new Error(`Invalid position enum: ${value}`);
+    }
+  };
+
+  const handleCloseModals = () => {
+    setShowConfirmModal(false);
+    setShowCompleteModal(false);
+    setShowSoftbanModal(false);
+    setShowSoftbanCompleteModal(false);
+    setShowSoftbanReleaseModal(false);
+    setSoftBanReason('');
+  };
+
+  const handleOpenSoftbanModal = () => {
+    setShowSoftbanModal(true);
+  };
+
+  const handleApplySoftban = async () => {
+    if (!parsedUserId) return;
+    if (!softBanReason.trim()) {
+      alert('소프트밴 사유를 입력해주세요.');
+      return;
+    }
+
+    try {
+      await BanUser(parsedUserId, { reason: softBanReason });
+
+      const updatedMember = await fetchUserInfo(parsedUserId);
+      setMember(updatedMember);
+
+      setShowSoftbanModal(false);
+      setShowSoftbanCompleteModal(true);
+      setSoftBanReason('');
+    } catch (e) {
+      console.error(e);
+      alert('소프트밴 처리에 실패했습니다.');
+    }
+  };
+
+  const handleReleaseSoftban = async () => {
+    if (!parsedUserId) return;
+
+    try {
+      await UnbanUser(parsedUserId);
+
+      const updatedMember = await fetchUserInfo(parsedUserId);
+      setMember(updatedMember);
+
+      setShowSoftbanReleaseModal(true);
+    } catch (e) {
+      console.error(e);
+      alert('소프트밴 해제에 실패했습니다.');
+    }
+  };
+
+  const getGenerationKey = (gen: Generation, index: number) => {
+    return gen.id ?? `temp-${index}`;
+  };
+
+  const handleUserProfile = (userId: number) => {
+    router.push(`/admin-member/${userId}/profile`);
+  };
+
+  const handleDeleteGeneration = async (gen: Generation) => {
+    setMember(prev => {
+      if (!prev) return prev;
+
+      const filtered = prev.generations.filter(g => g !== gen);
+
+      if (!filtered.some(g => g.isMain) && filtered.length > 0) {
+        filtered[0] = { ...filtered[0], isMain: true };
+      }
+
+      return { ...prev, generations: filtered };
+    });
+
+    if (gen.id) {
+      try {
+        await DeleteUserGeneration(gen.id);
+      } catch (e) {
+        console.error(e);
+        alert('역할 삭제에 실패했습니다.');
+      }
+    }
+  };
 
   return (
     <Container>
@@ -218,13 +389,18 @@ const AdminMemberDetail: NextPage = () => {
 
         <DetailHeader>
           <MemberName>{member.name}</MemberName>
-          <ProfileButton type="button">프로필 보기</ProfileButton>
+          <ProfileButton type="button" onClick={() => handleUserProfile(parsedUserId)}>
+            프로필 보기
+          </ProfileButton>
         </DetailHeader>
         <ContentCard>
           <FormGrid>
             <FieldGroup>
               <FieldLabel>학교</FieldLabel>
-              <Input value={member.school} onChange={e => setField('school', e.target.value)} />
+              <Input
+                value={member.school ?? ''}
+                onChange={e => setField('school', e.target.value)}
+              />
             </FieldGroup>
             <FieldGroup>
               <FieldLabel>파트</FieldLabel>
@@ -241,37 +417,31 @@ const AdminMemberDetail: NextPage = () => {
 
             <FieldGroup>
               <FieldLabel>이메일</FieldLabel>
-              <MutedInput value={member.email} readOnly />
+              <MutedInput value={member.email ?? ''} readOnly />
             </FieldGroup>
             <FieldGroup>
               <FieldLabel>전화번호</FieldLabel>
-              <MutedInput value={member.phone} readOnly />
+              <MutedInput value={member?.phoneNum ?? ''} readOnly />
             </FieldGroup>
 
             <FieldGroup>
               <FieldLabel>가입일</FieldLabel>
-              <MutedInput value={member.joinedAt} readOnly />
+              <MutedInput value={member.approveAt ?? ''} readOnly />
             </FieldGroup>
             <FieldGroup>
               <FieldLabel>상태</FieldLabel>
-              {member.statusHistory.length > 0 ? (
-                <StatusHistoryBox>
-                  {member.statusHistory.map((item, index) => (
-                    <StatusHistoryItem key={index}>
-                      {item.status} ({item.date})
-                    </StatusHistoryItem>
-                  ))}
-                </StatusHistoryBox>
-              ) : (
-                <MutedInput value={member.status} readOnly />
-              )}
+              <StatusHistoryBox>
+                {statusDisplay.map((text, idx) => (
+                  <StatusHistoryItem key={idx}>{text}</StatusHistoryItem>
+                ))}
+              </StatusHistoryBox>
             </FieldGroup>
           </FormGrid>
-          {member.status === '소프트밴' && member.softbanReason && (
+          {member.status === 'BANNED' && member.banReason && (
             <SoftbanReasonSection>
               <SoftbanReasonLabel>소프트밴 사유</SoftbanReasonLabel>
               <SoftbanReasonBox>
-                <SoftbanReasonText>{member.softbanReason}</SoftbanReasonText>
+                <SoftbanReasonText>{member.banReason}</SoftbanReasonText>
               </SoftbanReasonBox>
             </SoftbanReasonSection>
           )}
@@ -281,67 +451,50 @@ const AdminMemberDetail: NextPage = () => {
               <RoleHelper>선택된 역할이 기본 역할로 설정됩니다.</RoleHelper>
             </RoleHeader>
             <AddButtonCTNR>
-              <AddButton type="button" onClick={handleAddRole}>
+              <AddButton type="button" onClick={handleAddGeneration}>
                 추가
               </AddButton>
             </AddButtonCTNR>
           </RoleHeaderRow>
 
           <RoleList>
-            {member.roles.map(role => (
-              <RoleRow key={role.id}>
-                <Radio
-                  checked={Boolean(role.isPrimary)}
-                  onChange={() => handleRoleChange(role.id, 'isPrimary', true)}
-                  aria-label="기본 역할로 설정"
+            {sortedGenerations.map((gen, index) => (
+              <RoleRow key={getGenerationKey(gen, index)}>
+                <Radio checked={gen.isMain} onChange={() => handleMainGenerationChange(index)} />
+
+                <SelectBoxBasic
+                  options={GENERATION_OPTIONS}
+                  value={gen.generation ? [gen.generation] : []}
+                  onChange={selected => handleGenerationChange(index, selected?.[0] ?? '')}
                 />
-                <SelectBoxWrapper>
-                  <SelectBoxBasic
-                    className="admin-member-select"
-                    options={GENERATION_OPTIONS}
-                    placeholder="기수"
-                    value={role.generation ? [role.generation] : []}
-                    onChange={selected =>
-                      handleRoleChange(
-                        role.id,
-                        'generation',
-                        selected[0] ?? role.generation ?? GENERATION_OPTIONS[0]
-                      )
-                    }
-                  />
-                </SelectBoxWrapper>
-                <SelectBoxWrapper>
-                  <SelectBoxBasic
-                    className="admin-member-select"
-                    options={ROLE_OPTIONS}
-                    placeholder="분류"
-                    value={role.role ? [role.role] : []}
-                    onChange={selected =>
-                      handleRoleChange(role.id, 'role', selected[0] ?? role.role ?? ROLE_OPTIONS[0])
-                    }
-                  />
-                </SelectBoxWrapper>
+
+                <SelectBoxBasic
+                  options={POSITION_OPTIONS}
+                  value={gen.position ? [enumToPosition(gen.position)] : []}
+                  onChange={selected =>
+                    handlePositionChange(index, positionToEnum(selected?.[0] ?? 'Member'))
+                  }
+                />
+
                 <DeleteIconCTNR
                   src="/deleteicon_admin.svg"
                   alt="삭제"
-                  width={16.667}
-                  height={18.75}
-                  onClick={() => handleRemoveRole(role.id)}
+                  width={16}
+                  height={16}
+                  onClick={() => handleDeleteGeneration(gen)}
                 />
               </RoleRow>
             ))}
           </RoleList>
 
-          <ActionRow $roleCount={member.roles.length}>
-            {member.status === '소프트밴' ? (
-              <OutlineWarningButton type="button" onClick={handleReleaseSoftban}>
-                <OutlineWarningButtonText>소프트밴 해제</OutlineWarningButtonText>
-              </OutlineWarningButton>
-            ) : (
-              <OutlineDangerButton type="button" onClick={handleOpenSoftbanModal}>
-                소프트밴
+          <ActionRow $roleCount={member.generations.length}>
+            {member.status === 'BANNED' ? (
+              <OutlineDangerButton onClick={handleReleaseSoftban}>
+                소프트밴 해제
               </OutlineDangerButton>
-            )}
+            ) : member.status === 'ACTIVE' ? (
+              <OutlineDangerButton onClick={handleOpenSoftbanModal}>소프트밴</OutlineDangerButton>
+            ) : null}
             <PrimaryButton type="button" onClick={handleSaveClick}>
               저장하기
             </PrimaryButton>
@@ -366,8 +519,8 @@ const AdminMemberDetail: NextPage = () => {
                   <SoftbanArea>
                     <SoftbanTextarea
                       placeholder="소프트밴 사유를 입력해주세요."
-                      value={softbanReason}
-                      onChange={e => setSoftbanReason(e.target.value)}
+                      value={softBanReason}
+                      onChange={e => setSoftBanReason(e.target.value)}
                     />
                   </SoftbanArea>
                   <SoftbanActions>
@@ -1243,32 +1396,6 @@ const SoftbanReasonText = styled.p`
   white-space: pre-line;
 `;
 
-const OutlineWarningButton = styled.button`
-  display: flex;
-  width: 300px;
-  height: 50px;
-  padding: 10px 8px;
-  justify-content: center;
-  align-items: center;
-  border-radius: 8px;
-  border: 1px solid var(--point-red, #ea4335);
-  background: #fff;
-
-  &:hover {
-    background: rgba(66, 133, 244, 0.08);
-  }
-`;
-
-const OutlineWarningButtonText = styled.span`
-  color: var(--point-red, #ea4335);
-
-  /* body/b3/b3 */
-  font-family: Pretendard;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 160%; /* 28.8px */
-`;
 const SoftbanReleaseMessage = styled.p`
   margin: 0;
   color: var(--grayscale-600, #7e8590);

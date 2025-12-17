@@ -1,7 +1,7 @@
 import dynamic from 'next/dynamic';
 
 const AdminMemberProfile = dynamic(
-  () => import('../features/Admin/components/AdminMemberProfile/AdminMemberProfile'),
+  () => import('../../../features/Admin/components/AdminMemberProfile/AdminMemberProfile'),
   { ssr: false }
 );
 
