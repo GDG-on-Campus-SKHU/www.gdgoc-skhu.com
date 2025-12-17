@@ -59,14 +59,20 @@ export default function AdminIdeaProject() {
           projects.map(project => ({
             id: project.projectId,
             name: project.projectName,
-            startDate: project.startAt ? project.startAt.slice(0, 10).replaceAll('-', '.') : '—',
-            endDate: project.endAt ? project.endAt.slice(0, 10).replaceAll('-', '.') : '—',
+            startDate: project.startAt
+              ? project.startAt.slice(0, 10).replaceAll('-', '.')
+              : '—',
+            endDate: project.endAt
+              ? project.endAt.slice(0, 10).replaceAll('-', '.')
+              : '—',
           }))
         );
 
-        setTotalPages(pageInfo.totalPages);
+        setTotalPages(Math.max(1, pageInfo.totalPages));
       } catch (error) {
-        console.error('프로젝트 조회 실패', error);
+        setRows([]);
+        setTotalPages(1);
+        setPage(1);
       }
     };
 
@@ -121,19 +127,29 @@ export default function AdminIdeaProject() {
       </TableCard>
 
       <Pagination>
-        <PageButton $isArrow onClick={() => setPage(p => Math.max(1, p - 1))}>
+        <PageButton
+          $isArrow
+          onClick={() => setPage(p => Math.max(1, p - 1))}
+        >
           <ArrowIcon $direction="left" />
         </PageButton>
 
         <PageNumberGroup>
           {Array.from({ length: totalPages }, (_, i) => (
-            <PageInsertNum key={i + 1} $active={page === i + 1} onClick={() => setPage(i + 1)}>
+            <PageInsertNum
+              key={i + 1}
+              $active={page === i + 1}
+              onClick={() => setPage(i + 1)}
+            >
               {i + 1}
             </PageInsertNum>
           ))}
         </PageNumberGroup>
 
-        <PageButton $isArrow onClick={() => setPage(p => Math.min(totalPages, p + 1))}>
+        <PageButton
+          $isArrow
+          onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+        >
           <ArrowIcon $direction="right" />
         </PageButton>
       </Pagination>
