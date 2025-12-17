@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
 import type { NextPage } from 'next';
-import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useAdminCategories } from '@/lib/adminActivity.api';
 import styled from 'styled-components';

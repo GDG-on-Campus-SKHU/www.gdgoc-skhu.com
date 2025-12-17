@@ -451,7 +451,6 @@ const AdminProjectManagement: NextPage = () => {
   if (!hasProject) {
     return (
       <div className={styles.container}>
-
         <main className={styles.mainContent}>
           <div className={styles.headerSection}>
             <div className={styles.headerLeft}>
@@ -492,7 +491,6 @@ const AdminProjectManagement: NextPage = () => {
   // 프로젝트가 있을 때 - 편집 화면
   return (
     <div className={styles.container}>
-
       <main className={styles.mainContent}>
         <div className={styles.headerSection}>
           <div className={styles.headerLeft}>

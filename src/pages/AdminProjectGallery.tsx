@@ -6,7 +6,5 @@ const AdminProjectGallery = dynamic(
 );
 
 export default function AdminProjectGalleryPage() {
-  return (
-    <AdminProjectGallery />
-  );
+  return <AdminProjectGallery />;
 }

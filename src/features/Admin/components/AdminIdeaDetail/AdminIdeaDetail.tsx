@@ -2,16 +2,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import {
   AdminIdeaDetail as AdminIdeaDetailType,
+  deleteAdminIdea,
   getAdminProjectIdeaDetail,
   removeAdminIdeaMember,
-  deleteAdminIdea,
 } from '@/lib/adminIdea.api';
 import styled from 'styled-components';
 
 import MyTeamCount from '../../../team-building/components/MyTeam/MyTeamCount';
 import MyTeamMemberCard from '../../../team-building/components/MyTeam/MyTeamMember';
 import MyTeamStatusCard from '../../../team-building/components/MyTeam/MyTeamStatus';
-
 import {
   CancelButtonText,
   ContentContainer,
@@ -45,7 +44,6 @@ import {
   TitleSection,
   TitleText,
 } from '../../styles/AdminIdeaDetail';
-
 import { sanitizeDescription } from '../../utils/sanitizeDescription';
 
 /* ===============================
@@ -88,11 +86,9 @@ const ActionButton = styled.button<{ $primary?: boolean; $danger?: boolean }>`
   cursor: pointer;
   padding: 10px 8px;
   border: 1px solid
-    ${({ $primary, $danger }) =>
-      $primary ? '#4285f4' : $danger ? '#f44242' : '#d7dadd'};
+    ${({ $primary, $danger }) => ($primary ? '#4285f4' : $danger ? '#f44242' : '#d7dadd')};
   background: #ffffff;
-  color: ${({ $primary, $danger }) =>
-    $primary ? '#4285f4' : $danger ? '#f44242' : '#040405'};
+  color: ${({ $primary, $danger }) => ($primary ? '#4285f4' : $danger ? '#f44242' : '#040405')};
 `;
 
 const SubjectRow = styled.div`
@@ -143,8 +139,7 @@ export default function AdminIdeaDetail() {
   const { id, projectId } = router.query;
 
   const [ideaData, setIdeaData] = useState<AdminIdeaDetailType | null>(null);
-  const [ideaModalState, setIdeaModalState] =
-    useState<'closed' | 'confirm' | 'success'>('closed');
+  const [ideaModalState, setIdeaModalState] = useState<'closed' | 'confirm' | 'success'>('closed');
 
   const [memberModal, setMemberModal] = useState<{
     open: boolean;
@@ -287,9 +282,7 @@ export default function AdminIdeaDetail() {
 
               {!part.isRecruiting && <MyTeamStatusCard variant="not-recruiting" />}
 
-              {part.isRecruiting && part.current === 0 && (
-                <MyTeamStatusCard variant="not-filled" />
-              )}
+              {part.isRecruiting && part.current === 0 && <MyTeamStatusCard variant="not-filled" />}
 
               {part.members.map(member => (
                 <MyTeamMemberCard
@@ -345,9 +338,7 @@ export default function AdminIdeaDetail() {
                   <DeleteButtonText>삭제하기</DeleteButtonText>
                 </MyDeleteButton>
                 <MyCancelButton
-                  onClick={() =>
-                    setMemberModal({ open: false, memberId: null, memberName: '' })
-                  }
+                  onClick={() => setMemberModal({ open: false, memberId: null, memberName: '' })}
                 >
                   <CancelButtonText>취소</CancelButtonText>
                 </MyCancelButton>

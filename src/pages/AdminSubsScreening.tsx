@@ -6,7 +6,5 @@ const AdminSubsScreening = dynamic(
 );
 
 export default function AdminSubsScreeningPage() {
-  return (
-    <AdminSubsScreening />
-  );
+  return <AdminSubsScreening />;
 }

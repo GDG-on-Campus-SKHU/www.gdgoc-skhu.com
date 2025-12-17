@@ -8,8 +8,8 @@ import { AnimatePresence } from 'framer-motion';
 import Footer from '../components/Footer';
 import Nav from '../components/Nav';
 import Scene from '../components/Scene';
-import AdminLayout from '../features/Admin/layout/AdminLayout';
 import { BASE_URL } from '../constants/common';
+import AdminLayout from '../features/Admin/layout/AdminLayout';
 import GlobalStyle from '../styles/GlobalStyle';
 
 import '@uiw/react-md-editor/markdown-editor.css';

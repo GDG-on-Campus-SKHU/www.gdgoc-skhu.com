@@ -8,7 +8,5 @@ const AdminIdeaEdit = dynamic(
 );
 
 export default function AdminIdeaEditPage() {
-  return (
-    <AdminIdeaEdit />
-  );
+  return <AdminIdeaEdit />;
 }

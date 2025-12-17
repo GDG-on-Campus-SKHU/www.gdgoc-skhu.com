@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
@@ -36,7 +37,6 @@ const AdminProjectManagement: NextPage = () => {
 
   return (
     <div className={styles.container}>
-
       <main className={styles.mainContent}>
         <div className={styles.headerSection}>
           <div className={styles.headerLeft}>

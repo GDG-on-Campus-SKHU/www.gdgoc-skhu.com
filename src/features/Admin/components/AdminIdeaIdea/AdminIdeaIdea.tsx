@@ -62,7 +62,6 @@ export default function AdminIdeaIdea() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  /** 프로젝트 메타 정보 조회 */
   useEffect(() => {
     if (!projectId) return;
 
@@ -87,9 +86,8 @@ export default function AdminIdeaIdea() {
     };
 
     fetchProject();
-  }, [projectId]);
+  }, [projectId, router]);
 
-  /** 아이디어 목록 조회 */
   useEffect(() => {
     if (!projectId) return;
 
@@ -132,12 +130,10 @@ export default function AdminIdeaIdea() {
     };
 
     fetchIdeas();
-  }, [projectId, page]);
+  }, [projectId, page, router]);
 
   const handleRowClick = (row: IdeaRow) => {
-    const targetPath = row.status === '모집 중단'
-      ? '/AdminIdeaDeleted'
-      : '/AdminIdeaDetail';
+    const targetPath = row.status === '모집 중단' ? '/AdminIdeaDeleted' : '/AdminIdeaDetail';
 
     router.push({
       pathname: targetPath,
@@ -160,9 +156,7 @@ export default function AdminIdeaIdea() {
           <InfoRow>
             <NameInfoRow>{project?.projectName ?? '프로젝트명'}</NameInfoRow>
             <DateInfoRow>
-              {project
-                ? `${formatDate(project.startAt)} ~ ${formatDate(project.endAt)}`
-                : '— ~ —'}
+              {project ? `${formatDate(project.startAt)} ~ ${formatDate(project.endAt)}` : '— ~ —'}
             </DateInfoRow>
           </InfoRow>
 
@@ -220,11 +214,7 @@ export default function AdminIdeaIdea() {
               {Array.from({ length: totalPages }, (_, i) => {
                 const p = i + 1;
                 return (
-                  <PageInsertNum
-                    key={p}
-                    $active={p === page}
-                    onClick={() => setPage(p)}
-                  >
+                  <PageInsertNum key={p} $active={p === page} onClick={() => setPage(p)}>
                     {p}
                   </PageInsertNum>
                 );

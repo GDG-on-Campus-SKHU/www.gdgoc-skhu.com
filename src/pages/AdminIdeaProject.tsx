@@ -6,7 +6,5 @@ const AdminIdeaProject = dynamic(
 );
 
 export default function AdminIdeaProjectPage() {
-  return (
-    <AdminIdeaProject />
-  );
+  return <AdminIdeaProject />;
 }

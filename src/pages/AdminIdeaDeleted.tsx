@@ -6,7 +6,5 @@ const AdminIdeaDeleted = dynamic(
 );
 
 export default function AdminIdeaDeletedPage() {
-  return (
-    <AdminIdeaDeleted />
-  );
+  return <AdminIdeaDeleted />;
 }
