@@ -75,9 +75,14 @@ export default function AdminIdeaIdea() {
 
         const found = res.data.projects.find(p => p.projectId === Number(projectId));
 
-        setProject(found ?? null);
-      } catch (e) {
-        console.error('프로젝트 정보 조회 실패', e);
+        if (!found) {
+          router.replace('/AdminIdeaProject');
+          return;
+        }
+
+        setProject(found);
+      } catch {
+        router.replace('/AdminIdeaProject');
       }
     };
 
@@ -108,25 +113,31 @@ export default function AdminIdeaIdea() {
           return {
             id: idea.ideaId,
             title: idea.title,
-            author: idea.authorName ?? '작성자', // 백엔드 지원 전 임시
+            author: idea.authorName ?? '작성자',
             status,
           };
         });
 
         setIdeas(mapped);
-        setTotalPages(res.data.pageInfo.totalPages);
-      } catch (e) {
-        console.error('아이디어 목록 조회 실패', e);
+        setTotalPages(Math.max(1, res.data.pageInfo.totalPages));
+      } catch (e: any) {
+        if (e?.response?.status === 404) {
+          router.replace('/AdminIdeaProject');
+          return;
+        }
+
+        setIdeas([]);
+        setTotalPages(1);
       }
     };
 
     fetchIdeas();
   }, [projectId, page]);
 
-  // [수정됨] 클릭 시 상태에 따라 페이지 분기 처리
   const handleRowClick = (row: IdeaRow) => {
-    // 모집 중단 상태라면 Deleted 페이지로, 아니면 Detail 페이지로 이동
-    const targetPath = row.status === '모집 중단' ? '/AdminIdeaDeleted' : '/AdminIdeaDetail';
+    const targetPath = row.status === '모집 중단'
+      ? '/AdminIdeaDeleted'
+      : '/AdminIdeaDetail';
 
     router.push({
       pathname: targetPath,
@@ -139,7 +150,6 @@ export default function AdminIdeaIdea() {
 
   return (
     <Content>
-      {/* 레이아웃 너비 제한 유지 */}
       <ContentContainer style={{ maxWidth: '1080px', width: '100%' }}>
         <Heading>
           <Title>아이디어 관리</Title>
@@ -148,9 +158,11 @@ export default function AdminIdeaIdea() {
 
         <ContentBody>
           <InfoRow>
-            <NameInfoRow>{project ? project.projectName : '프로젝트명'}</NameInfoRow>
+            <NameInfoRow>{project?.projectName ?? '프로젝트명'}</NameInfoRow>
             <DateInfoRow>
-              {project ? `${formatDate(project.startAt)} ~ ${formatDate(project.endAt)}` : '— ~ —'}
+              {project
+                ? `${formatDate(project.startAt)} ~ ${formatDate(project.endAt)}`
+                : '— ~ —'}
             </DateInfoRow>
           </InfoRow>
 
@@ -208,7 +220,11 @@ export default function AdminIdeaIdea() {
               {Array.from({ length: totalPages }, (_, i) => {
                 const p = i + 1;
                 return (
-                  <PageInsertNum key={p} $active={p === page} onClick={() => setPage(p)}>
+                  <PageInsertNum
+                    key={p}
+                    $active={p === page}
+                    onClick={() => setPage(p)}
+                  >
                     {p}
                   </PageInsertNum>
                 );
