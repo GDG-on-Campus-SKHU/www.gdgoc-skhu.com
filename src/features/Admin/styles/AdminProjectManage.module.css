@@ -1,0 +1,1025 @@
+.container {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #fff;
+  display: flex;
+  line-height: normal;
+  letter-spacing: normal;
+  overflow: visible;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 255px;
+  min-height: 100vh;
+  background-color: #454b54;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.logo {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 28px 20px;
+  gap: 12px;
+  text-align: center;
+  color: #fff;
+  font-family: Pretendard;
+}
+
+.gdgocSkhuImage {
+  width: 60px;
+  max-height: 100%;
+  object-fit: cover;
+}
+
+.logoText {
+  margin: 0;
+  font-size: 20px;
+  line-height: 160%;
+  font-weight: 400;
+}
+
+.loginInfo {
+  align-self: stretch;
+  border-top: 1px solid #626873;
+  display: flex;
+  align-items: center;
+  padding: 18px 28px 20px;
+  gap: 8px;
+  color: #fff;
+  font-family: Pretendard;
+}
+
+.userName {
+  margin: 0;
+  font-size: 20px;
+  line-height: 160%;
+  font-weight: 700;
+}
+
+.divider {
+  font-size: 16px;
+  line-height: 160%;
+  font-weight: 500;
+}
+
+.menuList {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: center;
+  font-size: 16px;
+  color: #fff;
+  font-family: Pretendard;
+}
+
+.menuItem {
+  align-self: stretch;
+  background-color: #454b54;
+  border-bottom: 1px solid #626873;
+  display: flex;
+  height: 50px;
+  align-items: center;
+  padding: 12px 28px;
+  line-height: 160%;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.menuItem:first-child {
+  border-top: 1px solid #626873;
+}
+
+.menuItem:hover {
+  background-color: #353a40;
+}
+
+.menuItemActive {
+  background: linear-gradient(#353a40, #353a40), #25282c;
+  font-weight: 700;
+  justify-content: space-between;
+}
+
+.menuArrowIcon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+/* Main Content */
+.mainContent {
+  width: 1440px;
+  min-height: 100vh;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 60px 40px 40px;
+  overflow-x: hidden;
+}
+
+/* Loading */
+.loadingContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 400px;
+  color: #626873;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.headerSection {
+  display: flex;
+  width: 1105px;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 91px;
+  margin-bottom: 60px;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.title {
+  color: #000;
+  font-family: Pretendard;
+  font-size: 36px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%;
+  margin: 0;
+}
+
+.headerSubtitle {
+  margin: 0;
+  color: #626873;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.endedProjectButton {
+  display: flex;
+  width: 200px;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 1px solid #4285f4;
+  background: #fff;
+  cursor: pointer;
+}
+
+.endedProjectButton:hover {
+  background: #f5f7fa;
+}
+
+.endedProjectButtonText {
+  color: #4285f4;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+/* ==================== 빈 화면 (프로젝트 없음) ==================== */
+.emptyContainer {
+  display: flex;
+  width: 538px;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  margin: 0 auto;
+  flex: 1;
+  justify-content: center;
+}
+
+.emptyText {
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%;
+  margin: 0;
+  text-align: center;
+}
+
+.createProjectButton {
+  display: flex;
+  width: 200px;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  background: #4285f4;
+  border: none;
+  cursor: pointer;
+}
+
+.createProjectButton:hover {
+  background: #3367d6;
+}
+
+.createProjectButtonText {
+  color: #f9f9fa;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+/* ==================== 프로젝트 등록 모달 ==================== */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContainer {
+  display: flex;
+  width: 500px;
+  padding: 40px 20px 20px 20px;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 30px 0 rgba(0, 0, 0, 0.20);
+}
+
+.modalHeader {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalTitle {
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%;
+}
+
+.modalCloseButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.modalCloseButton:hover {
+  background-color: #f3f4f6;
+}
+
+.modalContent {
+  width: 100%;
+}
+
+.modalInput {
+  display: flex;
+  width: 100%;
+  padding: 16px;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #c3c6cb;
+  background: #fff;
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.modalInput:focus {
+  border-color: #4285f4;
+}
+
+.modalInput::placeholder {
+  color: #7e8590;
+}
+
+.modalFooter {
+  width: 100%;
+}
+
+.modalConfirmButton {
+  display: flex;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+  width: 100%;
+  border-radius: 8px;
+  background: #4285f4;
+  border: none;
+  cursor: pointer;
+}
+
+.modalConfirmButton:hover:not(:disabled) {
+  background: #3367d6;
+}
+
+.modalConfirmButtonDisabled {
+  background: #e0e2e5;
+  cursor: not-allowed;
+}
+
+.modalConfirmButtonDisabled:hover {
+  background: #e0e2e5;
+}
+
+.modalConfirmButtonText {
+  color: #f9f9fa;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.modalConfirmButtonDisabled .modalConfirmButtonText {
+  color: #7e8590;
+}
+
+/* Content Wrapper */
+.contentWrapper {
+  display: flex;
+  width: 1105px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.projectNameContainer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.projectName {
+  margin: 0;
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%;
+}
+
+.editIcon {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+/* Accordion */
+.accordionSection {
+  width: 100%;
+  border-bottom: 1px solid #e0e4ea;
+}
+
+.accordionSection:last-child {
+  border-bottom: none;
+}
+
+.accordionHeader {
+  display: flex;
+  padding: 24px 8px;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  cursor: pointer;
+}
+
+.accordionHeader:hover {
+  background: #fafafa;
+}
+
+.accordionTitle {
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%;
+}
+
+.accordionArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  transform: rotate(0deg);
+}
+
+.accordionArrowOpen {
+  transform: rotate(180deg);
+}
+
+.accordionContent {
+  padding: 16px 8px 24px;
+}
+
+/* Schedule Table */
+.scheduleTable {
+  width: 1105px;
+  margin-bottom: 8px;
+}
+
+.tableHeader {
+  background: #ededef;
+  display: flex;
+  height: 45px;
+  padding: 0 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  align-self: stretch;
+}
+
+.tableHeaderCategoryCell {
+  display: flex;
+  width: 200px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+}
+
+.tableHeaderCategoryText {
+  overflow: hidden;
+  color: #7e8590;
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  flex: 1 0 0;
+}
+
+.tableHeaderStatusCell {
+  display: flex;
+  width: 120px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+}
+
+.tableHeaderStatusText {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  flex: 1 0 0;
+  overflow: hidden;
+  color: #7e8590;
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.tableHeaderPeriodCell {
+  display: flex;
+  width: 440px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+}
+
+.tableHeaderPeriodText {
+  color: #7e8590;
+  text-align: center;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.tableHeaderActionCell {
+  display: flex;
+  width: 200px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+}
+
+.tableHeaderActionText {
+  color: #7e8590;
+  text-align: center;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.tableBody {
+  display: flex;
+  width: 1105px;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.tableRow {
+  display: flex;
+  height: 80px;
+  padding: 0 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  align-self: stretch;
+  border-bottom: 1px solid #e0e2e5;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableCellCategory {
+  display: flex;
+  width: 200px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+}
+
+.tableCellCategoryText {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  flex: 1 0 0;
+  overflow: hidden;
+  color: #040405;
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.tableCellStatus {
+  display: flex;
+  width: 120px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+}
+
+.tableCellStatusText {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  flex: 1 0 0;
+  overflow: hidden;
+  color: #040405;
+  text-overflow: ellipsis;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.tableCellPeriod {
+  display: flex;
+  width: 440px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+}
+
+.tableCellPeriodText {
+  color: #040405;
+  text-align: center;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.tableCellAction {
+  display: flex;
+  width: 200px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+}
+
+.registerButton {
+  display: flex;
+  width: 200px;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  background: #4285f4;
+  border: none;
+  cursor: pointer;
+}
+
+.registerButton:hover {
+  background: #3367d6;
+}
+
+.registerButtonText {
+  color: #f9f9fa;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.editButton {
+  display: flex;
+  width: 200px;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #4285f4;
+  background: #fff;
+  cursor: pointer;
+}
+
+.editButton:hover {
+  background: #e8f0fe;
+}
+
+.editButtonText {
+  color: #4285f4;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+/* Action Row */
+.actionRow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 60px;
+  width: 1105px;
+}
+
+.deleteButton {
+  display: flex;
+  width: 300px;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #ea4335;
+  background: #fff;
+  cursor: pointer;
+}
+
+.deleteButton:hover {
+  background: #fef2f2;
+}
+
+.deleteButtonText {
+  color: #ea4335;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.saveButton {
+  display: flex;
+  width: 300px;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  background: #4285f4;
+  border: none;
+  cursor: pointer;
+}
+
+.saveButton:hover {
+  background: #3367d6;
+}
+
+.saveButton:disabled {
+  background: #e0e2e5;
+  cursor: not-allowed;
+}
+
+.saveButtonText {
+  color: #f9f9fa;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+/* 주제 관리 스타일 */
+.topicListContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.topicItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+}
+
+.topicText {
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.topicDeleteButton {
+  display: flex;
+  width: 60px;
+  height: 40px;
+  padding: 8px 16px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #ea4335;
+  background: #fff;
+  cursor: pointer;
+}
+
+.topicDeleteButton:hover {
+  background: #fef2f1;
+}
+
+.topicDeleteButtonText {
+  color: #ea4335;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.addTopicButton {
+  display: flex;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #4285f4;
+  background: #fff;
+  cursor: pointer;
+}
+
+.addTopicButton:hover {
+  background: #e8f0fe;
+}
+
+.addTopicButtonText {
+  color: #4285f4;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+/* 팀 관리 스타일 */
+.teamManagementContainer {
+  display: flex;
+  width: 226px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 40px;
+}
+
+.teamSection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.teamSectionTitle {
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%;
+}
+
+.maxMembersRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.maxMembersInput {
+  display: flex;
+  width: 120px;
+  padding: 12px 16px;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #c3c6cb;
+  background: #fff;
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.maxMembersInput:focus {
+  outline: none;
+  border-color: #4285f4;
+}
+
+.maxMembersUnit {
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.partsCheckboxList {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.partCheckboxItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.partCheckbox {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  padding: 7.5px 6px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 3px;
+  background: #e0e2e5;
+}
+
+.partCheckbox:hover {
+  background: #c3c6cb;
+}
+
+.partCheckboxSelected {
+  background: #4285f4;
+}
+
+.partCheckboxSelected:hover {
+  background: #3367d6;
+}
+
+.partLabel {
+  color: #040405;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+/* 저장 완료 모달 */
+.saveModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.saveModalContainer {
+  display: flex;
+  width: 500px;
+  padding: 40px 20px 20px 20px;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 30px 0 rgba(0, 0, 0, 0.20);
+}
+
+.saveModalText {
+  color: #040405;
+  text-align: center;
+  font-family: Pretendard;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%;
+}
+
+.saveModalButton {
+  display: flex;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+  border-radius: 8px;
+  background: #4285f4;
+  border: none;
+  cursor: pointer;
+}
+
+.saveModalButton:hover {
+  background: #3367d6;
+}
+
+.saveModalButtonText {
+  color: #f9f9fa;
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
