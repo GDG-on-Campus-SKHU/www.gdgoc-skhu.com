@@ -1,19 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
+import { fetchUserProfile, updateUserProfile } from '@/lib/adminMember.api';
+import { api } from '@/lib/api';
+import {
+  Generation,
+  TechStack,
+  UpdateProfileData,
+  UserLink,
+  useTechStackOptions,
+  useUserLinkOptions,
+} from '@/lib/mypageProfile.api';
+import { colors } from '@/styles/constants';
+import { css } from '@emotion/react';
+import MDEditor from '@uiw/react-md-editor';
 import styled from 'styled-components';
 
 import SelectBoxBasic from '../../../team-building/components/SelectBoxBasic';
-import { useRouter } from 'next/router';
-import { TechStack, UpdateProfileData } from '@/lib/mypageProfile.api';
-import { Generation, UserLink } from '@/lib/mypageProfile.api';
-import { fetchUserProfile, updateUserProfile } from '@/lib/adminMember.api';
-import { useTechStackOptions, useUserLinkOptions } from '@/lib/mypageProfile.api';
-import { css } from '@emotion/react';
-import { colors } from '@/styles/constants'
 import AdminMemberProfile from '../AdminMemberProfile/AdminMemberProfile';
-import MDEditor from '@uiw/react-md-editor';
-import { api } from '@/lib/api';
 
 type MemberProfile = {
   userId: number;
@@ -166,7 +171,6 @@ const AdminMemberProfileEdit: NextPage = () => {
         : prev
     );
   }
-
 
   // ---------------------
   // 4. 붙여넣기 처리
@@ -436,7 +440,7 @@ const AdminMemberProfileEdit: NextPage = () => {
       </MainContent>
     </Container>
   );
-};;
+};
 
 export default AdminMemberProfileEdit;
 
@@ -717,11 +721,6 @@ const LinkRow = styled.div`
   align-self: stretch;
 `;
 
-const LinkSelectWrapper = styled.div`
-  width: 220px;
-  height: 50px;
-`;
-
 const LinkInput = styled.input`
   width: 840px;
   height: 50px;
@@ -853,17 +852,6 @@ const FieldRoleRow = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 60px;
-`;
-
-const LinkAddButtonText = styled.span`
-  color: var(--primary-600-main, #4285f4);
-
-  /* body/b3/b3 */
-  font-family: Pretendard;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 160%; /* 28.8px */
 `;
 
 const TechStackList = styled.div`

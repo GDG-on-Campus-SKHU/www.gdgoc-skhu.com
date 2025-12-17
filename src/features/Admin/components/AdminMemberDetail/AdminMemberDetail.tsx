@@ -1,21 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
+import {
+  BanUser,
+  DeleteUserGeneration,
+  fetchUserInfo,
+  UnbanUser,
+  updateUserInfo,
+  UpdateUserInfoData,
+  UserStatus,
+} from '@/lib/adminMember.api';
+import { Generation } from '@/lib/mypageProfile.api';
 import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 
 import SelectBoxBasic from '../../../team-building/components/SelectBoxBasic';
-import {
-  BanUser,
-  DeleteUserGeneration,
-  UnbanUser,
-  UpdateUserInfoData,
-  UserStatus,
-  fetchUserInfo,
-  updateUserInfo,
-} from '@/lib/adminMember.api';
-import { Generation } from '@/lib/mypageProfile.api';
-import { useRouter } from 'next/router';
 
 type MemberDetail = {
   name: string;
@@ -97,7 +97,6 @@ const AdminMemberDetail: NextPage = () => {
       return a.isMain ? -1 : 1;
     });
   }, [member]);
-
 
   if (!parsedUserId || !member) {
     return <div>로딩 중...</div>;
@@ -239,7 +238,7 @@ const AdminMemberDetail: NextPage = () => {
         throw new Error(`Invalid position: ${position}`);
     }
   };
-  
+
   const partUiToEnum = (part: string) => {
     switch (part) {
       case 'Design':
@@ -307,7 +306,6 @@ const AdminMemberDetail: NextPage = () => {
     }
   };
 
-
   const handleReleaseSoftban = async () => {
     if (!parsedUserId) return;
 
@@ -330,7 +328,7 @@ const AdminMemberDetail: NextPage = () => {
 
   const handleUserProfile = (userId: number) => {
     router.push(`/admin-member/${userId}/profile`);
-  }
+  };
 
   const handleDeleteGeneration = async (gen: Generation) => {
     setMember(prev => {
@@ -354,7 +352,6 @@ const AdminMemberDetail: NextPage = () => {
       }
     }
   };
-
 
   return (
     <Container>
@@ -1399,32 +1396,6 @@ const SoftbanReasonText = styled.p`
   white-space: pre-line;
 `;
 
-const OutlineWarningButton = styled.button`
-  display: flex;
-  width: 300px;
-  height: 50px;
-  padding: 10px 8px;
-  justify-content: center;
-  align-items: center;
-  border-radius: 8px;
-  border: 1px solid var(--point-red, #ea4335);
-  background: #fff;
-
-  &:hover {
-    background: rgba(66, 133, 244, 0.08);
-  }
-`;
-
-const OutlineWarningButtonText = styled.span`
-  color: var(--point-red, #ea4335);
-
-  /* body/b3/b3 */
-  font-family: Pretendard;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 160%; /* 28.8px */
-`;
 const SoftbanReleaseMessage = styled.p`
   margin: 0;
   color: var(--grayscale-600, #7e8590);

@@ -1,13 +1,18 @@
-import { TechStack, useTechStackOptions, useUserLinkOptions } from '@/lib/mypageProfile.api';
-import { fetchUserProfile } from '@/lib/adminMember.api';
-import { Generation, UserLink } from '@/lib/mypageProfile.api';
+import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from 'react';
-import styled from 'styled-components';
-import { css } from '@emotion/react';
+import { fetchUserProfile } from '@/lib/adminMember.api';
+import {
+  Generation,
+  TechStack,
+  UserLink,
+  useTechStackOptions,
+  useUserLinkOptions,
+} from '@/lib/mypageProfile.api';
 import { colors } from '@/styles/constants';
-import dynamic from 'next/dynamic';
+import { css } from '@emotion/react';
+import styled from 'styled-components';
 
 const MDPreview = dynamic(() => import('@uiw/react-markdown-preview').then(mod => mod.default), {
   ssr: false,
@@ -506,49 +511,12 @@ const LinkButtons = styled.div`
   flex-wrap: wrap;
 `;
 
-const LinkButton = styled.button`
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  border: 1px solid #e0e2e5;
-  background: #fff;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  padding: 0;
-
-  &:hover {
-    background: #f8f9fb;
-  }
-`;
-
 const IntroSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: 100%;
   padding-top: 16px; /* 24px(기본 gap) + 16px = 40px */
-`;
-
-const IntroArea = styled.textarea`
-  display: flex;
-  width: 100%; /* 고정값 대신 100%로 변경 */
-  max-width: 1080px;
-  height: 400px;
-  padding: 32px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 40px;
-  border-radius: 8px;
-  border: 1px solid var(--grayscale-400, #c3c6cb);
-  background: #fff;
-  color: var(--grayscale-1000, #040405);
-  font-family: Pretendard;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 160%;
-  box-sizing: border-box; /* padding 포함 */
 `;
 
 const boxCss = css`

@@ -1,28 +1,28 @@
 import { api } from './api';
-import { Generation, TechStack, UserLink, MyProfile, UpdateProfileData } from './mypageProfile.api';
+import { Generation, MyProfile, TechStack, UpdateProfileData, UserLink } from './mypageProfile.api';
 
 /* =========================================================
  * DTO Types (Backend Response Shape)
  * ======================================================= */
 interface UserSummaryDto {
-    users: UserSummaryItemDto[];
-    pageInfo: {
-        pageNumber: number;
-        pageSize: number;
-        totalElements: number;
-        totalPages: number;
-        };
+  users: UserSummaryItemDto[];
+  pageInfo: {
+    pageNumber: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
+  };
 }
 
 interface UserSummaryItemDto {
-    id: number;
-    userName: string;
-    email: string | null;
-    generations: Generation[];
-    number: string | null;
-    part: string;
-    school: string;
-    approvalStatus: string;
+  id: number;
+  userName: string;
+  email: string | null;
+  generations: Generation[];
+  number: string | null;
+  part: string;
+  school: string;
+  approvalStatus: string;
 }
 
 export interface UserInfoDto {
@@ -56,7 +56,7 @@ interface GetMyProfileResponse {
 }
 
 interface BanReason {
-    reason: string;
+  reason: string;
 }
 
 /* =========================================================
@@ -65,12 +65,12 @@ interface BanReason {
 export type UserStatus = 'ACTIVE' | 'BANNED' | 'DELETED';
 
 export interface UserSummary {
-    id: number;
-    userName: string;
-    generation: string;
-    school: string;
-    part: string;
-    position: string;
+  id: number;
+  userName: string;
+  generation: string;
+  school: string;
+  part: string;
+  position: string;
 }
 
 export interface UserInfo {
@@ -92,11 +92,10 @@ export interface UserInfo {
   generations: Generation[];
 }
 
-
 export interface UpdateUserInfoData {
-    generations: Generation[];
-    school: string;
-    part: string;
+  generations: Generation[];
+  school: string;
+  part: string;
 }
 
 export const partEnumToUi = (part: string) => {
@@ -124,7 +123,7 @@ export const partEnumToUi = (part: string) => {
  * utils
  * ======================================================= */
 function mapUserSummaryToDomain(dto: UserSummaryItemDto): UserSummary {
-    const mainGeneration = dto.generations?.find(gen => gen.isMain);
+  const mainGeneration = dto.generations?.find(gen => gen.isMain);
 
   return {
     id: dto.id,
@@ -153,8 +152,6 @@ function mapUserInfoToDomain(dto: UserInfoDto): UserInfo {
   };
 }
 
-
-
 function mapProfileDtoToDomain(dto: GetMyProfileResponse): MyProfile {
   return {
     userId: dto.userId,
@@ -171,60 +168,63 @@ function mapProfileDtoToDomain(dto: GetMyProfileResponse): MyProfile {
 /* =========================================================
  * API: Get User Summary
  * ======================================================= */
-export async function fetchUserSummaryList() : Promise<UserSummary[]> {
-    const res = await api.get<UserSummaryDto>('/admin/approved/users');
-    console.log(res.data);
-    return res.data.users.map(mapUserSummaryToDomain);
+export async function fetchUserSummaryList(): Promise<UserSummary[]> {
+  const res = await api.get<UserSummaryDto>('/admin/approved/users');
+  console.log(res.data);
+  return res.data.users.map(mapUserSummaryToDomain);
 }
 
 /* =========================================================
  * API: Get User Info
  * ======================================================= */
 export async function fetchUserInfo(userId: number): Promise<UserInfo> {
-    const res = await api.get<UserInfoDto>(`/admin/approved/${userId}`);
-    return mapUserInfoToDomain(res.data);
+  const res = await api.get<UserInfoDto>(`/admin/approved/${userId}`);
+  return mapUserInfoToDomain(res.data);
 }
 
 /* =========================================================
  * API: Get User Profile
  * ======================================================= */
 export async function fetchUserProfile(userId: number): Promise<MyProfile> {
-    const res = await api.get<GetMyProfileResponse>(`/admin/approved/${userId}/profile`);
-    return mapProfileDtoToDomain(res.data);
+  const res = await api.get<GetMyProfileResponse>(`/admin/approved/${userId}/profile`);
+  return mapProfileDtoToDomain(res.data);
 }
 
 /* =========================================================
  * API: Update User Info
  * ======================================================= */
 export async function updateUserInfo(userId: number, data: UpdateUserInfoData): Promise<void> {
-    await api.patch<void>(`/admin/approved/${userId}`, data);
+  await api.patch<void>(`/admin/approved/${userId}`, data);
 }
 
 /* =========================================================
  * API: Update User Profile
  * ======================================================= */
-export async function updateUserProfile(userId: number, data: UpdateProfileData): Promise<MyProfile> {
-    const res = await api.patch<GetMyProfileResponse>(`/admin/approved/${userId}/profile`, data);
-    return mapProfileDtoToDomain(res.data);
+export async function updateUserProfile(
+  userId: number,
+  data: UpdateProfileData
+): Promise<MyProfile> {
+  const res = await api.patch<GetMyProfileResponse>(`/admin/approved/${userId}/profile`, data);
+  return mapProfileDtoToDomain(res.data);
 }
 
 /* =========================================================
  * API: Delete User Generation
  * ======================================================= */
 export async function DeleteUserGeneration(generationId: number): Promise<void> {
-    await api.delete<void>(`/admin/approved/${generationId}`);    
+  await api.delete<void>(`/admin/approved/${generationId}`);
 }
 
 /* =========================================================
  * API: Ban User
  * ======================================================= */
 export async function BanUser(userId: number, data: BanReason): Promise<void> {
-    await api.post<void>(`/admin/approved/ban/${userId}`, data);
+  await api.post<void>(`/admin/approved/ban/${userId}`, data);
 }
 
 /* =========================================================
  * API: Unban User
  * ======================================================= */
 export async function UnbanUser(userId: number): Promise<void> {
-    await api.post<void>(`/admin/approved/unban/${userId}`);    
+  await api.post<void>(`/admin/approved/unban/${userId}`);
 }

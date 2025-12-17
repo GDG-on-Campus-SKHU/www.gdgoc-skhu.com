@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
+import { fetchUserSummaryList } from '@/lib/adminMember.api';
 import styled from 'styled-components';
 
 import SelectBoxBasic from '../../../team-building/components/SelectBoxBasic';
 import { ArrowIcon, PageButton, PageInsertNum } from '../../styles/AdminIdeaProject';
-
-import { fetchUserSummaryList } from '@/lib/adminMember.api';
-import { useRouter } from 'next/router';
 
 type SearchField = 'userName' | 'generation' | 'school' | 'part' | 'position';
 const SEARCH_FIELD_VALUES = ['name', 'generation', 'school', 'part', 'position'] as const;
@@ -49,10 +48,10 @@ const AdminMember: NextPage = () => {
   );
 
   useEffect(() => {
-    const fetchData = async() => {
+    const fetchData = async () => {
       const members = await fetchUserSummaryList();
       setMembers(members);
-    }
+    };
     fetchData();
   }, []);
 
@@ -107,7 +106,7 @@ const AdminMember: NextPage = () => {
 
   const handleUserDetail = (userId: number) => {
     router.push(`/admin-member/${userId}`);
-  }
+  };
 
   return (
     <Container>
@@ -199,7 +198,7 @@ const AdminMember: NextPage = () => {
 
             <TableBody>
               {paginatedMembers.map(member => (
-                <TableRow key={member.id} onClick={() =>handleUserDetail(member.id)}>
+                <TableRow key={member.id} onClick={() => handleUserDetail(member.id)}>
                   <BodyName>
                     {' '}
                     <BodyNameCell>{member.userName}</BodyNameCell>
