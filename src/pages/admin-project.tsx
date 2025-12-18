@@ -10,7 +10,7 @@ const AdminProjectManage = dynamic(
 export default function AdminProjectPage() {
   return (
     <AdminLayout>
-      <AdminProjectManage/>
+      <AdminProjectManage />
     </AdminLayout>
-  )
-};
+  );
+}

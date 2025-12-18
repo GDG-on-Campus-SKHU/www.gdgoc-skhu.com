@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import type { NextPage } from 'next';
 import Image from 'next/image';
+import axios from 'axios';
 import {
   createProject,
   getModifiableProject,
@@ -326,34 +326,32 @@ const AdminProjectManagement: NextPage = () => {
 
   const PARTS = ['기획', '디자인', '프론트엔드 (웹)', '프론트엔드 (모바일)', '백엔드', 'AI/ML'];
 
-  const loadProject = async () => {
-    setIsLoading(true);
-    try {
-      const projectData = await getModifiableProject();
-      applyProjectData(projectData);
-      console.log(projectData);
-      setHasProject(true);
-    } catch (error) {
-      handleLoadError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const applyProjectData = (projectData: ModifiableProject) => {
+      setProjectId(projectData.projectId);
+      setProjectName(projectData.projectName);
+      setSchedules(mapSchedules(projectData.schedules));
+      setTopics(projectData.topics ?? []);
+      setMaxMembers(projectData.maxMemberCount ?? 7);
+      setParticipantUserIds(mapParticipantIds(projectData.participants));
+      setSelectedParts(mapActiveParts(projectData.availableParts));
+    };
+
+    const loadProject = async () => {
+      setIsLoading(true);
+      try {
+        const projectData = await getModifiableProject();
+        applyProjectData(projectData);
+        setHasProject(true);
+      } catch (error) {
+        handleLoadError(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     loadProject();
   }, []);
-
-  const applyProjectData = (projectData: ModifiableProject) => {
-    setProjectId(projectData.projectId);
-    setProjectName(projectData.projectName);
-
-    setSchedules(mapSchedules(projectData.schedules));
-    setTopics(projectData.topics ?? []);
-    setMaxMembers(projectData.maxMemberCount ?? 7);
-    setParticipantUserIds(mapParticipantIds(projectData.participants));
-    setSelectedParts(mapActiveParts(projectData.availableParts));
-  };
 
   const mapSchedules = (schedules?: Schedule[]): ScheduleItem[] => {
     if (!schedules?.length) return INITIAL_SCHEDULES;
@@ -372,10 +370,10 @@ const AdminProjectManagement: NextPage = () => {
     }));
   };
 
-  const mapParticipantIds = (participants?: { participantId: number }[]) =>
+  const mapParticipantIds = (participants?: Array<{ participantId: number }>) =>
     participants?.map(p => p.participantId) ?? [];
 
-  const mapActiveParts = (parts: { part: Part; available: boolean }[]) =>
+  const mapActiveParts = (parts: Array<{ part: Part; available: boolean }>) =>
     parts.filter(p => p.available).map(p => PART_TO_KOREAN[p.part]);
 
   const handleLoadError = (error: unknown) => {
@@ -391,7 +389,13 @@ const AdminProjectManagement: NextPage = () => {
     setIsCreating(true);
     try {
       const project = await createProject({ projectName });
-      applyProjectData(project);
+      setProjectId(project.projectId);
+      setProjectName(project.projectName);
+      setSchedules(mapSchedules(project.schedules));
+      setTopics(project.topics ?? []);
+      setMaxMembers(project.maxMemberCount ?? 7);
+      setParticipantUserIds(mapParticipantIds(project.participants));
+      setSelectedParts(mapActiveParts(project.availableParts));
       setHasProject(true);
       setIsProjectRegisterModalOpen(false);
     } catch (error) {
