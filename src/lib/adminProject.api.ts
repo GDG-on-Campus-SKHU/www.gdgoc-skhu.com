@@ -137,3 +137,17 @@ export const updateProject = async (
   const response = await api.put(`/admin/projects/${projectId}`, data);
   return response.data;
 };
+
+// ==================== 학교 조회 API ====================
+
+// 학교 응답 타입
+export type SchoolResponse = {
+  school: string;
+};
+
+// GET /admin/projects/schools - 학교 목록 조회
+// 회원이 존재하는 모든 학교 목록을 조회합니다.
+export const getSchools = async (): Promise<SchoolResponse[]> => {
+  const response = await api.get('/admin/projects/schools');
+  return response.data;
+};
