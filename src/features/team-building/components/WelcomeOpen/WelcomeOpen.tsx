@@ -191,7 +191,7 @@ export default function WelcomeView() {
   const [projectName, setProjectName] = useState<string>('');
   const [schedules, setSchedules] = useState<CurrentProjectSchedule[]>([]);
   const [mounted, setMounted] = useState(false);
-
+ 
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -376,6 +376,7 @@ export default function WelcomeView() {
         (a, b) => SCHEDULE_ORDER.indexOf(a.scheduleType) - SCHEDULE_ORDER.indexOf(b.scheduleType)
       );
   }, [schedules]);
+
 
   const formatDateTime = (iso: string) => {
     const d = new Date(iso);
