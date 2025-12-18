@@ -18,6 +18,8 @@ export default function Admin() {
   }, [hydrateFromSession]);
 
   useEffect(() => {
+    if (accessToken === null) return;
+
     if (!accessToken) {
       router.replace('/login');
       return;

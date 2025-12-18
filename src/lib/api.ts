@@ -5,6 +5,19 @@ import { useAuthStore } from './authStore';
 const baseURL = process.env.NEXT_PUBLIC_API_URL;
 
 /**
+ * 인증이 필요 없는 Public 페이지 경로
+ */
+const PUBLIC_PATHS = [
+  '/',
+  '/login',
+  '/signup',
+  '/forgot-password',
+  '/project-gallery',
+  '/activity',
+  '/contact',
+];
+
+/**
  * 기본 API 인스턴스
  * - accessToken은 Authorization 헤더로 전달
  * - refreshToken은 HttpOnly Cookie로 자동 전달
@@ -64,6 +77,7 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token =
     accessToken || (typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null);
 
+  // Authorization 헤더는 "토큰이 있을 때만" 붙인다
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -110,16 +124,18 @@ api.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      // [수정 포인트] api.post 대신 axios.post 사용
-      // api 인스턴스를 쓰면 Request Interceptor가 다시 동작하여 만료된 토큰을 헤더에 붙입니다.
-      // 따라서 순수 axios를 사용하여 Authorization 헤더 없이 요청해야 합니다.
+      /**
+       * [중요]
+       * api.post를 사용하면 Request Interceptor가 다시 동작하여
+       * 만료된 accessToken을 Authorization 헤더에 붙이게 된다.
+       * 따라서 "순수 axios"를 사용해야 한다.
+       */
       const res = await axios.post<ReissueAccessTokenResponse>(
-        `${baseURL}/auth/token/access`, // 전체 URL 명시
-        {}, // body가 없다면 빈 객체
+        `${baseURL}/auth/token/access`,
+        {},
         {
-          withCredentials: true, // Refresh Token 쿠키 전송을 위해 필수
+          withCredentials: true,
           headers: {
-            // 명시적으로 Authorization 헤더 제거 (혹시 전역 설정이 있을 경우 대비)
             Authorization: '',
           },
         }
@@ -135,7 +151,7 @@ api.interceptors.response.use(
         role,
       });
 
-      // 세션 스토리지도 업데이트 (새로고침 대비용이라면)
+      // 세션 스토리지 업데이트
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('accessToken', accessToken);
       }
@@ -155,9 +171,16 @@ api.interceptors.response.use(
       processQueue(reissueError, null);
 
       useAuthStore.getState().clearAuth();
+
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('accessToken');
-        window.location.href = '/login';
+
+        const currentPath = window.location.pathname;
+        const isPublicPath = PUBLIC_PATHS.includes(currentPath);
+
+        if (!isPublicPath) {
+          window.location.href = '/login';
+        }
       }
 
       return Promise.reject(reissueError);
