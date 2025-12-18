@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import axios from 'axios';
+import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 
 import {
@@ -297,11 +298,11 @@ const ModalButton = styled(Button)`
 function scheduleTypeToKorean(scheduleType?: string) {
   switch (scheduleType) {
     case 'FIRST_TEAM_BUILDING':
-      return '1차 지원';
+      return '1차';
     case 'SECOND_TEAM_BUILDING':
-      return '2차 지원';
+      return '2차';
     case 'THIRD_TEAM_BUILDING':
-      return '3차 지원';
+      return '3차';
     default:
       return '';
   }
@@ -328,16 +329,14 @@ const PRIORITY_TO_CHOICE: Record<PriorityOption, EnrollmentChoice> = {
 };
 
 // 지망 라벨을 숫자로 변환
-const priorityToNumber = (priority: PriorityOption): number => {
+const priorityToNumber = (priority: PriorityOption): string => {
   switch (priority) {
     case '1지망':
-      return 1;
+      return 'FIRST';
     case '2지망':
-      return 2;
+      return 'SECOND';
     case '3지망':
-      return 3;
-    default:
-      return 1;
+      return 'THIRD';
   }
 };
 
@@ -374,9 +373,6 @@ const ZERO_TEAM: Idea['team'] = {
   aiMl: 0,
 };
 
-const PRIORITY_STORAGE_KEY = 'team-building:priority-selection';
-const DEFAULT_PROJECT_ID = 2;
-
 const createEmptyPriorityState = (): Record<PriorityOption, number | null> => ({
   '1지망': null,
   '2지망': null,
@@ -391,6 +387,26 @@ const partCodeToKey: Record<string, keyof Idea['team']> = {
   MOBILE: 'frontendMobile',
   BACKEND: 'backend',
   AI: 'aiMl',
+};
+
+const normalizeChoice = (choice: unknown): EnrollmentChoice | null => {
+  // 서버가 "FIRST" 처럼 주는 경우
+  if (choice === 'FIRST' || choice === 'SECOND' || choice === 'THIRD') return choice;
+
+  // 서버가 1/2/3으로 주는 경우
+  if (typeof choice === 'number') {
+    if (choice === 1) return 'FIRST';
+    if (choice === 2) return 'SECOND';
+    if (choice === 3) return 'THIRD';
+  }
+
+  // 서버가 "1" 같은 문자열로 주는 경우
+  if (typeof choice === 'string') {
+    const n = Number(choice);
+    if (Number.isFinite(n)) return normalizeChoice(n);
+  }
+
+  return null;
 };
 
 // API 응답을 Idea 타입으로 변환
@@ -429,6 +445,12 @@ const normalizeApiIdea = (apiIdea: IdeaApiResponse): Idea => {
 export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
   const router = useRouter();
   const { id } = router.query;
+
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const resolvedIdeaId = useMemo(() => {
     if (typeof ideaId === 'number' || ideaId === null) return ideaId;
@@ -471,6 +493,12 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
     () => PRIORITY_OPTIONS.every(option => priorityLocks[option] !== null),
     [priorityLocks]
   );
+
+  const priorityStorageKey = useMemo(() => {
+    const pid = applyInfo?.projectId ?? projectId ?? 'unknown';
+    const st = applyInfo?.scheduleType ?? 'unknown';
+    return `team-building:priority-selection:${pid}:${st}`;
+  }, [applyInfo?.projectId, applyInfo?.scheduleType, projectId]);
 
   const [modalState, setModalState] = useState<'closed' | 'confirm' | 'success'>('closed');
 
@@ -517,29 +545,25 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
     loadIdeaDetail();
   }, [loadIdeaDetail]);
 
-  // enrollment availability 로드
-  useEffect(() => {
-    if (resolvedIdeaId === null) return;
-
-    (async () => {
-      try {
-        const resp = await fetchEnrollmentAvailability(resolvedIdeaId);
-        setApplyInfo(resp.data);
-      } catch (err) {
-        console.warn('지원하기 정보 조회 실패:', err);
-        setApplyInfo(null);
-      }
-    })();
-  }, [resolvedIdeaId]);
-
   // 서버 availability map
   const choiceAvailabilityMap = useMemo(() => {
     const map: Record<EnrollmentChoice, boolean> = { FIRST: true, SECOND: true, THIRD: true };
     applyInfo?.choiceAvailabilities?.forEach(v => {
-      map[v.choice] = !!v.available;
+      const key = normalizeChoice((v as any).choice);
+      if (key) map[key] = !!(v as any).available;
     });
     return map;
   }, [applyInfo]);
+
+  useEffect(() => {
+    const selectedChoice = PRIORITY_TO_CHOICE[priority];
+    if (choiceAvailabilityMap[selectedChoice] === false) {
+      const next = PRIORITY_OPTIONS.find(
+        p => choiceAvailabilityMap[PRIORITY_TO_CHOICE[p]] !== false
+      );
+      if (next) setPriority(next);
+    }
+  }, [choiceAvailabilityMap, priority]);
 
   const partAvailabilityMap = useMemo(() => {
     const map: Record<Part, boolean> = {
@@ -659,7 +683,7 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      const raw = window.localStorage.getItem(PRIORITY_STORAGE_KEY);
+      const raw = window.localStorage.getItem(priorityStorageKey);
       if (!raw) return;
       const parsed = JSON.parse(raw) as Partial<Record<PriorityOption, unknown>>;
       const resolved = createEmptyPriorityState();
@@ -675,7 +699,7 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
     } catch {
       setPriorityLocks(createEmptyPriorityState());
     }
-  }, []);
+  }, [priorityStorageKey]);
 
   useEffect(() => {
     if (!idea) return;
@@ -762,7 +786,7 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
       // API 지원 요청
       const payload = {
         part: selectedPartApiCode,
-        priority: priorityToNumber(priority),
+        choice: priorityToNumber(priority),
       };
 
       console.log('=== 아이디어 지원 요청 ===');
@@ -774,7 +798,7 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
       // 지원 성공 시 로컬 스토리지에 지망 상태 저장
       if (typeof window !== 'undefined') {
         const nextLocks = { ...priorityLocks, [priority]: idea.id };
-        window.localStorage.setItem(PRIORITY_STORAGE_KEY, JSON.stringify(nextLocks));
+        window.localStorage.setItem(priorityStorageKey, JSON.stringify(nextLocks));
         setPriorityLocks(nextLocks);
       }
 
@@ -932,53 +956,56 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
             </ButtonContainer>
           </form>
 
-          {modalState !== 'closed' && (
-            <ModalOverlay>
-              {modalState === 'confirm' && (
-                <ModalCard>
-                  <ModalInfo>
-                    <ModalTitle>{idea.title}</ModalTitle>
-                    <ModalMessage>{`${priority}, ${selectedPartLabel}에 지원하시겠습니까?`}</ModalMessage>
-                    <ModalActions>
-                      <ModalButtonContainer>
+          {mounted &&
+            modalState !== 'closed' &&
+            createPortal(
+              <ModalOverlay>
+                {modalState === 'confirm' && (
+                  <ModalCard>
+                    <ModalInfo>
+                      <ModalTitle>{idea.title}</ModalTitle>
+                      <ModalMessage>{`${priority}, ${selectedPartLabel}에 지원하시겠습니까?`}</ModalMessage>
+                      <ModalActions>
+                        <ModalButtonContainer>
+                          <ModalButton
+                            title={isSubmitting ? '지원 중...' : '지원하기'}
+                            disabled={isSubmitting}
+                            onClick={handleConfirmSubmit}
+                            css={{ width: '100%' }}
+                          />
+                          <ModalButton
+                            title="취소"
+                            variant="secondary"
+                            disabled={isSubmitting}
+                            onClick={() => setModalState('closed')}
+                            css={{ width: '100%' }}
+                          />
+                        </ModalButtonContainer>
+                      </ModalActions>
+                    </ModalInfo>
+                  </ModalCard>
+                )}
+                {modalState === 'success' && (
+                  <ModalCard style={{ height: '200px', paddingTop: 0 }}>
+                    <ModalOKCard>
+                      <ModalTitleComplete>지원이 완료되었습니다.</ModalTitleComplete>
+                      <ModalActions>
                         <ModalButton
-                          title={isSubmitting ? '지원 중...' : '지원하기'}
-                          disabled={isSubmitting}
-                          onClick={handleConfirmSubmit}
+                          title="확인"
+                          disabled={false}
+                          onClick={() => {
+                            setModalState('closed');
+                            router.push('/WelcomeOpen');
+                          }}
                           css={{ width: '100%' }}
                         />
-                        <ModalButton
-                          title="취소"
-                          variant="secondary"
-                          disabled={isSubmitting}
-                          onClick={() => setModalState('closed')}
-                          css={{ width: '100%' }}
-                        />
-                      </ModalButtonContainer>
-                    </ModalActions>
-                  </ModalInfo>
-                </ModalCard>
-              )}
-              {modalState === 'success' && (
-                <ModalCard style={{ height: '200px', paddingTop: 0 }}>
-                  <ModalOKCard>
-                    <ModalTitleComplete>지원이 완료되었습니다.</ModalTitleComplete>
-                    <ModalActions>
-                      <ModalButton
-                        title="확인"
-                        disabled={false}
-                        onClick={() => {
-                          setModalState('closed');
-                          router.push('/WelcomeOpen');
-                        }}
-                        css={{ width: '100%' }}
-                      />
-                    </ModalActions>
-                  </ModalOKCard>
-                </ModalCard>
-              )}
-            </ModalOverlay>
-          )}
+                      </ModalActions>
+                    </ModalOKCard>
+                  </ModalCard>
+                )}
+              </ModalOverlay>,
+              document.body
+            )}
         </ApplyCanvas>
       </PageContainer>
     </>

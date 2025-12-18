@@ -62,7 +62,7 @@ export const applyToIdea = (
   ideaId: number,
   payload: {
     part: string;
-    priority: number; // 1, 2, 3
+    choice: string; // 1, 2, 3
   },
   config?: AxiosRequestConfig
 ) => {
@@ -99,6 +99,7 @@ export type EnrollmentAvailabilityPart = {
 };
 
 export type GetEnrollmentAvailabilityResponse = {
+  projectId?: number;
   projectName: string;
   scheduleType:
     | 'IDEA_REGISTRATION'
