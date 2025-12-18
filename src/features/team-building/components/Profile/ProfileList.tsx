@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { resolveIconUrl } from '@/features/Admin/components/AdminMemberProfile/AdminMemberProfile';
 import { MyProfile, useTechStackOptions, useUserLinkOptions } from '@/lib/mypageProfile.api';
 import { css } from '@emotion/react';
 
@@ -44,12 +44,6 @@ export default function ProfileList({
     ? `${mainGeneration.generation} ${mainGeneration.position}`
     : '정보 없음';
 
-  const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
-
-  const handleImageError = (linkId: number) => {
-    setFailedImages(prev => new Set(prev).add(linkId));
-  };
-
   const baseProfileItems = [
     { label: '학교', value: profile.school, isRole: false },
     { label: '역할', value: generationLabel, isRole: true },
@@ -73,7 +67,6 @@ export default function ProfileList({
 
   const renderTechStackContent = () => {
     if (showEditFields) {
-      // 옵션을 SelectBox 형식에 맞게 변환
       const techStackSelectOptions = techStackOptions.map(opt => opt.code);
 
       return (
@@ -87,20 +80,17 @@ export default function ProfileList({
       );
     }
 
-    if (showPreview && hasTechStack) {
+    if (showPreview && profile.techStacks.length > 0) {
       return (
         <div css={previewContainerCss}>
-          {selectedTechStack.map(techCode => {
-            const techOption = techStackOptions.find(opt => opt.code === techCode);
+          {profile.techStacks.map(stack => {
+            if (!stack.iconUrl) return null;
+
             return (
-              <div key={techCode} css={iconWrapperCss}>
+              <div key={stack.techStackType} css={iconWrapperCss}>
                 <div css={iconCss}>
-                  <img
-                    src={techOption?.iconUrl || `/icon/${techCode}.svg`}
-                    alt={techOption?.displayName || techCode}
-                  />
+                  <img src={resolveIconUrl(stack.iconUrl)} alt={stack.techStackType} />
                 </div>
-                <div css={tooltipCss}>{techOption?.displayName || techCode}</div>
               </div>
             );
           })}
@@ -120,31 +110,22 @@ export default function ProfileList({
       );
     }
 
-    if (showPreview && hasValidLinks) {
+    if (showPreview && profile.userLinks.length > 0) {
       return (
         <div css={previewContainerCss}>
-          {validLinks.map(link => {
-            const linkOption = userLinkOptions.find(opt => opt.type === link.platform);
-            const hasImageError = failedImages.has(link.id);
+          {profile.userLinks.map(link => {
+            const option = userLinkOptions.find(opt => opt.type === link.linkType);
+            if (!option?.iconUrl) return null;
 
             return (
               <a
-                key={link.id}
+                key={`${link.linkType}-${link.url}`}
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                css={hasImageError ? linkIconWithBorderCss : linkIconSimpleCss}
-                title={linkOption?.name || link.platform}
+                css={linkIconSimpleCss}
               >
-                <img
-                  src={
-                    hasImageError
-                      ? '/icon/link.svg'
-                      : linkOption?.iconUrl || `/icon/${link.platform}.svg`
-                  }
-                  alt={linkOption?.name || link.platform}
-                  onError={() => handleImageError(link.id)}
-                />
+                <img src={resolveIconUrl(option.iconUrl)} alt={option.name} />
               </a>
             );
           })}
@@ -259,39 +240,6 @@ const iconCss = css`
   }
 `;
 
-const tooltipCss = css`
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(-8px);
-  background-color: ${colors.grayscale[700]};
-  color: white;
-  padding: 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition:
-    opacity 0.2s,
-    visibility 0.2s;
-  pointer-events: none;
-  z-index: 10;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%) translateY(-4px) rotate(45deg);
-    width: 8px;
-    height: 8px;
-    background-color: ${colors.grayscale[700]};
-    border-radius: 0 0 2px 0;
-  }
-`;
-
 const linkIconSimpleCss = css`
   width: 40px;
   height: 40px;
@@ -300,29 +248,5 @@ const linkIconSimpleCss = css`
     width: 100%;
     height: 100%;
     object-fit: contain;
-  }
-`;
-
-const linkIconWithBorderCss = css`
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  border-radius: 8px;
-  border: 1px solid ${colors.grayscale[400]};
-  background-color: white;
-  padding: 8px;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-
-  &:hover {
-    border-color: ${colors.grayscale[600]};
   }
 `;

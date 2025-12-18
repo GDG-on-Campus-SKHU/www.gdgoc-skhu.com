@@ -15,6 +15,15 @@ import { colors } from '@/styles/constants';
 import { css } from '@emotion/react';
 import styled from 'styled-components';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+export function resolveIconUrl(iconUrl: string) {
+  if (iconUrl.startsWith('http')) {
+    return iconUrl;
+  }
+  return `${API_BASE_URL}${iconUrl}`;
+}
+
 const MDPreview = dynamic(() => import('@uiw/react-markdown-preview').then(mod => mod.default), {
   ssr: false,
 });
@@ -135,7 +144,12 @@ const AdminMemberProfile = ({ memberProps, onBack }: Props) => {
 
                 return (
                   <TechStackIcon key={stack.techStackType}>
-                    <img src={option.iconUrl} alt={option.displayName} width={36} height={36} />
+                    <img
+                      src={resolveIconUrl(option.iconUrl)}
+                      alt={option.displayName}
+                      width={36}
+                      height={36}
+                    />
                   </TechStackIcon>
                 );
               })}
@@ -149,6 +163,8 @@ const AdminMemberProfile = ({ memberProps, onBack }: Props) => {
               {member.userLinks.map((link, idx) => {
                 const option = userLinkOptions.find(opt => opt.type === link.linkType);
 
+                const iconUrl = option?.iconUrl || '/icon/link.svg';
+
                 return (
                   <a
                     key={`${link.linkType}-${idx}`}
@@ -157,7 +173,7 @@ const AdminMemberProfile = ({ memberProps, onBack }: Props) => {
                     rel="noopener noreferrer"
                   >
                     <img
-                      src={option?.iconUrl || '/icon/link.svg'}
+                      src={resolveIconUrl(iconUrl)}
                       alt={option?.name || link.linkType}
                       width={24}
                       height={24}
