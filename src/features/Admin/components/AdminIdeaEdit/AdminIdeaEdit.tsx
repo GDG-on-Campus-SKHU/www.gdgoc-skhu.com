@@ -45,6 +45,7 @@ import {
   getAdminProjectIdeaDetail,
   updateAdminIdea,
 } from '@/lib/adminIdea.api';
+import { css } from '@emotion/react';
 
 // --- Styles Imports (Admin Idea Edit) ---
 // 사이드바 관련 스타일은 제거하고 콘텐츠 영역 스타일만 남김
@@ -65,7 +66,6 @@ import {
   Title,
   TitleCNTR,
 } from '../../styles/AdminIdeaEdit';
-import { css } from '@emotion/react';
 
 const DEFAULT_TEAM: Record<TeamRole, number> = {
   planning: 0,
