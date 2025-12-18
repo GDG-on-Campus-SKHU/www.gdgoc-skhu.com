@@ -400,7 +400,13 @@ const AdminProjectManagement: NextPage = () => {
     setIsCreating(true);
     try {
       const project = await createProject({ projectName });
-      applyProjectData(project);
+      setProjectId(project.projectId);
+      setProjectName(project.projectName);
+      setSchedules(mapSchedules(project.schedules));
+      setTopics(project.topics ?? []);
+      setMaxMembers(project.maxMemberCount ?? 7);
+      setParticipantUserIds(mapParticipantIds(project.participants));
+      setSelectedParts(mapActiveParts(project.availableParts));
       setHasProject(true);
       setIsProjectRegisterModalOpen(false);
     } catch (error) {

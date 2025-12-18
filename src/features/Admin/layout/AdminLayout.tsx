@@ -63,7 +63,8 @@ export default function AdminLayout({ children }: Props) {
 
         <Nav>
           {NAV_ITEMS.map(item => {
-            const isActive = pathname === item.path || pathname.startsWith(item.path);
+            const isActive =
+              item.path === '/admin' ? pathname === '/admin' : pathname.startsWith(item.path);
 
             return (
               <NavButton

@@ -32,7 +32,7 @@ export default function ProjectSection() {
 
   const visible = useMemo(() => projects.slice(page * 3, page * 3 + 3), [projects, page]);
 
-  const hasEnoughProjects = projects.length >= 3;
+  const hasEnoughProjects = projects.length >= 1;
 
   return (
     <section css={sectionCss}>
