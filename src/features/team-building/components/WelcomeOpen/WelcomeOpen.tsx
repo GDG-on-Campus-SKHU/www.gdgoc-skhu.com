@@ -185,7 +185,7 @@ export default function WelcomeView() {
   const [projectName, setProjectName] = useState<string>('');
   const [schedules, setSchedules] = useState<CurrentProjectSchedule[]>([]);
   const [mounted, setMounted] = useState(false);
- 
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -362,13 +362,11 @@ export default function WelcomeView() {
   }, [topicIdMap]);
 
   const visibleSchedules = useMemo(() => {
-    return (
-      schedules
-        .filter(s => SCHEDULE_ORDER.includes(s.scheduleType))
-        .sort(
-          (a, b) => SCHEDULE_ORDER.indexOf(a.scheduleType) - SCHEDULE_ORDER.indexOf(b.scheduleType)
-        )
-    );
+    return schedules
+      .filter(s => SCHEDULE_ORDER.includes(s.scheduleType))
+      .sort(
+        (a, b) => SCHEDULE_ORDER.indexOf(a.scheduleType) - SCHEDULE_ORDER.indexOf(b.scheduleType)
+      );
   }, [schedules]);
 
   const formatDateTime = (iso: string) => {
