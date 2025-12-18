@@ -1,7 +1,7 @@
 import dynamic from 'next/dynamic';
 
 const AdminProjectManage = dynamic(
-  () => import('../features/Admin/components/AdminProjectManage/AdminProjectManage'),
+  () => import('../../features/Admin/components/AdminProjectManage/AdminProjectManage'),
   { ssr: false }
 );
 

@@ -17,6 +17,7 @@ import styles from '../../styles/AdminProjectManage.module.css';
 import ParticipantManagement from '../ParticipantManagement/ParticipantManagement';
 import ScheduleRegisterModal from '../ScheduleRegisterModal/ScheduleRegisterModal';
 import TopicRegisterModal from '../TopicRegisterModal/TopicRegisterModal';
+import { useRouter } from 'next/router';
 
 // ScheduleType을 한글 카테고리로 변환
 const SCHEDULE_TYPE_TO_CATEGORY: Record<ScheduleType, string> = {
@@ -326,6 +327,13 @@ const AdminProjectManagement: NextPage = () => {
 
   const PARTS = ['기획', '디자인', '프론트엔드 (웹)', '프론트엔드 (모바일)', '백엔드', 'AI/ML'];
 
+  const router = useRouter();
+
+  const handleGoArchived = () => {
+    console.log('clicked');
+    router.push('/admin-project/AdminArchivedProject');
+  };
+
   const mapSchedules = useCallback((schedules?: Schedule[]): ScheduleItem[] => {
     if (!schedules?.length) return INITIAL_SCHEDULES;
 
@@ -568,7 +576,7 @@ const AdminProjectManagement: NextPage = () => {
                 역대 프로젝트의 일정, 참여자, 팀 조건을 관리할 수 있습니다.
               </h3>
             </div>
-            <button type="button" className={styles.endedProjectButton}>
+            <button type="button" className={styles.endedProjectButton} onClick={handleGoArchived}>
               <span className={styles.endedProjectButtonText}>종료 프로젝트 보기</span>
             </button>
           </div>
@@ -608,7 +616,7 @@ const AdminProjectManagement: NextPage = () => {
               역대 프로젝트의 일정, 참여자, 팀 조건을 관리할 수 있습니다.
             </h3>
           </div>
-          <button type="button" className={styles.endedProjectButton}>
+          <button type="button" className={styles.endedProjectButton} onClick={handleGoArchived}>
             <span className={styles.endedProjectButtonText}>종료 프로젝트 보기</span>
           </button>
         </div>

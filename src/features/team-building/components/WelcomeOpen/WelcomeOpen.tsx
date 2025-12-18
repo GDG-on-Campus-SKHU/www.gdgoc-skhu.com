@@ -61,7 +61,7 @@ import Toggle from '../Toggle';
 
 const IDEAS_PER_PAGE = 10;
 
-const SCHEDULE_LABEL: Partial<Record<TeamBuildingScheduleType, string>> = {
+export const SCHEDULE_LABEL: Partial<Record<TeamBuildingScheduleType, string>> = {
   IDEA_REGISTRATION: '아이디어 등록 기간',
   FIRST_TEAM_BUILDING: '1차 팀빌딩 지원 기간',
   FIRST_TEAM_BUILDING_ANNOUNCEMENT: '1차 팀빌딩 결과 발표',
