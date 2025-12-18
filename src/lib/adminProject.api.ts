@@ -45,7 +45,7 @@ export type ModifiableProject = {
   projectName: string;
   maxMemberCount: number;
   topics: string[];
-  availableParts: AvailablePart[];
+  availableParts?: AvailablePart[];
   schedules: Schedule[];
   participants: Participant[];
 };
@@ -56,7 +56,7 @@ export type ApprovedUser = {
   userName: string;
   school: string;
   generations: Generation[];
-  part: string;
+  part: Part;
 };
 
 export type ApprovedUsersResponse = {
@@ -69,11 +69,33 @@ export type ApprovedUsersResponse = {
   };
 };
 
+// ==================== 종료된 프로젝트 ====================
+
+// GET /admin/projects/past 응답 타입
+export type ArchivedProjectListItem = {
+  projectId: number;
+  name: string;
+  startDate: string;
+  endDate: string;
+};
+
 // ==================== 관리자 프로젝트 관리 API ====================
 
 // GET /admin/projects/modifiable - 수정 가능한 프로젝트 조회
 export const getModifiableProject = async (): Promise<ModifiableProject> => {
   const response = await api.get('/admin/projects/modifiable');
+  return response.data;
+};
+
+// GET /admin/projects/past - 종료된 프로젝트 목록 조회
+export const getArchivedProjects = async (): Promise<ArchivedProjectListItem[]> => {
+  const response = await api.get('/admin/projects/past');
+  return response.data;
+};
+
+// GET /admin/projects/{projectId} - 프로젝트 상세 조회 (과거 프로젝트 포함)
+export const getAdminProjectDetail = async (projectId: number): Promise<ModifiableProject> => {
+  const response = await api.get(`/admin/projects/${projectId}`);
   return response.data;
 };
 
@@ -113,36 +135,6 @@ export const updateProject = async (
   data: ProjectUpdateRequest
 ): Promise<ModifiableProject> => {
   const response = await api.put(`/admin/projects/${projectId}`, data);
-  return response.data;
-};
-
-// ==================== 팀빌딩 프로젝트 API ====================
-
-// GET /team-building/projects/{projectId} - 프로젝트 정보 및 일정 조회
-export const getTeamBuildingProject = async (projectId: number): Promise<ModifiableProject> => {
-  const response = await api.get(`/team-building/projects/${projectId}`);
-  return response.data;
-};
-
-// ==================== 관리자의 승인된 멤버 관리 API ====================
-
-// GET /admin/approved/users - 승인된 유저 목록 조회
-export const getApprovedUsers = async (): Promise<ApprovedUsersResponse> => {
-  const response = await api.get('/admin/approved/users');
-  return response.data;
-};
-
-// ==================== 상수 조회 API ====================
-
-// GET /constants/parts - 파트 목록 조회
-export const getParts = async (): Promise<string[]> => {
-  const response = await api.get('/constants/parts');
-  return response.data;
-};
-
-// GET /constants/generations - 기수 목록 조회
-export const getGenerations = async (): Promise<string[]> => {
-  const response = await api.get('/constants/generations');
   return response.data;
 };
 

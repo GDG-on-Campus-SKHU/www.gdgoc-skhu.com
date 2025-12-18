@@ -29,7 +29,6 @@ export default function ProfilePage() {
     togglePreview,
   } = useProfileEditor(profile);
 
-  // 로딩 상태
   if (isLoading) {
     return (
       <main css={mainCss}>
@@ -40,23 +39,11 @@ export default function ProfilePage() {
     );
   }
 
-  // 에러 상태
-  if (error) {
+  if (error || !profile) {
     return (
       <main css={mainCss}>
         <div css={innerCss}>
-          <div css={errorCss}>프로필을 불러오는 중 오류가 발생했습니다.</div>
-        </div>
-      </main>
-    );
-  }
-
-  // 데이터 없음
-  if (!profile) {
-    return (
-      <main css={mainCss}>
-        <div css={innerCss}>
-          <div css={errorCss}>프로필 정보가 없습니다.</div>
+          <div css={errorCss}>{error ? '오류가 발생했습니다.' : '정보가 없습니다.'}</div>
         </div>
       </main>
     );
@@ -85,7 +72,8 @@ export default function ProfilePage() {
 
           <ProfileBio
             isEditing={isEditing}
-            bioMarkdown={isEditing ? tempMarkdown : bioMarkdown}
+            isPreviewMode={isPreviewMode} // 추가
+            bioMarkdown={bioMarkdown}
             tempMarkdown={tempMarkdown}
             setTempMarkdown={setTempMarkdown}
           />

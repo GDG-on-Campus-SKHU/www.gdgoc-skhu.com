@@ -13,7 +13,7 @@ type LocalMember = {
   part: string;
 };
 
-const GENERATIONS = ['25-26', '24-25', '23-24'];
+const GENERATIONS = ['25-26', '24-25', '23-24', '22-23'];
 
 type ParticipantManagementProps = {
   projectId: number;
@@ -27,7 +27,7 @@ const ParticipantManagement = ({
   onChangeParticipantUserIds,
 }: ParticipantManagementProps) => {
   // 로딩 상태
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   // 필터 상태
   const [schools, setSchools] = useState<string[]>([]);
@@ -67,10 +67,10 @@ const ParticipantManagement = ({
   // 데이터 로드(검색)
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true);
-
       try {
         if (selectedGeneration && selectedSchools.length > 0) {
+          setIsLoading(true);
+
           const users = await fetchSearchedUser({
             schools: selectedSchools,
             generation: selectedGeneration,
@@ -150,7 +150,6 @@ const ParticipantManagement = ({
 
       const next = Array.from(new Set([...prev, ...filteredIds]));
 
-      // selectedMembers에도 추가(중복 제거)
       const map = new Map<number, LocalMember>();
       [...selectedMembers, ...filteredAllMembers].forEach(m => map.set(m.id, m));
       setSelectedMembers(Array.from(map.values()));
@@ -159,10 +158,18 @@ const ParticipantManagement = ({
     });
   };
 
+  const MAIN_SCHOOL = '성공회대학교';
+
   const getSchoolDisplayLabel = () => {
     if (selectedSchools.length === 0) return '학교 선택';
-    if (selectedSchools.length === 1) return selectedSchools[0];
-    return `${selectedSchools[0]} 외 ${selectedSchools.length - 1}개`;
+
+    if (selectedSchools.length === 1) {
+      return selectedSchools[0];
+    }
+
+    const displaySchool = selectedSchools.includes(MAIN_SCHOOL) ? MAIN_SCHOOL : selectedSchools[0];
+
+    return `${displaySchool} 외 ${selectedSchools.length - 1}개`;
   };
 
   const handleToggleSchool = (school: string) => {

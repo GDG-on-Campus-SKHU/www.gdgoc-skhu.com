@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import axios from 'axios';
 import {
   createProject,
+  deleteProject,
   getModifiableProject,
   type ModifiableProject,
   type Part,
@@ -161,6 +162,13 @@ type ProjectNameEditModalProps = {
   onSuccess: (newName: string) => void;
 };
 
+type ProjectDeleteConfirmModalProps = {
+  isOpen: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+  isLoading?: boolean;
+};
+
 const ProjectRegisterModal = ({
   isOpen,
   onClose,
@@ -293,6 +301,80 @@ const ProjectNameEditModal = ({
   );
 };
 
+const ProjectDeleteConfirmModal = ({
+  isOpen,
+  onCancel,
+  onConfirm,
+  isLoading,
+}: ProjectDeleteConfirmModalProps) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className={styles.modalOverlay} onClick={onCancel}>
+      <div
+        className={styles.modalContainer}
+        onClick={e => e.stopPropagation()}
+        style={{ gap: '24px' }}
+      >
+        {/* 텍스트 영역 */}
+        <div style={{ textAlign: 'center' }}>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: '24px',
+              fontWeight: 700,
+              lineHeight: '160%',
+              color: '#040405',
+            }}
+          >
+            프로젝트를 삭제하시겠습니까?
+          </h2>
+          <p
+            style={{
+              marginTop: '8px',
+              fontSize: '16px',
+              fontWeight: 500,
+              color: '#7e8590',
+              lineHeight: '160%',
+            }}
+          >
+            삭제된 데이터는 복구할 수 없습니다.
+          </p>
+        </div>
+
+        {/* 버튼 영역 */}
+        <div
+          style={{
+            display: 'flex',
+            gap: '16px',
+            width: '100%',
+          }}
+        >
+          <button
+            type="button"
+            className={styles.saveButton}
+            onClick={onConfirm}
+            disabled={isLoading}
+            style={{ width: '100%' }}
+          >
+            <span className={styles.saveButtonText}>예</span>
+          </button>
+
+          <button
+            type="button"
+            className={styles.editButton}
+            onClick={onCancel}
+            disabled={isLoading}
+            style={{ width: '100%' }}
+          >
+            <span className={styles.editButtonText}>아니요</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AdminProjectManagement: NextPage = () => {
   // 로딩/저장 상태
   const [isLoading, setIsLoading] = useState(true);
@@ -324,6 +406,7 @@ const AdminProjectManagement: NextPage = () => {
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isProjectRegisterModalOpen, setIsProjectRegisterModalOpen] = useState(false);
   const [isProjectNameEditModalOpen, setIsProjectNameEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const PARTS = ['기획', '디자인', '프론트엔드 (웹)', '프론트엔드 (모바일)', '백엔드', 'AI/ML'];
 
@@ -358,15 +441,18 @@ const AdminProjectManagement: NextPage = () => {
   );
 
   const mapActiveParts = useCallback(
-    (parts: Array<{ part: Part; available: boolean }>) =>
-      parts.filter(p => p.available).map(p => PART_TO_KOREAN[p.part]),
+    (parts?: Array<{ part: Part; available: boolean }>): string[] =>
+      parts?.filter(p => p.available).map(p => PART_TO_KOREAN[p.part]) ?? [],
     []
   );
 
   const applyProjectData = useCallback(
     (projectData: ModifiableProject) => {
       setProjectId(projectData.projectId);
-      setProjectName(projectData.projectName);
+
+      setProjectName(prev =>
+        projectData.projectName && projectData.projectName.trim() ? projectData.projectName : prev
+      );
 
       setSchedules(mapSchedules(projectData.schedules));
       setTopics(projectData.topics ?? []);
@@ -391,7 +477,6 @@ const AdminProjectManagement: NextPage = () => {
     try {
       const projectData = await getModifiableProject();
       applyProjectData(projectData);
-      console.log(projectData);
       setHasProject(true);
     } catch (error) {
       handleLoadError(error);
@@ -408,13 +493,9 @@ const AdminProjectManagement: NextPage = () => {
     setIsCreating(true);
     try {
       const project = await createProject({ projectName });
+
       setProjectId(project.projectId);
-      setProjectName(project.projectName);
-      setSchedules(mapSchedules(project.schedules));
-      setTopics(project.topics ?? []);
-      setMaxMembers(project.maxMemberCount ?? 7);
-      setParticipantUserIds(mapParticipantIds(project.participants));
-      setSelectedParts(mapActiveParts(project.availableParts));
+      setProjectName(projectName);
       setHasProject(true);
       setIsProjectRegisterModalOpen(false);
     } catch (error) {
@@ -521,14 +602,6 @@ const AdminProjectManagement: NextPage = () => {
         endAt: s.scheduleType.includes('ANNOUNCEMENT') ? null : s.endAt,
       }));
 
-      console.log({
-        maxMemberCount: maxMembers,
-        availableParts,
-        topics,
-        participantUserIds,
-        schedules: schedulesData,
-      });
-
       await updateProject(projectId, {
         maxMemberCount: maxMembers,
         availableParts,
@@ -549,6 +622,30 @@ const AdminProjectManagement: NextPage = () => {
   // 저장 완료 모달 닫기
   const handleCloseSaveModal = () => {
     setIsSaveModalOpen(false);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!projectId) return;
+
+    try {
+      setIsSaving(true);
+      await deleteProject(projectId);
+
+      setProjectId(null);
+      setProjectName('');
+      setSchedules(INITIAL_SCHEDULES);
+      setTopics([]);
+      setMaxMembers(7);
+      setSelectedParts([]);
+      setParticipantUserIds([]);
+      setHasProject(false);
+      setIsDeleteModalOpen(false);
+    } catch (error) {
+      console.error('프로젝트 삭제 실패:', error);
+      alert('프로젝트 삭제에 실패했습니다.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // 로딩 중
@@ -767,7 +864,7 @@ const AdminProjectManagement: NextPage = () => {
 
             {isParticipantOpen && (
               <div className={styles.accordionContent}>
-                {projectId && (
+                {projectId !== null && (
                   <ParticipantManagement
                     projectId={projectId}
                     participantUserIds={participantUserIds}
@@ -834,9 +931,15 @@ const AdminProjectManagement: NextPage = () => {
         </div>
 
         <div className={styles.actionRow}>
-          <button type="button" className={styles.deleteButton}>
+          <button
+            type="button"
+            className={styles.deleteButton}
+            onClick={() => setIsDeleteModalOpen(true)}
+            disabled={isSaving}
+          >
             <span className={styles.deleteButtonText}>프로젝트 삭제하기</span>
           </button>
+
           <button
             type="button"
             className={styles.saveButton}
@@ -875,6 +978,13 @@ const AdminProjectManagement: NextPage = () => {
           }}
         />
       )}
+
+      <ProjectDeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onCancel={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        isLoading={isSaving}
+      />
 
       {/* 저장 완료 모달 */}
       {isSaveModalOpen && (

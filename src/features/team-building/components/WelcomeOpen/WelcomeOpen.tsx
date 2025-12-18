@@ -61,7 +61,7 @@ import Toggle from '../Toggle';
 
 const IDEAS_PER_PAGE = 10;
 
-export const SCHEDULE_LABEL: Partial<Record<TeamBuildingScheduleType, string>> = {
+export const SCHEDULE_LABEL: Record<VisibleScheduleType, string> = {
   IDEA_REGISTRATION: '아이디어 등록 기간',
   FIRST_TEAM_BUILDING: '1차 팀빌딩 지원 기간',
   FIRST_TEAM_BUILDING_ANNOUNCEMENT: '1차 팀빌딩 결과 발표',
@@ -69,6 +69,21 @@ export const SCHEDULE_LABEL: Partial<Record<TeamBuildingScheduleType, string>> =
   SECOND_TEAM_BUILDING_ANNOUNCEMENT: '2차 팀빌딩 결과 발표',
   FINAL_RESULT_ANNOUNCEMENT: '최종 팀빌딩 결과 발표',
 };
+
+const SCHEDULE_ORDER = [
+  'IDEA_REGISTRATION',
+  'FIRST_TEAM_BUILDING',
+  'FIRST_TEAM_BUILDING_ANNOUNCEMENT',
+  'SECOND_TEAM_BUILDING',
+  'SECOND_TEAM_BUILDING_ANNOUNCEMENT',
+  'FINAL_RESULT_ANNOUNCEMENT',
+] as const;
+
+function isVisibleScheduleType(type: TeamBuildingScheduleType): type is VisibleScheduleType {
+  return (SCHEDULE_ORDER as readonly string[]).includes(type);
+}
+
+type VisibleScheduleType = (typeof SCHEDULE_ORDER)[number];
 
 const SCHEDULE_MODAL_STORAGE_KEY = 'welcomeOpenScheduleModalSeen';
 const SCHEDULE_MODAL_BODY_CLASS = 'schedule-modal-open';
@@ -354,8 +369,12 @@ export default function WelcomeView() {
 
   const visibleSchedules = useMemo(() => {
     return schedules
-      .filter(s => s.scheduleType !== 'THIRD_TEAM_BUILDING')
-      .filter(s => Boolean(SCHEDULE_LABEL[s.scheduleType]));
+      .filter((s): s is CurrentProjectSchedule & { scheduleType: VisibleScheduleType } =>
+        isVisibleScheduleType(s.scheduleType)
+      )
+      .sort(
+        (a, b) => SCHEDULE_ORDER.indexOf(a.scheduleType) - SCHEDULE_ORDER.indexOf(b.scheduleType)
+      );
   }, [schedules]);
 
   const formatDateTime = (iso: string) => {
@@ -385,7 +404,7 @@ export default function WelcomeView() {
             <ScheduleModalCard role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
               <ScheduleModalHeader>
                 <div>
-                  <ScheduleModalTitle>그로우톤</ScheduleModalTitle>
+                  <ScheduleModalTitle>{projectName}</ScheduleModalTitle>
                   <ScheduleModalSubtitle>팀빌딩 진행 일정</ScheduleModalSubtitle>
                 </div>
                 <ScheduleModalCloseButton>
@@ -403,9 +422,9 @@ export default function WelcomeView() {
               <ScheduleSteps>
                 {visibleSchedules.map((s, idx) => {
                   const isLast = idx === visibleSchedules.length - 1;
-                  const title = SCHEDULE_LABEL[s.scheduleType] ?? s.scheduleType;
+                  const title = SCHEDULE_LABEL[s.scheduleType];
 
-                  const isAnnouncement = s.scheduleType.includes('ANNOUNCEMENT');
+                  const isAnnouncement = s.scheduleType.endsWith('ANNOUNCEMENT');
                   const period = isAnnouncement
                     ? formatDateTime(s.startAt)
                     : `${formatDateTime(s.startAt)} ~ ${formatDateTime(s.endAt)}`;
