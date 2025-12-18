@@ -51,11 +51,12 @@ export const SummaryCard = styled.article`
   flex: 1 0 0;
 `;
 
-export const SummaryHeader = styled.div`
+export const SummaryHeader = styled.div<{ clickable?: boolean }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
   align-self: stretch;
+  cursor: ${({ clickable }) => (clickable ? 'pointer' : 'default')};
 `;
 
 export const SummaryLabel = styled.span`
@@ -142,11 +143,12 @@ export const EmptyProjectText = styled.span`
   line-height: 160%; /* 38.4px */
 `;
 
-export const ProjectHeader = styled.div`
+export const ProjectHeader = styled.div<{ clickable?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
+  cursor: ${({ clickable }) => (clickable ? 'pointer' : 'default')};
 `;
 
 export const ProjectName = styled.h3`

@@ -29,6 +29,7 @@ import {
   SummaryValueRow,
   Title,
 } from '../../styles/AdminDashboard';
+import { useRouter } from 'next/router';
 
 type SummaryStat = {
   id: string;
@@ -70,6 +71,8 @@ type DashboardResponse = {
 };
 
 export default function AdminDashboard({ summaryStats = [], projects = [] }: AdminDashboardProps) {
+  const router = useRouter();
+
   const [fetchedStats, setFetchedStats] = useState<SummaryStat[] | null>(null);
   const [fetchedProjects, setFetchedProjects] = useState<ProjectOverview[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -184,6 +187,11 @@ export default function AdminDashboard({ summaryStats = [], projects = [] }: Adm
     };
   }, []);
 
+  const summaryRouteMap: Record<string, string> = {
+    waiting: '/AdminSubsScreening',
+    approved: '/admin-member',
+  };
+
   const statsToRender = fetchedStats && fetchedStats.length > 0 ? fetchedStats : summaryStats;
   const projectsToRender = fetchedProjects ?? projects ?? [];
   const hasProjects = projectsToRender.length > 0;
@@ -201,7 +209,20 @@ export default function AdminDashboard({ summaryStats = [], projects = [] }: Adm
       <SummaryGrid>
         {statsToRender.map(stat => (
           <SummaryCard key={stat.id}>
-            <SummaryHeader>
+            <SummaryHeader
+              role="button"
+              tabIndex={0}
+              clickable={Boolean(summaryRouteMap[stat.id])}
+              onClick={() => {
+                const route = summaryRouteMap[stat.id];
+                if (route) router.push(route);
+              }}
+              onKeyDown={e => {
+                if (e.key !== 'Enter') return;
+                const route = summaryRouteMap[stat.id];
+                if (route) router.push(route);
+              }}
+            >
               <SummaryLabel>{stat.label}</SummaryLabel>
               <CardArrow aria-hidden="true">
                 <Image src="/rightarrow.svg" alt="" width={8.469} height={16} />
@@ -221,8 +242,20 @@ export default function AdminDashboard({ summaryStats = [], projects = [] }: Adm
         {hasProjects ? (
           projectsToRender.map(project => (
             <ProjectCard key={project.id}>
-              <ProjectHeader>
+              <ProjectHeader clickable
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  router.push('/admin-project');
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    router.push('/admin-project');
+                  }
+                }}
+              >
                 <ProjectName>{project.name}</ProjectName>
+
                 <CardArrow aria-hidden="true">
                   <Image src="/rightarrow.svg" alt="" width={16} height={16} />
                 </CardArrow>
