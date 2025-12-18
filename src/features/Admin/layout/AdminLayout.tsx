@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 
+import { useAuthStore } from '../../../lib/authStore';
 import { Content } from '../styles/AdminDashboard';
 import {
   Brand,
@@ -31,8 +32,8 @@ type Props = {
 const NAV_ITEMS: NavItem[] = [
   { label: '대시보드', path: '/admin' },
   { label: '가입 심사', path: '/AdminSubsScreening' },
-  { label: '멤버 관리', path: '/AdminMember' },
-  { label: '프로젝트 관리', path: '/AdminProjectManage' },
+  { label: '멤버 관리', path: '/admin-member' },
+  { label: '프로젝트 관리', path: '/admin-project' },
   { label: '아이디어 관리', path: '/AdminIdea' },
   { label: '프로젝트 갤러리 관리', path: '/AdminProjectGallery' },
   { label: '액티비티 관리', path: '/AdminActivity' },
@@ -41,6 +42,7 @@ const NAV_ITEMS: NavItem[] = [
 export default function AdminLayout({ children }: Props) {
   const router = useRouter();
   const { pathname } = router;
+  const { name } = useAuthStore(); // Zustand 스토어에서 이름 가져오기
 
   return (
     <Page>
@@ -55,7 +57,7 @@ export default function AdminLayout({ children }: Props) {
         </BrandContainer>
 
         <ProfileDetails>
-          <ProfileName>윤준석</ProfileName>
+          <ProfileName>{name || '관리자'}</ProfileName>
           <ProfileTitle>님</ProfileTitle>
         </ProfileDetails>
 

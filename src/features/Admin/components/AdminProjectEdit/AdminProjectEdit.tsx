@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
@@ -277,30 +278,6 @@ const ProjectGalleryEdit: React.FC = () => {
 
   return (
     <Container>
-      <Sidebar>
-        <Logo>
-          <LogoImage src="/gdgoc_skhu_admin.svg" alt="" />
-          <LogoText>GDGoC SKHU</LogoText>
-        </Logo>
-        <LoginInfo>
-          <UserName>윤준석</UserName>
-          <Divider>님</Divider>
-        </LoginInfo>
-        <MenuList>
-          <MenuItem>대시보드</MenuItem>
-          <MenuItem>가입 심사</MenuItem>
-          <MenuItem>멤버 관리</MenuItem>
-          <MenuItem>프로젝트 관리</MenuItem>
-          <MenuItem>아이디어 관리</MenuItem>
-          <MenuItemActive>
-            <span>프로젝트 갤러리 관리</span>
-            <ArrowIcon src="/rightarrow_admin.svg" alt="" />
-          </MenuItemActive>
-          <MenuItem>액티비티 관리</MenuItem>
-          <MenuItem>홈 화면으로 나가기</MenuItem>
-        </MenuList>
-      </Sidebar>
-
       <MainContent>
         <ContentWrapper>
           <HeaderBlock>

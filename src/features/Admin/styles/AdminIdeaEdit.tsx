@@ -24,7 +24,7 @@ export const ContentContainer = styled.div`
   width: 100%;
   max-width: 1105px;
   gap: 32px;
-  margin: 0; /* ❗ 가운데 정렬 제거 */
+  margin: 0;
 `;
 
 export const ApplyButton = styled.button`

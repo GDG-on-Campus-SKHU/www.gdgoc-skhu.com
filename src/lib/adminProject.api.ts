@@ -1,42 +1,5 @@
-import axios from 'axios';
-
-// Axios 인스턴스 생성
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true,
-});
-
-// 요청 인터셉터 - 토큰 추가
-api.interceptors.request.use(
-  config => {
-    if (typeof window !== 'undefined') {
-      const token = sessionStorage.getItem('accessToken');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    }
-    return config;
-  },
-  error => Promise.reject(error)
-);
-
-// 응답 인터셉터 - 에러 처리
-api.interceptors.response.use(
-  response => response,
-  error => {
-    if (error.response?.status === 401) {
-      console.error('인증 에러: 토큰이 없거나 만료되었습니다.');
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('accessToken');
-      }
-    }
-    console.error('API Error:', error.response?.data || error.message);
-    return Promise.reject(error);
-  }
-);
+import { api } from './api';
+import { Generation } from './mypageProfile.api';
 
 // ==================== 타입 정의 (Swagger 스키마 기반) ====================
 
@@ -69,6 +32,7 @@ export type AvailablePart = {
 // 참여자
 export type Participant = {
   participantId: number;
+  userId: number;
   name: string;
   school: string;
   generation: string;
@@ -88,11 +52,21 @@ export type ModifiableProject = {
 
 // 승인된 유저 타입
 export type ApprovedUser = {
-  userId: number;
-  name: string;
-  university: string;
-  generation: string;
+  id: number;
+  userName: string;
+  school: string;
+  generations: Generation[];
   part: string;
+};
+
+export type ApprovedUsersResponse = {
+  users: ApprovedUser[];
+  pageInfo: {
+    pageNumber: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
+  };
 };
 
 // ==================== 관리자 프로젝트 관리 API ====================
@@ -153,10 +127,11 @@ export const getTeamBuildingProject = async (projectId: number): Promise<Modifia
 // ==================== 관리자의 승인된 멤버 관리 API ====================
 
 // GET /admin/approved/users - 승인된 유저 목록 조회
-export const getApprovedUsers = async (): Promise<ApprovedUser[]> => {
+export const getApprovedUsers = async (): Promise<ApprovedUsersResponse> => {
   const response = await api.get('/admin/approved/users');
   return response.data;
 };
+
 
 // ==================== 상수 조회 API ====================
 
@@ -185,22 +160,3 @@ export const getSchools = async (): Promise<SchoolResponse[]> => {
   const response = await api.get('/admin/projects/schools');
   return response.data;
 };
-
-// ==================== 참여자 API (엔드포인트 확인 필요) ====================
-
-// 참여자 추가
-export const addParticipant = async (projectId: number, userId: number): Promise<void> => {
-  // TODO: 백엔드 엔드포인트 확인 필요
-  await api.put(`/admin/projects/${projectId}/participants/${userId}`);
-};
-
-// 참여자 제거
-export const removeParticipant = async (
-  projectId: number,
-  participantId: number
-): Promise<void> => {
-  // TODO: 백엔드 엔드포인트 확인 필요
-  await api.delete(`/admin/projects/${projectId}/participants/${participantId}`);
-};
-
-export default api;

@@ -171,6 +171,7 @@
   border-radius: 0;
   overflow: hidden;
   border: none;
+  height: 680px;
 }
 
 /* 테이블 헤더 - 왼쪽 (선택된 멤버) */
@@ -290,6 +291,22 @@
 .tableBody {
   display: flex;
   flex-direction: column;
+
+  flex: 1;
+  overflow-y: auto;
+}
+
+.tableBody::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tableBody::-webkit-scrollbar-thumb {
+  background-color: #d0d4da;
+  border-radius: 3px;
+}
+
+.tableBody::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .tableBodyRow {
@@ -505,4 +522,16 @@
 
 .checkboxSelected:hover {
   background: #3367d6;
+}
+
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+
+.optionSelected {
+  background-color: #eef3ff;
+  font-weight: 600;
 }

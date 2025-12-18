@@ -9,6 +9,7 @@ import Footer from '../components/Footer';
 import Nav from '../components/Nav';
 import Scene from '../components/Scene';
 import { BASE_URL } from '../constants/common';
+import AdminLayout from '../features/Admin/layout/AdminLayout';
 import GlobalStyle from '../styles/GlobalStyle';
 
 import '@uiw/react-md-editor/markdown-editor.css';
@@ -20,7 +21,7 @@ export default function App({ Component, pageProps, router }: AppProps) {
   const CURRENT_URL = BASE_URL + router.route;
   const [queryClient] = useState(() => new QueryClient());
   const hideFooter = HIDE_FOOTER_PAGES.includes(router.pathname);
-  const hideNav = router.pathname.toLowerCase().startsWith('/admin');
+  const isAdminPage = router.pathname.toLowerCase().startsWith('/admin');
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -30,8 +31,8 @@ export default function App({ Component, pageProps, router }: AppProps) {
       </Head>
 
       <GlobalStyle />
-      {!hideNav && <Nav />}
-      <Scene />
+      {!isAdminPage && <Nav />}
+      {!isAdminPage && <Scene />}
 
       <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
         <div
@@ -41,11 +42,17 @@ export default function App({ Component, pageProps, router }: AppProps) {
             z-index: 99;
           `}
         >
-          <Component {...pageProps} />
+          {isAdminPage ? (
+            <AdminLayout>
+              <Component {...pageProps} />
+            </AdminLayout>
+          ) : (
+            <Component {...pageProps} />
+          )}
         </div>
       </AnimatePresence>
 
-      {!hideFooter && <Footer />}
+      {!hideFooter && !isAdminPage && <Footer />}
     </QueryClientProvider>
   );
 }

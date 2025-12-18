@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
@@ -64,9 +65,11 @@ export default function AdminIdeaProject() {
           }))
         );
 
-        setTotalPages(pageInfo.totalPages);
+        setTotalPages(Math.max(1, pageInfo.totalPages));
       } catch (error) {
-        console.error('프로젝트 조회 실패', error);
+        setRows([]);
+        setTotalPages(1);
+        setPage(1);
       }
     };
 

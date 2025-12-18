@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import axios from 'axios';
 import type { NextPage } from 'next';
 import Image from 'next/image';
 import {
@@ -141,12 +142,22 @@ const INITIAL_SCHEDULES: ScheduleItem[] = [
   },
 ];
 
+const SCHEDULE_ORDER = INITIAL_SCHEDULES.map(s => s.scheduleType);
+
 // 프로젝트 등록 모달 컴포넌트
 type ProjectRegisterModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (projectName: string) => void;
   isLoading?: boolean;
+};
+
+type ProjectNameEditModalProps = {
+  isOpen: boolean;
+  projectId: number;
+  currentName: string;
+  onClose: () => void;
+  onSuccess: (newName: string) => void;
 };
 
 const ProjectRegisterModal = ({
@@ -208,6 +219,79 @@ const ProjectRegisterModal = ({
   );
 };
 
+const ProjectNameEditModal = ({
+  isOpen,
+  projectId,
+  currentName,
+  onClose,
+  onSuccess,
+}: ProjectNameEditModalProps) => {
+  const [value, setValue] = useState(currentName);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) setValue(currentName);
+  }, [isOpen, currentName]);
+
+  if (!isOpen) return null;
+
+  const handleConfirm = async () => {
+    if (!value.trim() || value === currentName) {
+      onClose();
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await updateProjectName(projectId, { projectName: value.trim() });
+      onSuccess(value.trim());
+      onClose();
+    } catch (error) {
+      console.error('프로젝트 이름 수정 실패:', error);
+      alert('프로젝트 이름 수정에 실패했습니다.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalContainer} onClick={e => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <span className={styles.modalTitle}>프로젝트 이름 수정</span>
+          <button className={styles.modalCloseButton} onClick={onClose}>
+            <Image src="/close.svg" alt="닫기" width={24} height={24} />
+          </button>
+        </div>
+
+        <div className={styles.modalContent}>
+          <input
+            className={styles.modalInput}
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleConfirm()}
+            autoFocus
+          />
+        </div>
+
+        <div className={styles.modalFooter}>
+          <button
+            className={`${styles.modalConfirmButton} ${
+              !value.trim() || value === currentName ? styles.modalConfirmButtonDisabled : ''
+            }`}
+            onClick={handleConfirm}
+            disabled={isSaving || !value.trim() || value === currentName}
+          >
+            <span className={styles.modalConfirmButtonText}>
+              {isSaving ? '저장 중...' : '저장'}
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AdminProjectManagement: NextPage = () => {
   // 로딩/저장 상태
   const [isLoading, setIsLoading] = useState(true);
@@ -220,7 +304,6 @@ const AdminProjectManagement: NextPage = () => {
   // 프로젝트 데이터
   const [projectId, setProjectId] = useState<number | null>(null);
   const [projectName, setProjectName] = useState('');
-  const [initialProjectName, setInitialProjectName] = useState(''); // 초기 이름 (변경 감지용)
   const [schedules, setSchedules] = useState<ScheduleItem[]>(INITIAL_SCHEDULES);
   const [topics, setTopics] = useState<string[]>([]);
   const [maxMembers, setMaxMembers] = useState(7);
@@ -239,80 +322,81 @@ const AdminProjectManagement: NextPage = () => {
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isProjectRegisterModalOpen, setIsProjectRegisterModalOpen] = useState(false);
+  const [isProjectNameEditModalOpen, setIsProjectNameEditModalOpen] = useState(false);
 
   const PARTS = ['기획', '디자인', '프론트엔드 (웹)', '프론트엔드 (모바일)', '백엔드', 'AI/ML'];
 
-  // 데이터 로드
+  const loadProject = async () => {
+    setIsLoading(true);
+    try {
+      const projectData = await getModifiableProject();
+      applyProjectData(projectData);
+      console.log(projectData);
+      setHasProject(true);
+    } catch (error) {
+      handleLoadError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const projectData: ModifiableProject = await getModifiableProject();
-        setHasProject(true);
-        setProjectId(projectData.projectId);
-        setProjectName(projectData.projectName);
-        setInitialProjectName(projectData.projectName); // 초기 이름 저장
-
-        // 일정 매핑
-        if (projectData.schedules && projectData.schedules.length > 0) {
-          const mappedSchedules: ScheduleItem[] = projectData.schedules.map(
-            (schedule: Schedule) => ({
-              scheduleType: schedule.scheduleType,
-              category: SCHEDULE_TYPE_TO_CATEGORY[schedule.scheduleType] || schedule.scheduleType,
-              status: getScheduleStatus(schedule.startAt, schedule.endAt),
-              period: schedule.startAt
-                ? schedule.endAt
-                  ? `${formatDateTime(schedule.startAt)} ~ ${formatDateTime(schedule.endAt)}`
-                  : formatDateTime(schedule.startAt)
-                : '',
-              startAt: schedule.startAt,
-              endAt: schedule.endAt,
-            })
-          );
-          setSchedules(mappedSchedules);
-        }
-
-        setTopics(projectData.topics || []);
-        setMaxMembers(projectData.maxMemberCount || 7);
-
-        // 참여자 ID 목록 저장
-        if (projectData.participants && projectData.participants.length > 0) {
-          const userIds = projectData.participants.map(p => p.participantId);
-          setParticipantUserIds(userIds);
-        }
-
-        const activeParts = projectData.availableParts
-          .filter(p => p.available)
-          .map(p => PART_TO_KOREAN[p.part]);
-        setSelectedParts(activeParts);
-      } catch (error: any) {
-        if (error?.response?.status === 404) {
-          setHasProject(false);
-        } else {
-          console.error('프로젝트 정보 조회 실패:', error);
-          setHasProject(false);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
+    loadProject();
   }, []);
 
-  // 프로젝트 생성
-  const handleCreateProject = async (newProjectName: string) => {
+  const applyProjectData = (projectData: ModifiableProject) => {
+    setProjectId(projectData.projectId);
+    setProjectName(projectData.projectName);
+
+    setSchedules(mapSchedules(projectData.schedules));
+    setTopics(projectData.topics ?? []);
+    setMaxMembers(projectData.maxMemberCount ?? 7);
+    setParticipantUserIds(mapParticipantIds(projectData.participants));
+    setSelectedParts(mapActiveParts(projectData.availableParts));
+  };
+
+  const mapSchedules = (schedules?: Schedule[]): ScheduleItem[] => {
+    if (!schedules?.length) return INITIAL_SCHEDULES;
+
+    return schedules.map(schedule => ({
+      scheduleType: schedule.scheduleType,
+      category: SCHEDULE_TYPE_TO_CATEGORY[schedule.scheduleType],
+      status: getScheduleStatus(schedule.startAt, schedule.endAt),
+      period: schedule.startAt
+        ? schedule.endAt
+          ? `${formatDateTime(schedule.startAt)} ~ ${formatDateTime(schedule.endAt)}`
+          : formatDateTime(schedule.startAt)
+        : '',
+      startAt: schedule.startAt,
+      endAt: schedule.endAt,
+    }));
+  };
+
+  const mapParticipantIds = (participants?: { participantId: number }[]) =>
+    participants?.map(p => p.participantId) ?? [];
+
+  const mapActiveParts = (parts: { part: Part; available: boolean }[]) =>
+    parts.filter(p => p.available).map(p => PART_TO_KOREAN[p.part]);
+
+  const handleLoadError = (error: unknown) => {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      setHasProject(false);
+      return;
+    }
+
+    console.error('프로젝트 정보 조회 실패:', error);
+  };
+
+  const handleCreateProject = async (projectName: string) => {
     setIsCreating(true);
     try {
-      const newProject = await createProject({ projectName: newProjectName });
+      const project = await createProject({ projectName });
+      applyProjectData(project);
       setHasProject(true);
-      setProjectId(newProject.projectId);
-      setProjectName(newProject.projectName);
       setIsProjectRegisterModalOpen(false);
-      window.location.reload();
     } catch (error) {
       console.error('프로젝트 생성 실패:', error);
-      alert('프로젝트 생성에 실패했습니다. 다시 시도해주세요.');
+      alert('프로젝트 생성에 실패했습니다.');
     } finally {
       setIsCreating(false);
     }
@@ -338,26 +422,34 @@ const AdminProjectManagement: NextPage = () => {
   };
 
   // 모달 확인 → 일정 업데이트
-  const handleConfirm = (startAt: string, endAt?: string) => {
-    if (selectedSchedule) {
-      const periodText = endAt
-        ? `${formatDateTime(startAt)} ~ ${formatDateTime(endAt)}`
-        : formatDateTime(startAt);
+  const handleConfirm = (startAt: Date, endAt?: Date) => {
+    const periodText = endAt
+      ? `${formatDateTime(toLocalDateTimeString(startAt))} ~ ${formatDateTime(toLocalDateTimeString(endAt))}`
+      : formatDateTime(toLocalDateTimeString(startAt));
 
-      setSchedules(prev =>
-        prev.map(schedule =>
-          schedule.scheduleType === selectedSchedule.scheduleType
-            ? {
-                ...schedule,
-                status: '진행 전' as const,
-                period: periodText,
-                startAt,
-                endAt: endAt || null,
-              }
-            : schedule
-        )
-      );
-    }
+    setSchedules(prev =>
+      prev.map(schedule =>
+        schedule.scheduleType === selectedSchedule?.scheduleType
+          ? {
+              ...schedule,
+              status: '진행 전',
+              period: periodText,
+              startAt: toLocalDateTimeString(startAt),
+              endAt: endAt ? toLocalDateTimeString(endAt) : null,
+            }
+          : schedule
+      )
+    );
+  };
+
+  const toLocalDateTimeString = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${year}-${month}-${day}T${hours}:${minutes}:00`;
   };
 
   // 카테고리에 따라 모달 타입 결정
@@ -397,12 +489,6 @@ const AdminProjectManagement: NextPage = () => {
     if (!projectId) return;
     setIsSaving(true);
     try {
-      // 프로젝트 이름이 변경되었으면 별도 API 호출
-      if (projectName !== initialProjectName) {
-        await updateProjectName(projectId, { projectName });
-        setInitialProjectName(projectName); // 업데이트 후 초기값 갱신
-      }
-
       // 선택된 파트만 Part[] 형태로 변환
       const availableParts: Part[] = selectedParts.map(koreanPart => KOREAN_TO_PART[koreanPart]);
 
@@ -411,6 +497,14 @@ const AdminProjectManagement: NextPage = () => {
         startAt: s.startAt,
         endAt: s.scheduleType.includes('ANNOUNCEMENT') ? null : s.endAt,
       }));
+
+      console.log({
+        maxMemberCount: maxMembers,
+        availableParts,
+        topics,
+        participantUserIds,
+        schedules: schedulesData,
+      });
 
       await updateProject(projectId, {
         maxMemberCount: maxMembers,
@@ -438,41 +532,6 @@ const AdminProjectManagement: NextPage = () => {
   if (isLoading) {
     return (
       <div className={styles.container}>
-        <div className={styles.sidebar}>
-          <div className={styles.logo}>
-            <Image
-              className={styles.gdgocSkhuImage}
-              src="/gdgoc_skhu_admin.svg"
-              alt="GDGoC SKHU"
-              width={40}
-              height={26}
-            />
-            <h3 className={styles.logoText}>GDGoC SKHU</h3>
-          </div>
-          <div className={styles.loginInfo}>
-            <h3 className={styles.userName}>윤준석</h3>
-            <div className={styles.divider}>님</div>
-          </div>
-          <section className={styles.menuList}>
-            <div className={styles.menuItem}>대시보드</div>
-            <div className={styles.menuItem}>가입 심사</div>
-            <div className={styles.menuItem}>멤버 관리</div>
-            <div className={`${styles.menuItem} ${styles.menuItemActive}`}>
-              <span>프로젝트 관리</span>
-              <Image
-                className={styles.menuArrowIcon}
-                src="/rightarrow_admin.svg"
-                width={14}
-                height={14}
-                alt=""
-              />
-            </div>
-            <div className={styles.menuItem}>아이디어 관리</div>
-            <div className={styles.menuItem}>프로젝트 갤러리 관리</div>
-            <div className={styles.menuItem}>액티비티 관리</div>
-            <div className={styles.menuItem}>홈 화면으로 나가기</div>
-          </section>
-        </div>
         <main className={styles.mainContent}>
           <div className={styles.loadingContainer}>
             <span>로딩 중...</span>
@@ -486,42 +545,6 @@ const AdminProjectManagement: NextPage = () => {
   if (!hasProject) {
     return (
       <div className={styles.container}>
-        <div className={styles.sidebar}>
-          <div className={styles.logo}>
-            <Image
-              className={styles.gdgocSkhuImage}
-              src="/gdgoc_skhu_admin.svg"
-              alt="GDGoC SKHU"
-              width={40}
-              height={26}
-            />
-            <h3 className={styles.logoText}>GDGoC SKHU</h3>
-          </div>
-          <div className={styles.loginInfo}>
-            <h3 className={styles.userName}>윤준석</h3>
-            <div className={styles.divider}>님</div>
-          </div>
-          <section className={styles.menuList}>
-            <div className={styles.menuItem}>대시보드</div>
-            <div className={styles.menuItem}>가입 심사</div>
-            <div className={styles.menuItem}>멤버 관리</div>
-            <div className={`${styles.menuItem} ${styles.menuItemActive}`}>
-              <span>프로젝트 관리</span>
-              <Image
-                className={styles.menuArrowIcon}
-                src="/rightarrow_admin.svg"
-                width={14}
-                height={14}
-                alt=""
-              />
-            </div>
-            <div className={styles.menuItem}>아이디어 관리</div>
-            <div className={styles.menuItem}>프로젝트 갤러리 관리</div>
-            <div className={styles.menuItem}>액티비티 관리</div>
-            <div className={styles.menuItem}>홈 화면으로 나가기</div>
-          </section>
-        </div>
-
         <main className={styles.mainContent}>
           <div className={styles.headerSection}>
             <div className={styles.headerLeft}>
@@ -562,44 +585,6 @@ const AdminProjectManagement: NextPage = () => {
   // 프로젝트가 있을 때 - 편집 화면
   return (
     <div className={styles.container}>
-      <div className={styles.sidebar}>
-        <div className={styles.logo}>
-          <Image
-            className={styles.gdgocSkhuImage}
-            src="/gdgoc_skhu_admin.svg"
-            alt="GDGoC SKHU"
-            width={40}
-            height={26}
-          />
-          <h3 className={styles.logoText}>GDGoC SKHU</h3>
-        </div>
-
-        <div className={styles.loginInfo}>
-          <h3 className={styles.userName}>윤준석</h3>
-          <div className={styles.divider}>님</div>
-        </div>
-
-        <section className={styles.menuList}>
-          <div className={styles.menuItem}>대시보드</div>
-          <div className={styles.menuItem}>가입 심사</div>
-          <div className={styles.menuItem}>멤버 관리</div>
-          <div className={`${styles.menuItem} ${styles.menuItemActive}`}>
-            <span>프로젝트 관리</span>
-            <Image
-              className={styles.menuArrowIcon}
-              src="/rightarrow_admin.svg"
-              width={14}
-              height={14}
-              alt=""
-            />
-          </div>
-          <div className={styles.menuItem}>아이디어 관리</div>
-          <div className={styles.menuItem}>프로젝트 갤러리 관리</div>
-          <div className={styles.menuItem}>액티비티 관리</div>
-          <div className={styles.menuItem}>홈 화면으로 나가기</div>
-        </section>
-      </div>
-
       <main className={styles.mainContent}>
         <div className={styles.headerSection}>
           <div className={styles.headerLeft}>
@@ -616,7 +601,14 @@ const AdminProjectManagement: NextPage = () => {
         <div className={styles.contentWrapper}>
           <div className={styles.projectNameContainer}>
             <h2 className={styles.projectName}>{projectName}</h2>
-            <Image className={styles.editIcon} src="/edit.svg" alt="편집" width={24} height={24} />
+            <Image
+              className={styles.editIcon}
+              src="/edit.svg"
+              alt="편집"
+              width={24}
+              height={24}
+              onClick={() => setIsProjectNameEditModalOpen(true)}
+            />
           </div>
 
           {/* 프로젝트 일정 관리 */}
@@ -652,36 +644,42 @@ const AdminProjectManagement: NextPage = () => {
                   </div>
                 </div>
                 <div className={styles.tableBody}>
-                  {schedules.map(schedule => (
-                    <div key={schedule.scheduleType} className={styles.tableRow}>
-                      <div className={styles.tableCellCategory}>
-                        <span className={styles.tableCellCategoryText}>{schedule.category}</span>
-                      </div>
-                      <div className={styles.tableCellStatus}>
-                        <span className={styles.tableCellStatusText}>{schedule.status}</span>
-                      </div>
-                      <div className={styles.tableCellPeriod}>
-                        <span className={styles.tableCellPeriodText}>
-                          {schedule.period || '기간을 등록해주세요.'}
-                        </span>
-                      </div>
-                      <div className={styles.tableCellAction}>
-                        <button
-                          type="button"
-                          className={schedule.period ? styles.editButton : styles.registerButton}
-                          onClick={() => handleRegister(schedule)}
-                        >
-                          <span
-                            className={
-                              schedule.period ? styles.editButtonText : styles.registerButtonText
-                            }
-                          >
-                            {schedule.period ? '수정하기' : '등록하기'}
+                  {[...schedules]
+                    .sort(
+                      (a, b) =>
+                        SCHEDULE_ORDER.indexOf(a.scheduleType) -
+                        SCHEDULE_ORDER.indexOf(b.scheduleType)
+                    )
+                    .map(schedule => (
+                      <div key={schedule.scheduleType} className={styles.tableRow}>
+                        <div className={styles.tableCellCategory}>
+                          <span className={styles.tableCellCategoryText}>{schedule.category}</span>
+                        </div>
+                        <div className={styles.tableCellStatus}>
+                          <span className={styles.tableCellStatusText}>{schedule.status}</span>
+                        </div>
+                        <div className={styles.tableCellPeriod}>
+                          <span className={styles.tableCellPeriodText}>
+                            {schedule.period || '기간을 등록해주세요.'}
                           </span>
-                        </button>
+                        </div>
+                        <div className={styles.tableCellAction}>
+                          <button
+                            type="button"
+                            className={schedule.period ? styles.editButton : styles.registerButton}
+                            onClick={() => handleRegister(schedule)}
+                          >
+                            <span
+                              className={
+                                schedule.period ? styles.editButtonText : styles.registerButtonText
+                              }
+                            >
+                              {schedule.period ? '수정하기' : '등록하기'}
+                            </span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             )}
@@ -746,7 +744,13 @@ const AdminProjectManagement: NextPage = () => {
 
             {isParticipantOpen && (
               <div className={styles.accordionContent}>
-                {projectId && <ParticipantManagement projectId={projectId} />}
+                {projectId && (
+                  <ParticipantManagement
+                    projectId={projectId}
+                    participantUserIds={participantUserIds}
+                    onChangeParticipantUserIds={setParticipantUserIds}
+                  />
+                )}
               </div>
             )}
           </div>
@@ -827,6 +831,8 @@ const AdminProjectManagement: NextPage = () => {
         title={selectedSchedule?.category || ''}
         type={selectedSchedule ? getModalType(selectedSchedule.category) : 'period'}
         onConfirm={handleConfirm}
+        initialStartAt={selectedSchedule?.startAt ?? null}
+        initialEndAt={selectedSchedule?.endAt ?? null}
       />
 
       <TopicRegisterModal
@@ -834,6 +840,18 @@ const AdminProjectManagement: NextPage = () => {
         onClose={handleCloseTopicModal}
         onConfirm={handleTopicConfirm}
       />
+
+      {projectId && (
+        <ProjectNameEditModal
+          isOpen={isProjectNameEditModalOpen}
+          projectId={projectId}
+          currentName={projectName}
+          onClose={() => setIsProjectNameEditModalOpen(false)}
+          onSuccess={newName => {
+            setProjectName(newName);
+          }}
+        />
+      )}
 
       {/* 저장 완료 모달 */}
       {isSaveModalOpen && (

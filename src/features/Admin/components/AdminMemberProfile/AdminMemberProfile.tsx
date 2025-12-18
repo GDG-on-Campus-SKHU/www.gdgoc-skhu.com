@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
@@ -79,32 +80,6 @@ const AdminMemberProfile = ({ memberProps, onBack }: Props) => {
 
   return (
     <Container>
-      <Sidebar>
-        <Logo>
-          <GdgocSkhuImage src="/gdgoc_skhu_admin.svg" alt="" width={60} height={38} />
-          <LogoText>GDGoC SKHU</LogoText>
-        </Logo>
-
-        <LoginInfo>
-          <UserName>윤준석</UserName>
-          <Divider>님</Divider>
-        </LoginInfo>
-
-        <MenuList>
-          <MenuItem>대시보드</MenuItem>
-          <MenuItem>가입 심사</MenuItem>
-          <MenuItemActive>
-            <span>멤버 관리</span>
-            <MenuArrowIcon src="/rightarrow_admin.svg" width={16} height={16} alt="" />
-          </MenuItemActive>
-          <MenuItem>프로젝트 관리</MenuItem>
-          <MenuItem>아이디어 관리</MenuItem>
-          <MenuItem>프로젝트 갤러리 관리</MenuItem>
-          <MenuItem>액티비티 관리</MenuItem>
-          <MenuItem>홈 화면으로 나가기</MenuItem>
-        </MenuList>
-      </Sidebar>
-
       <MainContent>
         <Header>
           <Title>멤버 관리</Title>

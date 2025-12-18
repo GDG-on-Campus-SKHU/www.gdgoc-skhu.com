@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useMemo, useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
@@ -195,32 +196,6 @@ const AdminMemberProfileEdit: NextPage = () => {
 
   return (
     <Container>
-      <Sidebar>
-        <Logo>
-          <GdgocSkhuImage src="/gdgoc_skhu_admin.svg" alt="GDGoC SKHU" width={40} height={26} />
-          <LogoText>GDGoC SKHU</LogoText>
-        </Logo>
-
-        <LoginInfo>
-          <UserName>윤준석</UserName>
-          <Divider>님</Divider>
-        </LoginInfo>
-
-        <MenuList>
-          <MenuItem>대시보드</MenuItem>
-          <MenuItem>가입 심사</MenuItem>
-          <MenuItemActive>
-            <span>멤버 관리</span>
-            <MenuArrowIcon src="/rightarrow_admin.svg" width={14} height={14} alt="" />
-          </MenuItemActive>
-          <MenuItem>프로젝트 관리</MenuItem>
-          <MenuItem>아이디어 관리</MenuItem>
-          <MenuItem>프로젝트 갤러리 관리</MenuItem>
-          <MenuItem>액티비티 관리</MenuItem>
-          <MenuItem>홈 화면으로 나가기</MenuItem>
-        </MenuList>
-      </Sidebar>
-
       <MainContent>
         <Header>
           <Title>멤버 관리</Title>
@@ -452,77 +427,6 @@ const Container = styled.div`
   line-height: normal;
   letter-spacing: normal;
   overflow: visible;
-`;
-
-const Sidebar = styled.div`
-  width: 255px;
-  min-height: 100vh;
-  background-color: #454b54;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-`;
-
-const Logo = styled.div`
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 40px 28px 20px;
-  gap: 12px;
-  text-align: center;
-  color: #fff;
-  font-family: Pretendard;
-`;
-
-const GdgocSkhuImage = styled(Image)`
-  width: 60px;
-  max-height: 100%;
-  object-fit: cover;
-`;
-
-const LogoText = styled.h3`
-  margin: 0;
-  font-size: 20px;
-  line-height: 160%;
-  font-weight: 400;
-`;
-
-const LoginInfo = styled.div`
-  align-self: stretch;
-  border-top: 1px solid #626873;
-  display: flex;
-  align-items: center;
-  padding: 18px 28px 20px;
-  gap: 8px;
-  color: #fff;
-  font-family: Pretendard;
-`;
-
-const UserName = styled.h3`
-  margin: 0;
-  font-size: 20px;
-  line-height: 160%;
-  font-weight: 700;
-`;
-
-const Divider = styled.div`
-  font-size: 16px;
-  line-height: 160%;
-  font-weight: 500;
-`;
-
-const MenuList = styled.section`
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: center;
-  font-size: 16px;
-  color: #fff;
-  font-family: Pretendard;
 `;
 
 const MenuItem = styled.div`

@@ -166,10 +166,6 @@ export const ContentContainer = styled.div`
 `;
 export const Content = styled.main`
   background: #ffffff;
-
-  /* 🔥 Heading이 top에서 91px 떨어지도록 고정 */
-  padding: 91px 40px 40px 40px;
-
   display: flex;
   justify-content: flex-start;
   height: 100vh;
