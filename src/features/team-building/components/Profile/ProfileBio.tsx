@@ -74,13 +74,13 @@ const boxCss = css`
   /* 마크다운 렌더링 스타일 강제 지정 */
   & .wmde-markdown {
     background-color: transparent;
-    
+
     ul {
       list-style-type: disc !important; /* 불렛(점) 강제 활성화 */
       margin-left: 1.5rem !important;
       padding-left: 0 !important;
     }
-    
+
     ol {
       list-style-type: decimal !important; /* 숫자 강제 활성화 */
       margin-left: 1.5rem !important;
@@ -103,7 +103,7 @@ const editorContainerCss = css`
   & .w-md-editor {
     border-radius: 8px;
     border: 1px solid #c3c6cb;
-    
+
     /* 편집기 내부 리스트 스타일 복구 */
     .w-md-editor-content ul {
       list-style: disc !important;
