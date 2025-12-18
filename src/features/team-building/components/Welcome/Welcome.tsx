@@ -229,7 +229,12 @@ export default function Welcome() {
           <Title>Team Building</Title>
           <Subtitle>
             그로우톤
-            <GrowthonLogo src="/GrowthonScheduleIcon.svg" alt="그로우톤 로고" width={36} height={36} />
+            <GrowthonLogo
+              src="/GrowthonScheduleIcon.svg"
+              alt="그로우톤 로고"
+              width={36}
+              height={36}
+            />
           </Subtitle>
         </TitleSection>
 
