@@ -132,7 +132,6 @@ export const getApprovedUsers = async (): Promise<ApprovedUsersResponse> => {
   return response.data;
 };
 
-
 // ==================== 상수 조회 API ====================
 
 // GET /constants/parts - 파트 목록 조회

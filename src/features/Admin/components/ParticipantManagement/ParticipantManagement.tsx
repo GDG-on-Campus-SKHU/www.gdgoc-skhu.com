@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { fetchSearchedUser } from '@/lib/adminMember.api';
 import { getModifiableProject, getSchools } from 'src/lib/adminProject.api';
 
 import styles from '../../styles/ParticipantManagement.module.css';
-import { fetchSearchedUser } from '@/lib/adminMember.api';
 
 type LocalMember = {
   id: number;
@@ -38,7 +38,6 @@ const ParticipantManagement = ({
 
   // 멤버 데이터
   const [allMembers, setAllMembers] = useState<LocalMember[]>([]);
-  const [memberMap, setMemberMap] = useState<Map<number, LocalMember>>(new Map());
   const [selectedMembers, setSelectedMembers] = useState<LocalMember[]>([]);
 
   // 데이터 로드
@@ -47,7 +46,6 @@ const ParticipantManagement = ({
       setIsLoading(true);
 
       try {
-        // 1️⃣ 필터 조건이 있는 경우만 검색
         if (selectedGeneration && selectedSchools.length > 0) {
           const users = await fetchSearchedUser({
             schools: selectedSchools,
@@ -62,21 +60,8 @@ const ParticipantManagement = ({
             part: u.part.trim(),
           }));
 
-          // 👉 멤버 선택 테이블용
           setAllMembers(mappedMembers);
-
-          // 👉 선택된 멤버 보존용 캐시
-          setMemberMap(prev => {
-            const next = new Map(prev);
-            mappedMembers.forEach(m => {
-              if (!next.has(m.id)) {
-                next.set(m.id, m);
-              }
-            });
-            return next;
-          });
         } else {
-          // 2️⃣ 필터 없으면 검색 결과만 비움 (선택된 멤버는 유지)
           setAllMembers([]);
         }
       } catch (error) {
@@ -96,7 +81,7 @@ const ParticipantManagement = ({
         const project = await getModifiableProject();
 
         const mapped: LocalMember[] = project.participants.map(p => ({
-          id: p.userId, // 🔥 핵심
+          id: p.userId,
           school: p.school,
           name: p.name,
           generation: p.generation,
@@ -104,8 +89,6 @@ const ParticipantManagement = ({
         }));
 
         setSelectedMembers(mapped);
-
-        // participantUserIds 동기화
         onChangeParticipantUserIds(mapped.map(m => m.id));
       } catch (e) {
         console.error('참여자 조회 실패', e);
@@ -113,44 +96,7 @@ const ParticipantManagement = ({
     };
 
     fetchInitialParticipants();
-  }, [projectId]);
-
-
-  useEffect(() => {
-    const fetchInitialSelectedMembers = async () => {
-      if (participantUserIds.length === 0) return;
-
-      try {
-        // 필터 없이 전체 조회 (가능하다는 전제)
-        const users = await fetchSearchedUser({ generation: undefined, schools: undefined });
-
-        setMemberMap(prev => {
-          const next = new Map(prev);
-          users.forEach(u => {
-            if (participantUserIds.includes(u.id)) {
-              next.set(u.id, {
-                id: u.id,
-                school: u.school.trim(),
-                name: u.name.trim(),
-                generation: u.generation?.trim(),
-                part: u.part.trim(),
-              });
-            }
-          });
-          return next;
-        });
-      } catch (e) {
-        console.error('초기 선택 멤버 조회 실패', e);
-      }
-    };
-
-    fetchInitialSelectedMembers();
-    // ✅ participantUserIds가 처음 세팅될 때 한 번 채우고 싶으면 아래처럼 가드도 가능
-  }, [participantUserIds]);
-
-  // const selectedMembers = Array.from(memberMap.values()).filter(m =>
-  //   participantUserIds.includes(m.id)
-  // );
+  }, [projectId, onChangeParticipantUserIds]);
 
   useEffect(() => {
     const fetchSchools = async () => {
@@ -168,10 +114,8 @@ const ParticipantManagement = ({
   const normalize = (v: string) => (v ?? '').trim();
 
   const filterByCondition = (members: LocalMember[]) => {
-    // 🔥 기수 필수
     if (!selectedGeneration || selectedGeneration === '전체') return [];
 
-    // 🔥 학교 최소 1개 필수
     if (selectedSchools.length === 0) return [];
 
     return members.filter(member => {
@@ -198,12 +142,10 @@ const ParticipantManagement = ({
     onChangeParticipantUserIds(prev => {
       const isAllSelected = filteredIds.every(id => prev.includes(id));
 
-      // 이미 전부 선택 → 전체 해제
       if (isAllSelected) {
         return prev.filter(id => !filteredIds.includes(id));
       }
 
-      // 일부/전혀 선택 안 됨 → 전체 선택
       return Array.from(new Set([...prev, ...filteredIds]));
     });
   };
