@@ -7,9 +7,5 @@ const AdminMemberProfileEdit = dynamic(
 );
 
 export default function AdminMemberProfileEditPage() {
-  return (
-    <AdminLayout>
-      <AdminMemberProfileEdit />
-    </AdminLayout>
-  );
+  return <AdminMemberProfileEdit />;
 }
