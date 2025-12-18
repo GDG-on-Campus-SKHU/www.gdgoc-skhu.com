@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
 import axios from 'axios';
@@ -326,34 +326,7 @@ const AdminProjectManagement: NextPage = () => {
 
   const PARTS = ['기획', '디자인', '프론트엔드 (웹)', '프론트엔드 (모바일)', '백엔드', 'AI/ML'];
 
-  useEffect(() => {
-    const applyProjectData = (projectData: ModifiableProject) => {
-      setProjectId(projectData.projectId);
-      setProjectName(projectData.projectName);
-      setSchedules(mapSchedules(projectData.schedules));
-      setTopics(projectData.topics ?? []);
-      setMaxMembers(projectData.maxMemberCount ?? 7);
-      setParticipantUserIds(mapParticipantIds(projectData.participants));
-      setSelectedParts(mapActiveParts(projectData.availableParts));
-    };
-
-    const loadProject = async () => {
-      setIsLoading(true);
-      try {
-        const projectData = await getModifiableProject();
-        applyProjectData(projectData);
-        setHasProject(true);
-      } catch (error) {
-        handleLoadError(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadProject();
-  }, []);
-
-  const mapSchedules = (schedules?: Schedule[]): ScheduleItem[] => {
+  const mapSchedules = useCallback((schedules?: Schedule[]): ScheduleItem[] => {
     if (!schedules?.length) return INITIAL_SCHEDULES;
 
     return schedules.map(schedule => ({
@@ -368,22 +341,60 @@ const AdminProjectManagement: NextPage = () => {
       startAt: schedule.startAt,
       endAt: schedule.endAt,
     }));
-  };
+  }, []);
 
-  const mapParticipantIds = (participants?: Array<{ participantId: number }>) =>
-    participants?.map(p => p.participantId) ?? [];
+  const mapParticipantIds = useCallback(
+    (participants?: Array<{ participantId: number }>) =>
+      participants?.map(p => p.participantId) ?? [],
+    []
+  );
 
-  const mapActiveParts = (parts: Array<{ part: Part; available: boolean }>) =>
-    parts.filter(p => p.available).map(p => PART_TO_KOREAN[p.part]);
+  const mapActiveParts = useCallback(
+    (parts: Array<{ part: Part; available: boolean }>) =>
+      parts.filter(p => p.available).map(p => PART_TO_KOREAN[p.part]),
+    []
+  );
 
-  const handleLoadError = (error: unknown) => {
+  const applyProjectData = useCallback(
+    (projectData: ModifiableProject) => {
+      setProjectId(projectData.projectId);
+      setProjectName(projectData.projectName);
+
+      setSchedules(mapSchedules(projectData.schedules));
+      setTopics(projectData.topics ?? []);
+      setMaxMembers(projectData.maxMemberCount ?? 7);
+      setParticipantUserIds(mapParticipantIds(projectData.participants));
+      setSelectedParts(mapActiveParts(projectData.availableParts));
+    },
+    [mapSchedules, mapParticipantIds, mapActiveParts]
+  );
+
+  const handleLoadError = useCallback((error: unknown) => {
     if (axios.isAxiosError(error) && error.response?.status === 404) {
       setHasProject(false);
       return;
     }
 
     console.error('프로젝트 정보 조회 실패:', error);
-  };
+  }, []);
+
+  const loadProject = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const projectData = await getModifiableProject();
+      applyProjectData(projectData);
+      console.log(projectData);
+      setHasProject(true);
+    } catch (error) {
+      handleLoadError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [applyProjectData, handleLoadError]);
+
+  useEffect(() => {
+    loadProject();
+  }, [loadProject]);
 
   const handleCreateProject = async (projectName: string) => {
     setIsCreating(true);

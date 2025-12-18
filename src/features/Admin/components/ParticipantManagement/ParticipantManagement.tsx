@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { fetchSearchedUser } from '@/lib/adminMember.api';
 import { getModifiableProject, getSchools } from 'src/lib/adminProject.api';
@@ -40,7 +40,31 @@ const ParticipantManagement = ({
   const [allMembers, setAllMembers] = useState<LocalMember[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<LocalMember[]>([]);
 
-  // 데이터 로드
+  const normalize = (v: string) => (v ?? '').trim();
+
+  // 필터 조건 기반 결과 필터링
+  const filteredAllMembers = useMemo(() => {
+    // 기수 필수
+    if (!selectedGeneration || selectedGeneration === '전체') return [];
+    // 학교 최소 1개 필수
+    if (selectedSchools.length === 0) return [];
+
+    return allMembers.filter(member => {
+      const gen = normalize(member.generation);
+      const sch = normalize(member.school);
+
+      const matchGeneration = gen === normalize(selectedGeneration);
+      const matchSchool = selectedSchools.some(selected => normalize(selected) === sch);
+
+      return matchGeneration && matchSchool;
+    });
+  }, [allMembers, selectedGeneration, selectedSchools]);
+
+  const allFilteredSelected =
+    filteredAllMembers.length > 0 &&
+    filteredAllMembers.every(m => participantUserIds.includes(m.id));
+
+  // 데이터 로드(검색)
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -75,6 +99,7 @@ const ParticipantManagement = ({
     fetchData();
   }, [projectId, selectedGeneration, selectedSchools]);
 
+  // 초기 참여자 로드
   useEffect(() => {
     const fetchInitialParticipants = async () => {
       try {
@@ -89,6 +114,7 @@ const ParticipantManagement = ({
         }));
 
         setSelectedMembers(mapped);
+
         onChangeParticipantUserIds(mapped.map(m => m.id));
       } catch (e) {
         console.error('참여자 조회 실패', e);
@@ -111,31 +137,6 @@ const ParticipantManagement = ({
     fetchSchools();
   }, []);
 
-  const normalize = (v: string) => (v ?? '').trim();
-
-  const filterByCondition = (members: LocalMember[]) => {
-    if (!selectedGeneration || selectedGeneration === '전체') return [];
-
-    if (selectedSchools.length === 0) return [];
-
-    return members.filter(member => {
-      const gen = normalize(member.generation);
-      const sch = normalize(member.school);
-
-      const matchGeneration = gen === normalize(selectedGeneration);
-
-      const matchSchool = selectedSchools.some(selected => normalize(selected) === sch);
-
-      return matchGeneration && matchSchool;
-    });
-  };
-
-  const filteredAllMembers = filterByCondition(allMembers);
-
-  const allFilteredSelected =
-    filteredAllMembers.length > 0 &&
-    filteredAllMembers.every(m => participantUserIds.includes(m.id));
-
   const handleToggleAllFilteredMembers = () => {
     const filteredIds = filteredAllMembers.map(m => m.id);
 
@@ -143,22 +144,24 @@ const ParticipantManagement = ({
       const isAllSelected = filteredIds.every(id => prev.includes(id));
 
       if (isAllSelected) {
+        setSelectedMembers(m => m.filter(x => !filteredIds.includes(x.id)));
         return prev.filter(id => !filteredIds.includes(id));
       }
 
-      return Array.from(new Set([...prev, ...filteredIds]));
+      const next = Array.from(new Set([...prev, ...filteredIds]));
+
+      // selectedMembers에도 추가(중복 제거)
+      const map = new Map<number, LocalMember>();
+      [...selectedMembers, ...filteredAllMembers].forEach(m => map.set(m.id, m));
+      setSelectedMembers(Array.from(map.values()));
+
+      return next;
     });
   };
 
   const getSchoolDisplayLabel = () => {
-    if (selectedSchools.length === 0) {
-      return '학교 선택';
-    }
-
-    if (selectedSchools.length === 1) {
-      return selectedSchools[0];
-    }
-
+    if (selectedSchools.length === 0) return '학교 선택';
+    if (selectedSchools.length === 1) return selectedSchools[0];
     return `${selectedSchools[0]} 외 ${selectedSchools.length - 1}개`;
   };
 
@@ -187,12 +190,11 @@ const ParticipantManagement = ({
     });
   };
 
-  const isMemberSelected = (memberId: number) => {
-    return participantUserIds.includes(memberId);
-  };
+  const isMemberSelected = (memberId: number) => participantUserIds.includes(memberId);
 
   const handleDeselectMember = (memberId: number) => {
     onChangeParticipantUserIds(prev => prev.filter(id => id !== memberId));
+    setSelectedMembers(m => m.filter(x => x.id !== memberId));
   };
 
   if (isLoading) {
