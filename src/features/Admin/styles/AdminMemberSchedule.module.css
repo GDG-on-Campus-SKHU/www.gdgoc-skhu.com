@@ -131,6 +131,8 @@
   align-items: flex-start;
   margin-top: 91px;
   margin-bottom: 60px;
+  position: relative;
+  z-index: 10;
 }
 
 .headerLeft {
@@ -172,6 +174,9 @@
   border: 1px solid #4285f4;
   background: #fff;
   cursor: pointer;
+  position: relative;
+  z-index: 20;
+  pointer-events: auto;
 }
 
 .endedProjectButton:hover {
