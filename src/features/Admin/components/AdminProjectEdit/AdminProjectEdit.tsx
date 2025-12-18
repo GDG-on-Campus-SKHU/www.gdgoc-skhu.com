@@ -30,26 +30,25 @@ const ROLE_OPTIONS = [
   '프론트엔드 (웹)',
   '프론트엔드 (모바일)',
   '백엔드',
-  'AI/ML',
+  'AI',
 ] as const;
 
 const PART_MAP_TO_KR: Record<string, string> = {
   PM: '기획',
   DESIGN: '디자인',
   WEB: '프론트엔드 (웹)',
-  ANDROID: '프론트엔드 (모바일)',
-  IOS: '프론트엔드 (모바일)',
-  SERVER: '백엔드',
-  AI: 'AI/ML',
+  MOBILE: '프론트엔드 (모바일)',
+  BACKEND: '백엔드',
+  AI: 'AI',
 };
 
 const PART_MAP_TO_EN: Record<string, string> = {
   기획: 'PM',
   디자인: 'DESIGN',
   '프론트엔드 (웹)': 'WEB',
-  '프론트엔드 (모바일)': 'ANDROID',
-  백엔드: 'SERVER',
-  'AI/ML': 'AI',
+  '프론트엔드 (모바일)': 'MOBILE',
+  백엔드: 'BACKEND',
+  AI: 'AI',
 };
 
 // 디바운스 훅
