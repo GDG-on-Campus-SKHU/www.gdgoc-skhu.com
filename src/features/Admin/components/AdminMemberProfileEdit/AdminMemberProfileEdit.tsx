@@ -46,7 +46,6 @@ const AdminMemberProfileEdit: NextPage = () => {
   const { data: techStackOptions = [] } = useTechStackOptions();
   const { data: userLinkOptions = [] } = useUserLinkOptions();
 
-
   const GITHUB_FALLBACK_ICON = 'https://cdn.simpleicons.org/github';
 
   useEffect(() => {
@@ -67,7 +66,6 @@ const AdminMemberProfileEdit: NextPage = () => {
                 },
               ],
       });
-
     };
 
     fetchData();
