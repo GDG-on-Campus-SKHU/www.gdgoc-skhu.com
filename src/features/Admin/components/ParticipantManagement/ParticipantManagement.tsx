@@ -13,7 +13,7 @@ type LocalMember = {
   part: string;
 };
 
-const GENERATIONS = ['25-26', '24-25', '23-24'];
+const GENERATIONS = ['25-26', '24-25', '23-24', '22-23'];
 
 type ParticipantManagementProps = {
   projectId: number;

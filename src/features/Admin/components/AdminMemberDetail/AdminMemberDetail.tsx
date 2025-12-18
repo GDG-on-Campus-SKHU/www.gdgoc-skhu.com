@@ -38,7 +38,7 @@ type MemberDetail = {
 };
 
 const PART_OPTIONS = ['Design', 'PM', 'AI', 'Backend', 'Web', 'Mobile'];
-const GENERATION_OPTIONS = ['24-25', '25-26', '26-27'];
+const GENERATION_OPTIONS = ['25-26', '24-25', '23-24', '22-23'];
 const POSITION_OPTIONS = ['Member', 'Core', 'Organizer'];
 
 const AdminMemberDetail: NextPage = () => {
