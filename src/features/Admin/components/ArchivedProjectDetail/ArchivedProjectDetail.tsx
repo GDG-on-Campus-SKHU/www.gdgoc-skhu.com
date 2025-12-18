@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import type { NextPage } from 'next';
-import { ScheduleType } from '@/lib/adminProject.api';
+import { useRouter } from 'next/router';
+import { getAdminProjectDetail, ScheduleType } from '@/lib/adminProject.api';
 import { colors } from '@/styles/constants';
 import { css } from '@emotion/react';
 
@@ -9,11 +11,11 @@ type ApiSchedule = {
   scheduleType: ScheduleType;
   startAt: string | null;
   endAt: string | null;
-  isEnded?: boolean; // 서버에서 줄 수도 있어서 optional
+  isEnded?: boolean;
 };
 
 type ApiParticipant = {
-  id: number;
+  participantId: number;
   school: string;
   name: string;
   generation: string;
@@ -21,17 +23,21 @@ type ApiParticipant = {
 };
 
 type ApiProjectDetail = {
+  projectId: number;
   projectName: string;
   topics: string[];
   schedules: ApiSchedule[];
   participants: ApiParticipant[];
-  team: {
-    maxMembers: number;
-    parts: string[];
-  };
+  maxMemberCount: number;
+  availableParts?: Array<{ part: string; available: boolean }>;
 };
 
-type ScheduleRow = { id: string; category: string; status: string; period: string };
+type ScheduleRow = {
+  id: string;
+  category: string;
+  status: string;
+  period: string;
+};
 
 type ParticipantRow = ApiParticipant & {
   displaySchool: string;
@@ -64,7 +70,6 @@ const isAnnouncementType = (type: ScheduleType) => type.includes('ANNOUNCEMENT')
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
-/** ISO → "YYYY.MM.DD 10AM" 같은 느낌 (원하면 포맷 더 다듬어도 됨) */
 const formatKoreanDateTime = (iso: string) => {
   const d = new Date(iso);
   const yyyy = d.getFullYear();
@@ -83,8 +88,6 @@ const formatKoreanDateTime = (iso: string) => {
 
 const getScheduleStatus = (s: ApiSchedule): string => {
   if (!s.startAt) return '등록 전';
-
-  // 서버가 isEnded를 주면 우선 반영
   if (s.isEnded === true) return '완료';
 
   const now = new Date();
@@ -103,19 +106,20 @@ const getSchedulePeriod = (s: ApiSchedule): string => {
     return formatKoreanDateTime(s.startAt);
   }
 
-  // 기간 타입
-  if (s.endAt) return `${formatKoreanDateTime(s.startAt)} ~ ${formatKoreanDateTime(s.endAt)}`;
+  if (s.endAt) {
+    return `${formatKoreanDateTime(s.startAt)} ~ ${formatKoreanDateTime(s.endAt)}`;
+  }
+
   return formatKoreanDateTime(s.startAt);
 };
 
-const toScheduleRows = (schedules: ApiSchedule[]): ScheduleRow[] => {
-  return schedules.map(s => ({
+const toScheduleRows = (schedules: ApiSchedule[]): ScheduleRow[] =>
+  schedules.map(s => ({
     id: s.scheduleType,
     category: SCHEDULE_LABEL[s.scheduleType],
     status: getScheduleStatus(s),
     period: getSchedulePeriod(s),
   }));
-};
 
 const toParticipantRowsWithSchoolCount = (participants: ApiParticipant[]): ParticipantRow[] => {
   const countBySchool = participants.reduce<Record<string, number>>((acc, p) => {
@@ -128,9 +132,7 @@ const toParticipantRowsWithSchoolCount = (participants: ApiParticipant[]): Parti
 
   return participants.map(p => {
     const school = (p.school ?? '').trim();
-    if (!school) {
-      return { ...p, displaySchool: '' };
-    }
+    if (!school) return { ...p, displaySchool: '' };
 
     if (!seen.has(school)) {
       seen.add(school);
@@ -141,70 +143,30 @@ const toParticipantRowsWithSchoolCount = (participants: ApiParticipant[]): Parti
   });
 };
 
-/**  데이터 */
-const MOCK: ApiProjectDetail = {
-  projectName: '그로우톤',
-  schedules: [
-    {
-      scheduleType: 'IDEA_REGISTRATION',
-      startAt: '2025-11-08T08:00:00.000Z',
-      endAt: '2025-11-10T08:00:00.000Z',
-      isEnded: true,
-    },
-    {
-      scheduleType: 'FIRST_TEAM_BUILDING',
-      startAt: '2025-11-11T01:00:00.000Z',
-      endAt: '2025-11-16T07:00:00.000Z',
-      isEnded: true,
-    },
-    {
-      scheduleType: 'FIRST_TEAM_BUILDING_ANNOUNCEMENT',
-      startAt: '2025-11-16T08:00:00.000Z',
-      endAt: null,
-      isEnded: true,
-    },
-    {
-      scheduleType: 'SECOND_TEAM_BUILDING',
-      startAt: '2025-11-16T08:00:00.000Z',
-      endAt: null,
-      isEnded: true,
-    },
-    {
-      scheduleType: 'SECOND_TEAM_BUILDING_ANNOUNCEMENT',
-      startAt: '2025-11-16T08:00:00.000Z',
-      endAt: null,
-      isEnded: true,
-    },
-    {
-      scheduleType: 'THIRD_TEAM_BUILDING',
-      startAt: '2025-11-16T08:00:00.000Z',
-      endAt: null,
-      isEnded: true,
-    },
-    {
-      scheduleType: 'FINAL_RESULT_ANNOUNCEMENT',
-      startAt: '2025-11-16T08:00:00.000Z',
-      endAt: null,
-      isEnded: true,
-    },
-  ],
-  topics: ['주제1', '주제2', '주제3'],
-  participants: [
-    { id: 1, school: '성공회대학교', name: '강민정', generation: '25-26', part: 'Design' },
-    { id: 2, school: '성공회대학교', name: '강우혁', generation: '25-26', part: 'BE' },
-    { id: 3, school: '성공회대학교', name: '권지후', generation: '25-26', part: 'BE' },
-    { id: 4, school: '서울  여자대학교', name: '김선호', generation: '25-26', part: 'PM' },
-  ],
-  team: {
-    maxMembers: 7,
-    parts: ['기획', '디자인', '프론트엔드 (웹)', '프론트엔드 (모바일)', '백엔드'],
-  },
-};
-
 const ArchivedProjectDetail: NextPage = () => {
-  // 연결 시 여기서 괄호 안에 임시 데이터 대신 실제 응답 넣으면 됨
-  const scheduleRows = toScheduleRows(MOCK.schedules);
-  const participantRows = toParticipantRowsWithSchoolCount(MOCK.participants);
+  const router = useRouter();
+  const { id } = router.query;
+
+  const [data, setData] = useState<ApiProjectDetail | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+
+    getAdminProjectDetail(Number(id))
+      .then(res => setData(res))
+      .catch(() => setData(null));
+  }, [id]);
+
+  if (!data) {
+    return (
+      <div css={pageCss}>
+        <p>프로젝트 정보를 불러올 수 없습니다.</p>
+      </div>
+    );
+  }
+
+  const scheduleRows = toScheduleRows(data.schedules);
+  const participantRows = toParticipantRowsWithSchoolCount(data.participants);
 
   return (
     <div css={pageCss}>
@@ -213,7 +175,7 @@ const ArchivedProjectDetail: NextPage = () => {
         <p css={pageDescCss}>역대 프로젝트의 일정, 참여자, 팀 조건을 관리할 수 있습니다.</p>
       </div>
 
-      <h2 css={projectNameCss}>{MOCK.projectName}</h2>
+      <h2 css={projectNameCss}>{data.projectName}</h2>
 
       <section css={sectionCss}>
         <h3 css={sectionTitleCss1}>프로젝트 일정 관리</h3>
@@ -223,7 +185,7 @@ const ArchivedProjectDetail: NextPage = () => {
       <section css={sectionCss}>
         <h3 css={sectionTitleCss}>주제 관리</h3>
         <ul css={topicListCss}>
-          {MOCK.topics.map(t => (
+          {data.topics.map(t => (
             <li key={t} css={topicItemCss}>
               <span css={topicTextCss}>{t}</span>
             </li>
@@ -235,9 +197,13 @@ const ArchivedProjectDetail: NextPage = () => {
         <h3 css={sectionTitleCss}>참여자 관리</h3>
         <div css={selectedInfoCss}>
           <span css={selectedLabelCss}>선택된 멤버</span>
-          <span css={selectedCountCss}>{MOCK.participants.length}명</span>
+          <span css={selectedCountCss}>{data.participants.length}명</span>
         </div>
-        <ArchivedTable columns={participantColumns} rows={participantRows} getRowKey={r => r.id} />
+        <ArchivedTable
+          columns={participantColumns}
+          rows={participantRows}
+          getRowKey={r => r.participantId}
+        />
       </section>
 
       <section css={sectionCss}>
@@ -245,12 +211,17 @@ const ArchivedProjectDetail: NextPage = () => {
         <div css={teamBlockCss}>
           <div>
             <div css={teamLabelCss}>최대 인원</div>
-            <div css={teamValueCss}>{MOCK.team.maxMembers}명</div>
+            <div css={teamValueCss}>{data.maxMemberCount}명</div>
           </div>
 
           <div css={{ marginTop: 22 }}>
             <div css={teamLabelCss}>모집 파트</div>
-            <div css={teamValueCss}>{MOCK.team.parts.join(', ')}</div>
+            <div css={teamValueCss}>
+              {data.availableParts
+                ?.filter(p => p.available)
+                .map(p => p.part)
+                .join(', ') || '-'}
+            </div>
           </div>
         </div>
       </section>
