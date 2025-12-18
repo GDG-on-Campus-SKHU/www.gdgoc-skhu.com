@@ -433,15 +433,18 @@ const AdminProjectManagement: NextPage = () => {
   );
 
   const mapActiveParts = useCallback(
-    (parts: Array<{ part: Part; available: boolean }>) =>
-      parts.filter(p => p.available).map(p => PART_TO_KOREAN[p.part]),
+    (parts?: Array<{ part: Part; available: boolean }>): string[] =>
+      parts?.filter(p => p.available).map(p => PART_TO_KOREAN[p.part]) ?? [],
     []
   );
 
   const applyProjectData = useCallback(
     (projectData: ModifiableProject) => {
       setProjectId(projectData.projectId);
-      setProjectName(projectData.projectName);
+
+      setProjectName(prev =>
+        projectData.projectName && projectData.projectName.trim() ? projectData.projectName : prev
+      );
 
       setSchedules(mapSchedules(projectData.schedules));
       setTopics(projectData.topics ?? []);
@@ -466,7 +469,6 @@ const AdminProjectManagement: NextPage = () => {
     try {
       const projectData = await getModifiableProject();
       applyProjectData(projectData);
-      console.log(projectData);
       setHasProject(true);
     } catch (error) {
       handleLoadError(error);
@@ -483,13 +485,9 @@ const AdminProjectManagement: NextPage = () => {
     setIsCreating(true);
     try {
       const project = await createProject({ projectName });
+
       setProjectId(project.projectId);
-      setProjectName(project.projectName);
-      setSchedules(mapSchedules(project.schedules));
-      setTopics(project.topics ?? []);
-      setMaxMembers(project.maxMemberCount ?? 7);
-      setParticipantUserIds(mapParticipantIds(project.participants));
-      setSelectedParts(mapActiveParts(project.availableParts));
+      setProjectName(projectName);
       setHasProject(true);
       setIsProjectRegisterModalOpen(false);
     } catch (error) {
@@ -595,14 +593,6 @@ const AdminProjectManagement: NextPage = () => {
         startAt: s.startAt,
         endAt: s.scheduleType.includes('ANNOUNCEMENT') ? null : s.endAt,
       }));
-
-      console.log({
-        maxMemberCount: maxMembers,
-        availableParts,
-        topics,
-        participantUserIds,
-        schedules: schedulesData,
-      });
 
       await updateProject(projectId, {
         maxMemberCount: maxMembers,
@@ -866,7 +856,7 @@ const AdminProjectManagement: NextPage = () => {
 
             {isParticipantOpen && (
               <div className={styles.accordionContent}>
-                {projectId && (
+                {projectId !== null && (
                   <ParticipantManagement
                     projectId={projectId}
                     participantUserIds={participantUserIds}
