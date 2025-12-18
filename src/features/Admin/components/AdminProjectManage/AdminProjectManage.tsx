@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 import axios from 'axios';
 import {
   createProject,
@@ -17,7 +18,6 @@ import styles from '../../styles/AdminProjectManage.module.css';
 import ParticipantManagement from '../ParticipantManagement/ParticipantManagement';
 import ScheduleRegisterModal from '../ScheduleRegisterModal/ScheduleRegisterModal';
 import TopicRegisterModal from '../TopicRegisterModal/TopicRegisterModal';
-import { useRouter } from 'next/router';
 
 // ScheduleType을 한글 카테고리로 변환
 const SCHEDULE_TYPE_TO_CATEGORY: Record<ScheduleType, string> = {

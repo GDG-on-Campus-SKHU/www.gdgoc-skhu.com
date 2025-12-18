@@ -1,8 +1,9 @@
-import { css } from '@emotion/react';
 import type { NextPage } from 'next';
-import ArchivedTable, { type ColumnDef } from '../ArchivedProject/ArchivedProjectTable';
 import { ScheduleType } from '@/lib/adminProject.api';
 import { colors } from '@/styles/constants';
+import { css } from '@emotion/react';
+
+import ArchivedTable, { type ColumnDef } from '../ArchivedProject/ArchivedProjectTable';
 
 type ApiSchedule = {
   scheduleType: ScheduleType;

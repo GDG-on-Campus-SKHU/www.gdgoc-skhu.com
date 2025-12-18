@@ -1,6 +1,7 @@
-import { css } from '@emotion/react';
-import ArchivedProjectRow from './ArchivedProjectRow';
 import { colors } from '@/styles/constants';
+import { css } from '@emotion/react';
+
+import ArchivedProjectRow from './ArchivedProjectRow';
 
 export type ColumnDef<T> = {
   /** thead에 표시할 라벨 */
