@@ -158,10 +158,18 @@ const ParticipantManagement = ({
     });
   };
 
+  const MAIN_SCHOOL = '성공회대학교';
+
   const getSchoolDisplayLabel = () => {
     if (selectedSchools.length === 0) return '학교 선택';
-    if (selectedSchools.length === 1) return selectedSchools[0];
-    return `${selectedSchools[0]} 외 ${selectedSchools.length - 1}개`;
+
+    if (selectedSchools.length === 1) {
+      return selectedSchools[0];
+    }
+
+    const displaySchool = selectedSchools.includes(MAIN_SCHOOL) ? MAIN_SCHOOL : selectedSchools[0];
+
+    return `${displaySchool} 외 ${selectedSchools.length - 1}개`;
   };
 
   const handleToggleSchool = (school: string) => {

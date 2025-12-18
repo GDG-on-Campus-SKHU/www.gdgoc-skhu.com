@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 
 import { api } from '../../../../lib/api';
 import {
@@ -29,7 +30,6 @@ import {
   SummaryValueRow,
   Title,
 } from '../../styles/AdminDashboard';
-import { useRouter } from 'next/router';
 
 type SummaryStat = {
   id: string;
@@ -242,7 +242,8 @@ export default function AdminDashboard({ summaryStats = [], projects = [] }: Adm
         {hasProjects ? (
           projectsToRender.map(project => (
             <ProjectCard key={project.id}>
-              <ProjectHeader clickable
+              <ProjectHeader
+                clickable
                 role="button"
                 tabIndex={0}
                 onClick={() => {
