@@ -4,6 +4,7 @@ import Image from 'next/image';
 import axios from 'axios';
 import {
   createProject,
+  deleteProject,
   getModifiableProject,
   type ModifiableProject,
   type Part,
@@ -11,7 +12,6 @@ import {
   type ScheduleType,
   updateProject,
   updateProjectName,
-  deleteProject,
 } from 'src/lib/adminProject.api';
 
 import styles from '../../styles/AdminProjectManage.module.css';
@@ -432,8 +432,11 @@ const AdminProjectManagement: NextPage = () => {
     []
   );
 
-  const mapActiveParts = (parts?: Array<{ part: Part; available: boolean }>): string[] =>
-    parts?.filter(p => p.available).map(p => PART_TO_KOREAN[p.part]) ?? [];
+  const mapActiveParts = useCallback(
+    (parts: Array<{ part: Part; available: boolean }>) =>
+      parts.filter(p => p.available).map(p => PART_TO_KOREAN[p.part]),
+    []
+  );
 
   const applyProjectData = useCallback(
     (projectData: ModifiableProject) => {
@@ -646,8 +649,6 @@ const AdminProjectManagement: NextPage = () => {
       setIsSaving(false);
     }
   };
-
-
 
   // 로딩 중
   if (isLoading) {
