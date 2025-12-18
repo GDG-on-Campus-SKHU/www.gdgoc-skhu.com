@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import axios from 'axios';
+import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 
 import {
@@ -17,7 +18,6 @@ import Button from '../Button';
 import { partToLabel } from '../MyTeam/ApplyStatusSection';
 import Radio from '../Radio';
 import { Idea, resolveTotalMembers, useIdeaStore } from '../store/IdeaStore';
-import { createPortal } from 'react-dom';
 
 const MOBILE_BREAKPOINT = '900px';
 
@@ -699,7 +699,7 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
     } catch {
       setPriorityLocks(createEmptyPriorityState());
     }
-  }, []);
+  }, [priorityStorageKey]);
 
   useEffect(() => {
     if (!idea) return;
