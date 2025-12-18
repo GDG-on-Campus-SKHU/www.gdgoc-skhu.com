@@ -68,7 +68,7 @@ export default function ProjectSection() {
                 <div css={cardCss}>
                   <div css={thumbFrameCss}>
                     <img
-                      src={item.thumbnailUrl ?? '/images/project-dummy.png'}
+                      src={item.thumbnailUrl?.trim() ? item.thumbnailUrl : '/gdgoc_logo.svg'}
                       alt={item.title}
                       css={logoCss}
                     />

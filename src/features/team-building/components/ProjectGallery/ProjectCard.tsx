@@ -11,7 +11,11 @@ export default function ProjectCard({ item }: Props) {
     <Link href={`/project-gallery/${item.id}`}>
       <article css={articleCss}>
         <div css={thumbFrameCss}>
-          <img src={item.thumbnailUrl ?? '/gdgoc_logo.svg'} alt={item.title} css={logoCss} />
+          <img
+            src={item.thumbnailUrl?.trim() ? item.thumbnailUrl : '/gdgoc_logo.svg'}
+            alt={item.title}
+            css={logoCss}
+          />
         </div>
         <div css={metaCss}>
           <h3 css={titleCss}>{item.title}</h3>
