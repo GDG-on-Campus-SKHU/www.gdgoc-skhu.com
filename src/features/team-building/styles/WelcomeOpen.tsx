@@ -252,7 +252,9 @@ export const EmptyMessage = styled.p`
 export const IdeaHeaderRow = styled.div`
   display: flex;
   width: 1080px;
-  padding: 8px 0;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-right: 22px;
   align-items: center;
   gap: 40px;
   border-bottom: 1px solid var(--grayscale-200, #ededef);
