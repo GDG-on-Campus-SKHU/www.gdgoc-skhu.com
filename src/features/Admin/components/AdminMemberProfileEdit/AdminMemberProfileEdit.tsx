@@ -7,9 +7,11 @@ import { fetchUserProfile, updateUserProfile } from '@/lib/adminMember.api';
 import { api } from '@/lib/api';
 import {
   Generation,
+  LinkType,
   TechStack,
   UpdateProfileData,
   UserLink,
+  UserLinkOption,
   useTechStackOptions,
   useUserLinkOptions,
 } from '@/lib/mypageProfile.api';
@@ -19,7 +21,7 @@ import MDEditor from '@uiw/react-md-editor';
 import styled from 'styled-components';
 
 import SelectBoxBasic from '../../../team-building/components/SelectBoxBasic';
-import AdminMemberProfile from '../AdminMemberProfile/AdminMemberProfile';
+import AdminMemberProfile, { resolveIconUrl } from '../AdminMemberProfile/AdminMemberProfile';
 
 type MemberProfile = {
   userId: number;
@@ -39,10 +41,13 @@ const AdminMemberProfileEdit: NextPage = () => {
 
   const [member, setMember] = useState<MemberProfile | null>(null);
   const [mode, setMode] = useState<'edit' | 'preview'>('edit');
-  const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   const { data: techStackOptions = [] } = useTechStackOptions();
   const { data: userLinkOptions = [] } = useUserLinkOptions();
+
+
+  const GITHUB_FALLBACK_ICON = 'https://cdn.simpleicons.org/github';
 
   useEffect(() => {
     if (!parsedUserId) return;
@@ -57,16 +62,59 @@ const AdminMemberProfileEdit: NextPage = () => {
             ? member.userLinks
             : [
                 {
-                  linkType: 'GitHub',
+                  linkType: 'GITHUB',
                   url: '',
-                  iconUrl: '/github.svg',
                 },
               ],
       });
+
     };
 
     fetchData();
   }, [parsedUserId]);
+
+  useEffect(() => {
+    if (!member) return;
+
+    if (member.userLinks.length === 0) {
+      setMember(prev =>
+        prev
+          ? {
+              ...prev,
+              userLinks: [
+                {
+                  linkType: 'GITHUB',
+                  url: '',
+                },
+              ],
+            }
+          : prev
+      );
+    }
+  }, [member]);
+
+  useEffect(() => {
+    if (!member) return;
+    if (member.userLinks.length > 0) return;
+    if (userLinkOptions.length === 0) return;
+
+    const githubOption = userLinkOptions.find(opt => opt.type === 'GITHUB');
+    if (!githubOption) return;
+
+    setMember(prev =>
+      prev
+        ? {
+            ...prev,
+            userLinks: [
+              {
+                linkType: githubOption.type,
+                url: '',
+              },
+            ],
+          }
+        : prev
+    );
+  }, [member, userLinkOptions]);
 
   const sortedGenerations = useMemo(() => {
     if (!member) return [];
@@ -84,8 +132,12 @@ const AdminMemberProfileEdit: NextPage = () => {
   const validLinks = member.userLinks.filter(link => link.url.trim() !== '');
   const hasValidLinks = validLinks.length > 0;
 
-  const handleImageError = (linkId: number) => {
-    setFailedImages(prev => new Set(prev).add(linkId));
+  const handleImageError = (linkType: string) => {
+    setFailedImages(prev => {
+      const next = new Set(prev);
+      next.add(linkType);
+      return next;
+    });
   };
 
   const buildUpdateProfilePayload = (member: MemberProfile): UpdateProfileData => {
@@ -263,11 +315,22 @@ const AdminMemberProfileEdit: NextPage = () => {
                 />
               </SelectBoxWrapper>
               <TechStackList>
-                {member.techStacks.map((stack, idx) => (
-                  <TechStackIcon key={`${stack.techStackType}-${idx}`}>
-                    <img src={stack.iconUrl} alt={stack.techStackType} width={36} height={36} />
-                  </TechStackIcon>
-                ))}
+                {member.techStacks.map(stack => {
+                  const option = techStackOptions.find(opt => opt.code === stack.techStackType);
+
+                  if (!option) return null;
+
+                  return (
+                    <TechStackIcon key={stack.techStackType}>
+                      <img
+                        src={resolveIconUrl(option.iconUrl)}
+                        alt={option.displayName}
+                        width={36}
+                        height={36}
+                      />
+                    </TechStackIcon>
+                  );
+                })}
               </TechStackList>
             </VerticalField>
 
@@ -275,54 +338,55 @@ const AdminMemberProfileEdit: NextPage = () => {
               <FieldLabel>링크</FieldLabel>
 
               <LinksBlock>
-                {member.userLinks.map((link, idx) => (
-                  <LinkRow key={`${link.linkType}-${idx}`}>
-                    <SelectBoxBasic
-                      options={userLinkOptions.map(opt => opt.name)}
-                      placeholder="타입 선택"
-                      value={[
-                        userLinkOptions.find(o => o.type === link.linkType)?.name ?? link.linkType,
-                      ]}
-                      onChange={selected =>
-                        setMember(prev =>
-                          prev
-                            ? {
-                                ...prev,
-                                userLinks: prev.userLinks.map((l, i) => {
-                                  if (i !== idx) return l;
+                {member.userLinks.map((link, idx) => {
+                  const option = userLinkOptions.find(opt => opt.type === link.linkType);
 
-                                  const option = userLinkOptions.find(o => o.name === selected[0]);
+                  return (
+                    <LinkRow key={`${link.linkType}-${idx}`}>
+                      <SelectBoxBasic
+                        options={userLinkOptions.map(opt => opt.name)}
+                        placeholder="타입 선택"
+                        value={[option?.name ?? link.linkType]}
+                        onChange={selected => {
+                          const option = userLinkOptions.find(o => o.name === selected[0]);
 
-                                  return {
-                                    ...l,
-                                    linkType: option?.type ?? l.linkType,
-                                    iconUrl: option?.iconUrl ?? l.iconUrl,
-                                  };
-                                }),
-                              }
-                            : prev
-                        )
-                      }
-                    />
+                          setMember(prev =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  userLinks: prev.userLinks.map((l, i) =>
+                                    i === idx
+                                      ? {
+                                          ...l,
+                                          linkType: (option?.type ?? l.linkType) as LinkType,
+                                        }
+                                      : l
+                                  ),
+                                }
+                              : prev
+                          );
+                        }}
+                      />
 
-                    <LinkInput
-                      placeholder="링크를 입력해주세요."
-                      value={link.url}
-                      onChange={e =>
-                        setMember(prev =>
-                          prev
-                            ? {
-                                ...prev,
-                                userLinks: prev.userLinks.map((l, i) =>
-                                  i === idx ? { ...l, url: e.target.value } : l
-                                ),
-                              }
-                            : prev
-                        )
-                      }
-                    />
-                  </LinkRow>
-                ))}
+                      <LinkInput
+                        placeholder="링크를 입력해주세요."
+                        value={link.url}
+                        onChange={e =>
+                          setMember(prev =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  userLinks: prev.userLinks.map((l, i) =>
+                                    i === idx ? { ...l, url: e.target.value } : l
+                                  ),
+                                }
+                              : prev
+                          )
+                        }
+                      />
+                    </LinkRow>
+                  );
+                })}
 
                 <LinkAddButton
                   type="button"
@@ -334,9 +398,8 @@ const AdminMemberProfileEdit: NextPage = () => {
                             userLinks: [
                               ...prev.userLinks,
                               {
-                                linkType: userLinkOptions[0]?.type ?? 'github',
+                                linkType: 'GITHUB' as LinkType,
                                 url: '',
-                                iconUrl: userLinkOptions[0]?.iconUrl ?? '',
                               },
                             ],
                           }
@@ -350,29 +413,28 @@ const AdminMemberProfileEdit: NextPage = () => {
 
               {hasValidLinks && (
                 <div css={previewContainerCss}>
-                  {validLinks.map((link, idx) => {
+                  {validLinks.map(link => {
                     const linkOption = userLinkOptions.find(opt => opt.type === link.linkType);
-                    const hasImageError = failedImages.has(idx);
+                    const hasImageError = failedImages.has(link.linkType);
+
+                    // options 로딩 전/후 상관없이 항상 GitHub 아이콘 보장
+                    const rawIconUrl = hasImageError
+                      ? GITHUB_FALLBACK_ICON
+                      : (linkOption?.iconUrl ?? GITHUB_FALLBACK_ICON);
 
                     return (
                       <a
-                        key={`${link.linkType}-${idx}`}
+                        key={`${link.linkType}-${link.url}`}
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         css={hasImageError ? linkIconWithBorderCss : linkIconSimpleCss}
-                        title={linkOption?.name || link.linkType}
+                        title={linkOption?.name || 'GitHub'}
                       >
                         <img
-                          src={
-                            hasImageError
-                              ? '/icon/link.svg'
-                              : link.iconUrl ||
-                                linkOption?.iconUrl ||
-                                `/icon/${link.linkType.toLowerCase()}.svg`
-                          }
-                          alt={linkOption?.name || link.linkType}
-                          onError={() => handleImageError(idx)}
+                          src={resolveIconUrl(rawIconUrl)} // http(s)면 그대로 사용
+                          alt={linkOption?.name || 'GitHub'}
+                          onError={() => handleImageError(link.linkType)}
                         />
                       </a>
                     );
