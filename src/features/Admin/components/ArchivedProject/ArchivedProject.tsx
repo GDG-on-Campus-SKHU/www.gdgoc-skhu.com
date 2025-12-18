@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/navigation';
+import { getArchivedProjects } from '@/lib/adminProject.api';
 import { css } from '@emotion/react';
 
 import ArchivedTable, { type ColumnDef } from './ArchivedProjectTable';
@@ -11,28 +13,33 @@ type ArchivedProjectListRow = {
   endedAt: string;
 };
 
-const MOCK: ArchivedProjectListRow[] = [
-  { id: 1, projectName: '그로우톤', startedAt: '2025.01.29', endedAt: '2025.03.01' },
-  {
-    id: 2,
-    projectName: '청신X숙명X성공회 SSS프로젝트',
-    startedAt: '2025.01.02',
-    endedAt: '2025.01.23',
-  },
-];
-
 const columns: Array<ColumnDef<ArchivedProjectListRow>> = [
   { header: '프로젝트명', key: 'projectName', width: 640 },
   { header: '시작일', key: 'startedAt', width: 220 },
   { header: '종료일', key: 'endedAt', width: 180 },
 ];
 
+const formatDate = (value: string) => value.replaceAll('-', '.').slice(0, 10);
+
 const ArchivedProject: NextPage = () => {
   const router = useRouter();
+  const [rows, setRows] = useState<ArchivedProjectListRow[]>([]);
+
+  useEffect(() => {
+    getArchivedProjects().then(data => {
+      setRows(
+        data.map(p => ({
+          id: p.projectId,
+          projectName: p.name,
+          startedAt: formatDate(p.startDate),
+          endedAt: formatDate(p.endDate),
+        }))
+      );
+    });
+  }, []);
 
   const handleRowClick = (row: ArchivedProjectListRow) => {
     router.push(`/admin-project/AdminArchivedProject/${row.id}`);
-    console.log('go detail:', row.id);
   };
 
   return (
@@ -46,9 +53,10 @@ const ArchivedProject: NextPage = () => {
 
       <ArchivedTable
         columns={columns}
-        rows={MOCK}
+        rows={rows}
         getRowKey={row => row.id}
         onRowClick={handleRowClick}
+        emptyText="종료된 프로젝트가 없습니다."
       />
     </div>
   );
