@@ -21,14 +21,26 @@ interface Step2Props {
   setPw: (v: string) => void;
   setPw2: (v: string) => void;
   setPhone: (v: string) => void;
-  errors: Record<string, string>;
   onNext: () => void;
   onPrev: () => void;
-  touched: boolean;
-  setTouched: (v: boolean) => void;
   currentStep: Step;
-  isDisabled: boolean;
 }
+
+type TouchedFields = {
+  name: boolean;
+  email: boolean;
+  pw: boolean;
+  pw2: boolean;
+  phone: boolean;
+};
+
+const formatPhone = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+};
 
 export default function Step2({
   visible,
@@ -43,15 +55,19 @@ export default function Step2({
   setPw,
   setPw2,
   setPhone,
-  errors,
   onNext,
   onPrev,
-  touched,
-  setTouched,
   currentStep,
-  isDisabled,
 }: Step2Props) {
   const [isMobile, setIsMobile] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<TouchedFields>({
+    name: false,
+    email: false,
+    pw: false,
+    pw2: false,
+    phone: false,
+  });
 
   useEffect(() => {
     document.body.style.overflow = currentStep === 2 ? 'auto' : 'hidden';
@@ -66,6 +82,48 @@ export default function Step2({
     window.addEventListener('resize', checkWidth);
     return () => window.removeEventListener('resize', checkWidth);
   }, []);
+
+  useEffect(() => {
+    const newErrors: Record<string, string> = {};
+
+    if (!/^[a-zA-Z가-힣]{2,5}$/.test(name)) {
+      newErrors.name = '이름은 2~5자의 한글 또는 영문만 입력 가능합니다.';
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = '이메일 형식이 올바르지 않습니다.';
+    }
+
+    if (pw.length < 8) {
+      newErrors.pw = '비밀번호는 8자 이상이어야 합니다.';
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(pw)) {
+      newErrors.pw = '비밀번호에 특수문자를 포함해야 합니다.';
+    }
+
+    if (pw2 && pw !== pw2) {
+      newErrors.pw2 = '비밀번호가 일치하지 않습니다.';
+    }
+
+    if (!/^010-\d{4}-\d{4}$/.test(phone)) {
+      newErrors.phone = '전화번호 형식이 올바르지 않습니다.';
+    }
+
+    setErrors(newErrors);
+  }, [name, email, pw, pw2, phone]);
+
+  const handleNext = () => {
+    setTouched({
+      name: true,
+      email: true,
+      pw: true,
+      pw2: true,
+      phone: true,
+    });
+
+    if (Object.keys(errors).length === 0) {
+      onNext();
+    }
+  };
 
   return (
     <section css={sectionCss(visible, step, isMobile)}>
@@ -82,11 +140,11 @@ export default function Step2({
           placeholder="이름을 입력해주세요."
           value={name}
           onChange={e => {
-            if (!touched) setTouched(true);
+            setTouched(v => ({ ...v, name: true }));
             setName(e.target.value);
           }}
-          error={touched && !!errors.name}
-          errorMessage={touched ? errors.name : ''}
+          error={touched.name && !!errors.name}
+          errorMessage={touched.name ? errors.name : ''}
         />
 
         <FieldOfSignUp
@@ -94,11 +152,13 @@ export default function Step2({
           placeholder="이메일 주소를 입력해주세요."
           value={email}
           onChange={e => {
-            if (!touched) setTouched(true);
+            setTouched(v => ({ ...v, email: true }));
             setEmail(e.target.value);
           }}
-          error={touched && !!errors.email}
-          errorMessage={errors.email || '주로 사용하는 연락 가능한 이메일 주소를 작성해주세요.'}
+          error={touched.email && !!errors.email}
+          errorMessage={
+            touched.email ? errors.email : '주로 사용하는 연락 가능한 이메일 주소를 작성해주세요.'
+          }
         />
 
         <FieldOfSignUp
@@ -107,11 +167,11 @@ export default function Step2({
           placeholder="비밀번호를 입력해주세요."
           value={pw}
           onChange={e => {
-            if (!touched) setTouched(true);
+            setTouched(v => ({ ...v, pw: true }));
             setPw(e.target.value);
           }}
-          error={touched && !!errors.pw}
-          errorMessage={errors.pw || '8자리 이상, 특수문자 포함'}
+          error={touched.pw && !!errors.pw}
+          errorMessage={touched.pw ? errors.pw || '8자리 이상, 특수문자 포함' : ''}
         />
 
         <FieldOfSignUp
@@ -120,11 +180,11 @@ export default function Step2({
           placeholder="비밀번호를 다시 입력해주세요."
           value={pw2}
           onChange={e => {
-            if (!touched) setTouched(true);
+            setTouched(v => ({ ...v, pw2: true }));
             setPw2(e.target.value);
           }}
-          error={touched && !!errors.pw2}
-          errorMessage={touched ? errors.pw2 || '' : ''}
+          error={touched.pw2 && !!errors.pw2}
+          errorMessage={touched.pw2 ? errors.pw2 || '' : ''}
         />
 
         <FieldOfSignUp
@@ -132,11 +192,11 @@ export default function Step2({
           placeholder="- 포함 전화번호 입력"
           value={phone}
           onChange={e => {
-            if (!touched) setTouched(true);
-            setPhone(e.target.value);
+            setTouched(v => ({ ...v, phone: true }));
+            setPhone(formatPhone(e.target.value));
           }}
-          error={touched && !!errors.phone}
-          errorMessage={errors.phone || '010-1234-5678 형식'}
+          error={touched.phone && !!errors.phone}
+          errorMessage={touched.phone ? errors.phone || '010-1234-5678 형식' : ''}
           hideHelperOnValue
         />
       </div>
@@ -147,7 +207,7 @@ export default function Step2({
         </div>
 
         <div css={rightBtn}>
-          <Button title="다음" onClick={onNext} disabled={isDisabled} />
+          <Button title="다음" onClick={handleNext} />
         </div>
       </div>
     </section>
@@ -206,10 +266,6 @@ export const sectionCss = (visible: boolean, step: Step, isMobile: boolean) => c
   transition: all 0.4s ease;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: stretch;
   gap: 4px;
-  min-height: fit-content;
-  height: auto;
   max-width: 90vw;
 `;

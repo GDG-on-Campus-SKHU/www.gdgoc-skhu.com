@@ -20,7 +20,6 @@ export default function SignUpPage() {
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
   const [phone, setPhone] = useState('');
-  const [touched, setTouched] = useState(false);
 
   const [school, setSchool] = useState('');
   const [cohort, setCohort] = useState('');
@@ -28,50 +27,21 @@ export default function SignUpPage() {
   const [position, setPosition] = useState<'MEMBER' | 'CORE' | 'ORGANIZER'>('MEMBER');
   const [agree, setAgree] = useState(false);
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateType, setDuplicateType] = useState<'email' | 'phone' | null>(null);
 
-  const validateStep = useCallback(
-    (step: Step) => {
-      const newErrors: Record<string, string> = {};
+  const validateStep3 = useCallback(() => {
+    const errors: Record<string, string> = {};
 
-      if (step === 2) {
-        if (!name.trim()) newErrors.name = '이름을 입력해주세요.';
-        else if (!/^[A-Za-z가-힣]+$/.test(name))
-          newErrors.name = '이름은 영문 또는 한글만 입력 가능합니다.';
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-          newErrors.email = '이메일 형식이 올바르지 않습니다.';
-        if (pw !== pw2) newErrors.pw2 = '비밀번호가 일치하지 않습니다.';
-        if (pw.length < 8) {
-          newErrors.pw = '비밀번호는 8자 이상이어야 합니다.';
-        } else if (!/[A-Za-z]/.test(pw) || !/\d/.test(pw)) {
-          newErrors.pw = '비밀번호는 영문과 숫자 특수문자를 모두 포함해야 합니다.';
-        }
-        if (!/^\d{2,3}-\d{3,4}-\d{4}$/.test(phone))
-          newErrors.phone = '전화번호 형식이 올바르지 않습니다.(예: 010-1234-5678)';
-      }
+    if (orgType !== 'internal' && !school.trim()) errors.school = '학교를 입력해주세요.';
+    if (!cohort) errors.cohort = '기수를 선택해주세요.';
+    if (!part) errors.part = '파트를 선택해주세요.';
+    if (!position) errors.position = '분류를 선택해주세요.';
+    if (!agree) errors.agree = '약관에 동의해주세요.';
 
-      if (step === 3) {
-        if (orgType !== 'internal' && !school.trim()) newErrors.school = '학교를 입력해주세요.';
-        if (!cohort) newErrors.cohort = '기수를 선택해주세요.';
-        if (!part) newErrors.part = '파트를 선택해주세요.';
-        if (!position) newErrors.position = '분류를 선택해주세요.';
-        if (!agree) newErrors.agree = '약관에 동의해주세요.';
-      }
-
-      setErrors(newErrors);
-      return Object.keys(newErrors).length === 0;
-    },
-    [name, email, pw, pw2, phone, school, cohort, part, position, agree, orgType]
-  );
-
-  useEffect(() => {
-    if (currentStep === 2 && touched) {
-      validateStep(2);
-    }
-  }, [name, email, pw, pw2, phone, touched, currentStep, validateStep]);
+    return Object.keys(errors).length === 0;
+  }, [orgType, school, cohort, part, position, agree]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -83,9 +53,7 @@ export default function SignUpPage() {
   }, []);
 
   const handleNext = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep(prev => (prev < 3 ? ((prev + 1) as Step) : prev));
-    }
+    setCurrentStep(prev => (prev < 3 ? ((prev + 1) as Step) : prev));
   };
 
   const handlePrev = () => {
@@ -94,7 +62,7 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateStep(3)) return;
+    if (!validateStep3()) return;
 
     const userRole = orgType === 'internal' ? 'ROLE_SKHU_MEMBER' : 'ROLE_OTHERS';
     const finalSchool = orgType === 'internal' ? '성공회대학교' : school;
@@ -133,14 +101,6 @@ export default function SignUpPage() {
     }
   };
 
-  const isStep2Disabled =
-    !name.trim() ||
-    !/^[A-Za-z가-힣]+$/.test(name) ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
-    !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/.test(pw) ||
-    pw !== pw2 ||
-    !/^\d{2,3}-\d{3,4}-\d{4}$/.test(phone);
-
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -168,13 +128,9 @@ export default function SignUpPage() {
             setPw={setPw}
             setPw2={setPw2}
             setPhone={setPhone}
-            errors={errors}
             onNext={handleNext}
             onPrev={handlePrev}
-            touched={touched}
-            setTouched={setTouched}
             currentStep={currentStep}
-            isDisabled={isStep2Disabled}
           />
         );
       case 3:
