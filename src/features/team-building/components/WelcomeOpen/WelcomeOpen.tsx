@@ -57,6 +57,7 @@ import Button from '../Button';
 import IdeaItem from '../IdeaItem/IdeaItem';
 import { Idea } from '../store/IdeaStore';
 import Toggle from '../Toggle';
+import { createPortal } from 'react-dom';
 
 const IDEAS_PER_PAGE = 10;
 
@@ -174,6 +175,11 @@ export default function WelcomeView() {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [projectName, setProjectName] = useState<string>('');
   const [schedules, setSchedules] = useState<CurrentProjectSchedule[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // 일정 모달 초기화
   useEffect(() => {
@@ -372,52 +378,55 @@ export default function WelcomeView() {
 
   return (
     <>
-      {showScheduleModal && (
-        <ScheduleModalOverlay onClick={handleCloseScheduleModal}>
-          <ScheduleModalCard role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
-            <ScheduleModalHeader>
-              <div>
-                <ScheduleModalTitle>그로우톤</ScheduleModalTitle>
-                <ScheduleModalSubtitle>팀빌딩 진행 일정</ScheduleModalSubtitle>
-              </div>
-              <ScheduleModalCloseButton>
-                <Image
-                  src="/outX.svg"
-                  alt="닫기 아이콘"
-                  width={20}
-                  height={20}
-                  style={{ aspectRatio: '1 / 1' }}
-                  onClick={handleCloseScheduleModal}
-                />
-              </ScheduleModalCloseButton>
-            </ScheduleModalHeader>
+      {mounted &&
+        showScheduleModal &&
+        createPortal(
+          <ScheduleModalOverlay onClick={handleCloseScheduleModal}>
+            <ScheduleModalCard role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+              <ScheduleModalHeader>
+                <div>
+                  <ScheduleModalTitle>그로우톤</ScheduleModalTitle>
+                  <ScheduleModalSubtitle>팀빌딩 진행 일정</ScheduleModalSubtitle>
+                </div>
+                <ScheduleModalCloseButton>
+                  <Image
+                    src="/outX.svg"
+                    alt="닫기 아이콘"
+                    width={20}
+                    height={20}
+                    style={{ aspectRatio: '1 / 1' }}
+                    onClick={handleCloseScheduleModal}
+                  />
+                </ScheduleModalCloseButton>
+              </ScheduleModalHeader>
 
-            <ScheduleSteps>
-              {visibleSchedules.map((s, idx) => {
-                const isLast = idx === visibleSchedules.length - 1;
-                const title = SCHEDULE_LABEL[s.scheduleType] ?? s.scheduleType;
+              <ScheduleSteps>
+                {visibleSchedules.map((s, idx) => {
+                  const isLast = idx === visibleSchedules.length - 1;
+                  const title = SCHEDULE_LABEL[s.scheduleType] ?? s.scheduleType;
 
-                const isAnnouncement = s.scheduleType.includes('ANNOUNCEMENT');
-                const period = isAnnouncement
-                  ? formatDateTime(s.startAt)
-                  : `${formatDateTime(s.startAt)} ~ ${formatDateTime(s.endAt)}`;
+                  const isAnnouncement = s.scheduleType.includes('ANNOUNCEMENT');
+                  const period = isAnnouncement
+                    ? formatDateTime(s.startAt)
+                    : `${formatDateTime(s.startAt)} ~ ${formatDateTime(s.endAt)}`;
 
-                return (
-                  <ScheduleStep key={s.scheduleType} $isLast={isLast}>
-                    <ScheduleMarker $isLast={isLast}>
-                      <ScheduleDot />
-                    </ScheduleMarker>
-                    <div>
-                      <ScheduleStepTitle>{title}</ScheduleStepTitle>
-                      <ScheduleStepDate>{period}</ScheduleStepDate>
-                    </div>
-                  </ScheduleStep>
-                );
-              })}
-            </ScheduleSteps>
-          </ScheduleModalCard>
-        </ScheduleModalOverlay>
-      )}
+                  return (
+                    <ScheduleStep key={s.scheduleType} $isLast={isLast}>
+                      <ScheduleMarker $isLast={isLast}>
+                        <ScheduleDot />
+                      </ScheduleMarker>
+                      <div>
+                        <ScheduleStepTitle>{title}</ScheduleStepTitle>
+                        <ScheduleStepDate>{period}</ScheduleStepDate>
+                      </div>
+                    </ScheduleStep>
+                  );
+                })}
+              </ScheduleSteps>
+            </ScheduleModalCard>
+          </ScheduleModalOverlay>,
+          document.body
+        )}
 
       <Container>
         <Wrapper>

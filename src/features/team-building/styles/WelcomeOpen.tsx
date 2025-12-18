@@ -427,7 +427,7 @@ export const ScheduleModalOverlay = styled.div`
   align-items: center;
   justify-content: center;
   padding: 16px;
-  z-index: 9999;
+  z-index: 2000;
 `;
 
 export const ScheduleModalCard = styled.div`

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   AutoSaveStatus,
@@ -51,6 +51,7 @@ import IdeaDescriptionEditor from './IdeaDescriptionEditor';
 import { PREFERRED_OPTIONS, TEAM_ROLES, TeamRole } from './IdeaFormUtils';
 
 import 'react-quill/dist/quill.snow.css';
+import { createPortal } from 'react-dom';
 
 type ModalState = 'idle' | 'confirm' | 'success';
 
@@ -114,6 +115,12 @@ export default function IdeaFormView({
   autoSaveSaving,
   autoSaveSavedAt,
 }: IdeaFormViewProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const title = form.title ?? '';
   const intro = form.intro ?? '';
   const isTitleLimitReached = title.length >= TITLE_MAX_LENGTH;
@@ -272,34 +279,37 @@ export default function IdeaFormView({
           </SubmitButton>
         </ButtonGroup>
 
-        {modalState !== 'idle' && (
-          <ModalOverlay className="modal">
-            <ModalCard>
-              {modalState === 'confirm' ? (
-                <>
-                  <ModalTitle>해당 아이디어를 게시하겠습니까?</ModalTitle>
-                  <ModalActions>
-                    <ModalButton type="button" onClick={onConfirmSubmit}>
-                      예
-                    </ModalButton>
-                    <ModalButton type="button" $variant="secondary" onClick={onCloseModal}>
-                      아니오
-                    </ModalButton>
-                  </ModalActions>
-                </>
-              ) : (
-                <>
-                  <ModalTitle>게시가 완료되었습니다.</ModalTitle>
-                  <ModalActions>
-                    <ModalButton type="button" onClick={onModalDone}>
-                      확인
-                    </ModalButton>
-                  </ModalActions>
-                </>
-              )}
-            </ModalCard>
-          </ModalOverlay>
-        )}
+        {mounted &&
+          modalState !== 'idle' &&
+          createPortal(
+            <ModalOverlay className="modal">
+              <ModalCard>
+                {modalState === 'confirm' ? (
+                  <>
+                    <ModalTitle>해당 아이디어를 게시하겠습니까?</ModalTitle>
+                    <ModalActions>
+                      <ModalButton type="button" onClick={onConfirmSubmit}>
+                        예
+                      </ModalButton>
+                      <ModalButton type="button" $variant="secondary" onClick={onCloseModal}>
+                        아니오
+                      </ModalButton>
+                    </ModalActions>
+                  </>
+                ) : (
+                  <>
+                    <ModalTitle>게시가 완료되었습니다.</ModalTitle>
+                    <ModalActions>
+                      <ModalButton type="button" onClick={onModalDone}>
+                        확인
+                      </ModalButton>
+                    </ModalActions>
+                  </>
+                )}
+              </ModalCard>
+            </ModalOverlay>,
+            document.body
+          )}
       </FormContainer>
     </PageContainer>
   );
