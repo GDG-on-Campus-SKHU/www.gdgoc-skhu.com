@@ -61,7 +61,7 @@ import Toggle from '../Toggle';
 
 const IDEAS_PER_PAGE = 10;
 
-export const SCHEDULE_LABEL: Partial<Record<TeamBuildingScheduleType, string>> = {
+export const SCHEDULE_LABEL: Record<VisibleScheduleType, string> = {
   IDEA_REGISTRATION: '아이디어 등록 기간',
   FIRST_TEAM_BUILDING: '1차 팀빌딩 지원 기간',
   FIRST_TEAM_BUILDING_ANNOUNCEMENT: '1차 팀빌딩 결과 발표',
@@ -78,6 +78,12 @@ const SCHEDULE_ORDER = [
   'SECOND_TEAM_BUILDING_ANNOUNCEMENT',
   'FINAL_RESULT_ANNOUNCEMENT',
 ] as const;
+
+function isVisibleScheduleType(type: TeamBuildingScheduleType): type is VisibleScheduleType {
+  return (SCHEDULE_ORDER as readonly string[]).includes(type);
+}
+
+type VisibleScheduleType = (typeof SCHEDULE_ORDER)[number];
 
 const SCHEDULE_MODAL_STORAGE_KEY = 'welcomeOpenScheduleModalSeen';
 const SCHEDULE_MODAL_BODY_CLASS = 'schedule-modal-open';
@@ -363,7 +369,9 @@ export default function WelcomeView() {
 
   const visibleSchedules = useMemo(() => {
     return schedules
-      .filter(s => SCHEDULE_ORDER.includes(s.scheduleType))
+      .filter((s): s is CurrentProjectSchedule & { scheduleType: VisibleScheduleType } =>
+        isVisibleScheduleType(s.scheduleType)
+      )
       .sort(
         (a, b) => SCHEDULE_ORDER.indexOf(a.scheduleType) - SCHEDULE_ORDER.indexOf(b.scheduleType)
       );
@@ -414,7 +422,7 @@ export default function WelcomeView() {
               <ScheduleSteps>
                 {visibleSchedules.map((s, idx) => {
                   const isLast = idx === visibleSchedules.length - 1;
-                  const title = SCHEDULE_LABEL[s.scheduleType as TeamBuildingScheduleType];
+                  const title = SCHEDULE_LABEL[s.scheduleType];
 
                   const isAnnouncement = s.scheduleType.endsWith('ANNOUNCEMENT');
                   const period = isAnnouncement
