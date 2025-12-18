@@ -45,7 +45,7 @@ export type ModifiableProject = {
   projectName: string;
   maxMemberCount: number;
   topics: string[];
-  availableParts: AvailablePart[];
+  availableParts?: AvailablePart[];
   schedules: Schedule[];
   participants: Participant[];
 };
