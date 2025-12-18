@@ -1,6 +1,7 @@
 // WelcomeView.tsx 수정 (API 연동 + 일정 모달 + 개별 조회)
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import { createPortal } from 'react-dom';
 
 import {
   CurrentProjectSchedule,
@@ -57,7 +58,6 @@ import Button from '../Button';
 import IdeaItem from '../IdeaItem/IdeaItem';
 import { Idea } from '../store/IdeaStore';
 import Toggle from '../Toggle';
-import { createPortal } from 'react-dom';
 
 const IDEAS_PER_PAGE = 10;
 

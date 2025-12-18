@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import {
   AutoSaveStatus,
@@ -51,7 +52,6 @@ import IdeaDescriptionEditor from './IdeaDescriptionEditor';
 import { PREFERRED_OPTIONS, TEAM_ROLES, TeamRole } from './IdeaFormUtils';
 
 import 'react-quill/dist/quill.snow.css';
-import { createPortal } from 'react-dom';
 
 type ModalState = 'idle' | 'confirm' | 'success';
 

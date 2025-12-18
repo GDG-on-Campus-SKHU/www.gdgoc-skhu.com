@@ -125,7 +125,7 @@ export interface SearchedUser {
   school: string;
   generation: string;
   part: string;
-};
+}
 
 /* =========================================================
  * utils
@@ -258,9 +258,7 @@ export const fetchSearchedUser = async ({
       serialize: params => {
         const searchParams = new URLSearchParams();
 
-        params.schools?.forEach((school: string) =>
-          searchParams.append('schools', school)
-        );
+        params.schools?.forEach((school: string) => searchParams.append('schools', school));
 
         if (params.generation) {
           searchParams.append('generation', params.generation);

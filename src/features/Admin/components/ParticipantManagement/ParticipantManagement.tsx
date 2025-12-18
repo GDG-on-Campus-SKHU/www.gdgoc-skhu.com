@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import { fetchSearchedUser } from '@/lib/adminMember.api';
 import { getModifiableProject, getSchools } from 'src/lib/adminProject.api';
 
 import styles from '../../styles/ParticipantManagement.module.css';
-import { fetchSearchedUser } from '@/lib/adminMember.api';
 
 type LocalMember = {
   id: number;
@@ -38,16 +38,38 @@ const ParticipantManagement = ({
 
   // 멤버 데이터
   const [allMembers, setAllMembers] = useState<LocalMember[]>([]);
-  const [memberMap, setMemberMap] = useState<Map<number, LocalMember>>(new Map());
   const [selectedMembers, setSelectedMembers] = useState<LocalMember[]>([]);
 
-  // 데이터 로드
+  const normalize = (v: string) => (v ?? '').trim();
+
+  // 필터 조건 기반 결과 필터링
+  const filteredAllMembers = useMemo(() => {
+    // 기수 필수
+    if (!selectedGeneration || selectedGeneration === '전체') return [];
+    // 학교 최소 1개 필수
+    if (selectedSchools.length === 0) return [];
+
+    return allMembers.filter(member => {
+      const gen = normalize(member.generation);
+      const sch = normalize(member.school);
+
+      const matchGeneration = gen === normalize(selectedGeneration);
+      const matchSchool = selectedSchools.some(selected => normalize(selected) === sch);
+
+      return matchGeneration && matchSchool;
+    });
+  }, [allMembers, selectedGeneration, selectedSchools]);
+
+  const allFilteredSelected =
+    filteredAllMembers.length > 0 &&
+    filteredAllMembers.every(m => participantUserIds.includes(m.id));
+
+  // 데이터 로드(검색)
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
 
       try {
-        // 1️⃣ 필터 조건이 있는 경우만 검색
         if (selectedGeneration && selectedSchools.length > 0) {
           const users = await fetchSearchedUser({
             schools: selectedSchools,
@@ -62,21 +84,8 @@ const ParticipantManagement = ({
             part: u.part.trim(),
           }));
 
-          // 👉 멤버 선택 테이블용
           setAllMembers(mappedMembers);
-
-          // 👉 선택된 멤버 보존용 캐시
-          setMemberMap(prev => {
-            const next = new Map(prev);
-            mappedMembers.forEach(m => {
-              if (!next.has(m.id)) {
-                next.set(m.id, m);
-              }
-            });
-            return next;
-          });
         } else {
-          // 2️⃣ 필터 없으면 검색 결과만 비움 (선택된 멤버는 유지)
           setAllMembers([]);
         }
       } catch (error) {
@@ -90,13 +99,14 @@ const ParticipantManagement = ({
     fetchData();
   }, [projectId, selectedGeneration, selectedSchools]);
 
+  // 초기 참여자 로드
   useEffect(() => {
     const fetchInitialParticipants = async () => {
       try {
         const project = await getModifiableProject();
 
         const mapped: LocalMember[] = project.participants.map(p => ({
-          id: p.userId, // 🔥 핵심
+          id: p.userId,
           school: p.school,
           name: p.name,
           generation: p.generation,
@@ -105,7 +115,6 @@ const ParticipantManagement = ({
 
         setSelectedMembers(mapped);
 
-        // participantUserIds 동기화
         onChangeParticipantUserIds(mapped.map(m => m.id));
       } catch (e) {
         console.error('참여자 조회 실패', e);
@@ -113,44 +122,7 @@ const ParticipantManagement = ({
     };
 
     fetchInitialParticipants();
-  }, [projectId]);
-
-
-  useEffect(() => {
-    const fetchInitialSelectedMembers = async () => {
-      if (participantUserIds.length === 0) return;
-
-      try {
-        // 필터 없이 전체 조회 (가능하다는 전제)
-        const users = await fetchSearchedUser({ generation: undefined, schools: undefined });
-
-        setMemberMap(prev => {
-          const next = new Map(prev);
-          users.forEach(u => {
-            if (participantUserIds.includes(u.id)) {
-              next.set(u.id, {
-                id: u.id,
-                school: u.school.trim(),
-                name: u.name.trim(),
-                generation: u.generation?.trim(),
-                part: u.part.trim(),
-              });
-            }
-          });
-          return next;
-        });
-      } catch (e) {
-        console.error('초기 선택 멤버 조회 실패', e);
-      }
-    };
-
-    fetchInitialSelectedMembers();
-    // ✅ participantUserIds가 처음 세팅될 때 한 번 채우고 싶으면 아래처럼 가드도 가능
-  }, [participantUserIds]);
-
-  // const selectedMembers = Array.from(memberMap.values()).filter(m =>
-  //   participantUserIds.includes(m.id)
-  // );
+  }, [projectId, onChangeParticipantUserIds]);
 
   useEffect(() => {
     const fetchSchools = async () => {
@@ -165,58 +137,31 @@ const ParticipantManagement = ({
     fetchSchools();
   }, []);
 
-  const normalize = (v: string) => (v ?? '').trim();
-
-  const filterByCondition = (members: LocalMember[]) => {
-    // 🔥 기수 필수
-    if (!selectedGeneration || selectedGeneration === '전체') return [];
-
-    // 🔥 학교 최소 1개 필수
-    if (selectedSchools.length === 0) return [];
-
-    return members.filter(member => {
-      const gen = normalize(member.generation);
-      const sch = normalize(member.school);
-
-      const matchGeneration = gen === normalize(selectedGeneration);
-
-      const matchSchool = selectedSchools.some(selected => normalize(selected) === sch);
-
-      return matchGeneration && matchSchool;
-    });
-  };
-
-  const filteredAllMembers = filterByCondition(allMembers);
-
-  const allFilteredSelected =
-    filteredAllMembers.length > 0 &&
-    filteredAllMembers.every(m => participantUserIds.includes(m.id));
-
   const handleToggleAllFilteredMembers = () => {
     const filteredIds = filteredAllMembers.map(m => m.id);
 
     onChangeParticipantUserIds(prev => {
       const isAllSelected = filteredIds.every(id => prev.includes(id));
 
-      // 이미 전부 선택 → 전체 해제
       if (isAllSelected) {
+        setSelectedMembers(m => m.filter(x => !filteredIds.includes(x.id)));
         return prev.filter(id => !filteredIds.includes(id));
       }
 
-      // 일부/전혀 선택 안 됨 → 전체 선택
-      return Array.from(new Set([...prev, ...filteredIds]));
+      const next = Array.from(new Set([...prev, ...filteredIds]));
+
+      // selectedMembers에도 추가(중복 제거)
+      const map = new Map<number, LocalMember>();
+      [...selectedMembers, ...filteredAllMembers].forEach(m => map.set(m.id, m));
+      setSelectedMembers(Array.from(map.values()));
+
+      return next;
     });
   };
 
   const getSchoolDisplayLabel = () => {
-    if (selectedSchools.length === 0) {
-      return '학교 선택';
-    }
-
-    if (selectedSchools.length === 1) {
-      return selectedSchools[0];
-    }
-
+    if (selectedSchools.length === 0) return '학교 선택';
+    if (selectedSchools.length === 1) return selectedSchools[0];
     return `${selectedSchools[0]} 외 ${selectedSchools.length - 1}개`;
   };
 
@@ -245,12 +190,11 @@ const ParticipantManagement = ({
     });
   };
 
-  const isMemberSelected = (memberId: number) => {
-    return participantUserIds.includes(memberId);
-  };
+  const isMemberSelected = (memberId: number) => participantUserIds.includes(memberId);
 
   const handleDeselectMember = (memberId: number) => {
     onChangeParticipantUserIds(prev => prev.filter(id => id !== memberId));
+    setSelectedMembers(m => m.filter(x => x.id !== memberId));
   };
 
   if (isLoading) {

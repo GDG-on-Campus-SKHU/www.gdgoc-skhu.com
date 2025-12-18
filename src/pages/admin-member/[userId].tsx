@@ -2,9 +2,9 @@ import AdminMemberDetail from '@/features/Admin/components/AdminMemberDetail/Adm
 import AdminLayout from '@/features/Admin/layout/AdminLayout';
 
 export default function AdminMemberDetailPage() {
-    return (
-        <AdminLayout>
-            <AdminMemberDetail/>
-        </AdminLayout>
-    )
+  return (
+    <AdminLayout>
+      <AdminMemberDetail />
+    </AdminLayout>
+  );
 }

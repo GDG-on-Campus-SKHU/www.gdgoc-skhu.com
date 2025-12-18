@@ -35,7 +35,7 @@ const ScheduleRegisterModal = ({
   type = 'period',
   onConfirm,
   initialStartAt,
-  initialEndAt
+  initialEndAt,
 }: ScheduleRegisterModalProps) => {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
