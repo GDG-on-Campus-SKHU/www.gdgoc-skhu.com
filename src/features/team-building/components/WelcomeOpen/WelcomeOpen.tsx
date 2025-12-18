@@ -70,6 +70,15 @@ export const SCHEDULE_LABEL: Partial<Record<TeamBuildingScheduleType, string>> =
   FINAL_RESULT_ANNOUNCEMENT: '최종 팀빌딩 결과 발표',
 };
 
+const SCHEDULE_ORDER = [
+  'IDEA_REGISTRATION',
+  'FIRST_TEAM_BUILDING',
+  'FIRST_TEAM_BUILDING_ANNOUNCEMENT',
+  'SECOND_TEAM_BUILDING',
+  'SECOND_TEAM_BUILDING_ANNOUNCEMENT',
+  'FINAL_RESULT_ANNOUNCEMENT',
+] as const;
+
 const SCHEDULE_MODAL_STORAGE_KEY = 'welcomeOpenScheduleModalSeen';
 const SCHEDULE_MODAL_BODY_CLASS = 'schedule-modal-open';
 
@@ -176,7 +185,7 @@ export default function WelcomeView() {
   const [projectName, setProjectName] = useState<string>('');
   const [schedules, setSchedules] = useState<CurrentProjectSchedule[]>([]);
   const [mounted, setMounted] = useState(false);
-
+ 
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -353,9 +362,13 @@ export default function WelcomeView() {
   }, [topicIdMap]);
 
   const visibleSchedules = useMemo(() => {
-    return schedules
-      .filter(s => s.scheduleType !== 'THIRD_TEAM_BUILDING')
-      .filter(s => Boolean(SCHEDULE_LABEL[s.scheduleType]));
+    return (
+      schedules
+        .filter(s => SCHEDULE_ORDER.includes(s.scheduleType))
+        .sort(
+          (a, b) => SCHEDULE_ORDER.indexOf(a.scheduleType) - SCHEDULE_ORDER.indexOf(b.scheduleType)
+        )
+    );
   }, [schedules]);
 
   const formatDateTime = (iso: string) => {
@@ -385,7 +398,7 @@ export default function WelcomeView() {
             <ScheduleModalCard role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
               <ScheduleModalHeader>
                 <div>
-                  <ScheduleModalTitle>그로우톤</ScheduleModalTitle>
+                  <ScheduleModalTitle>{projectName}</ScheduleModalTitle>
                   <ScheduleModalSubtitle>팀빌딩 진행 일정</ScheduleModalSubtitle>
                 </div>
                 <ScheduleModalCloseButton>
@@ -403,9 +416,9 @@ export default function WelcomeView() {
               <ScheduleSteps>
                 {visibleSchedules.map((s, idx) => {
                   const isLast = idx === visibleSchedules.length - 1;
-                  const title = SCHEDULE_LABEL[s.scheduleType] ?? s.scheduleType;
+                  const title = SCHEDULE_LABEL[s.scheduleType as TeamBuildingScheduleType];
 
-                  const isAnnouncement = s.scheduleType.includes('ANNOUNCEMENT');
+                  const isAnnouncement = s.scheduleType.endsWith('ANNOUNCEMENT');
                   const period = isAnnouncement
                     ? formatDateTime(s.startAt)
                     : `${formatDateTime(s.startAt)} ~ ${formatDateTime(s.endAt)}`;
