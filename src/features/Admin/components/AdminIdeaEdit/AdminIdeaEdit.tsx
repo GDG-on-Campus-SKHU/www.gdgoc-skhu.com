@@ -65,6 +65,7 @@ import {
   Title,
   TitleCNTR,
 } from '../../styles/AdminIdeaEdit';
+import { css } from '@emotion/react';
 
 const DEFAULT_TEAM: Record<TeamRole, number> = {
   planning: 0,
@@ -144,7 +145,6 @@ export default function AdminIdeaEdit() {
 
         const data = res.data;
 
-        // API Roster -> UI Team Count 변환
         const loadedTeam = { ...DEFAULT_TEAM };
         data.rosters.forEach(roster => {
           const uiKey = ROLE_API_TO_UI[roster.part];
@@ -250,7 +250,7 @@ export default function AdminIdeaEdit() {
       alert('변경 사항이 적용되었습니다.');
 
       router.push({
-        pathname: '/AdminIdeaDetail', // 실제 상세페이지 라우트명 확인
+        pathname: '/AdminIdeaDetail',
         query: { projectId, id },
       });
     } catch (error) {
@@ -264,8 +264,8 @@ export default function AdminIdeaEdit() {
 
   // AdminLayout이 적용되므로 Sidebar 등은 제거하고 Content 영역만 반환합니다.
   return (
-    <Content>
-      <ContentContainer ref={pageRef}>
+    <Content css={contentFullWidthCss}>
+      <ContentContainer ref={pageRef} css={contentContainerFullWidthCss}>
         <HeaderTop>
           <Title>아이디어 관리</Title>
           <Description>역대 프로젝트에 게시된 아이디어 리스트를 관리할 수 있습니다.</Description>
@@ -276,7 +276,7 @@ export default function AdminIdeaEdit() {
           </ApplyButton>
         </HeaderActions>
 
-        <FormWrapper>
+        <FormWrapper css={formWrapperFullWidthCss}>
           <TitleCNTR>
             <FieldHeader>
               <FieldLabel htmlFor="title">아이디어 제목</FieldLabel>
@@ -387,7 +387,7 @@ export default function AdminIdeaEdit() {
             </FieldHeader>
           </DescriptionCNTR>
           <TextAreaWrapper>
-            <QuillWrapper>
+            <QuillWrapper css={quillWrapperFullWidthCss}>
               <input
                 type="file"
                 accept="image/*"
@@ -411,3 +411,26 @@ export default function AdminIdeaEdit() {
     </Content>
   );
 }
+
+const contentFullWidthCss = css`
+  width: 100%;
+  max-width: 100%;
+`;
+
+const contentContainerFullWidthCss = css`
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  min-width: 0;
+`;
+
+const formWrapperFullWidthCss = css`
+  width: 100%;
+  max-width: 100%;
+`;
+
+const quillWrapperFullWidthCss = css`
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+`;
