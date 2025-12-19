@@ -86,7 +86,6 @@ const AdminSubsScreening: NextPage = () => {
 
   // API 응답 데이터를 Applicant 형태로 변환
   const normalizeUser = (user: ApiUser): Applicant => {
-    // generations 배열에서 isMain이 true인 것을 찾거나 첫 번째 것을 사용
     const mainGeneration = user.generations.find(g => g.isMain) || user.generations[0];
 
     return {
@@ -106,22 +105,48 @@ const AdminSubsScreening: NextPage = () => {
     };
   };
 
+  // 모든 페이지의 데이터를 가져오는 함수
   useEffect(() => {
     let cancelled = false;
 
-    const fetchUsers = async () => {
+    const fetchAllUsers = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const res = await api.get<UsersResponse>('/admin/users');
+
+        // 첫 페이지를 먼저 가져와서 전체 페이지 수 확인
+        const firstPageRes = await api.get<UsersResponse>('/admin/users', {
+          params: { page: 0, size: 20 },
+        });
+
         if (cancelled) return;
 
-        const users = res.data.users || [];
+        const totalPages = firstPageRes.data.pageInfo.totalPages;
+        const allUsers: ApiUser[] = [...firstPageRes.data.users];
+
+        // 나머지 페이지들을 병렬로 가져오기
+        if (totalPages > 1) {
+          const pagePromises = [];
+          for (let page = 1; page < totalPages; page++) {
+            pagePromises.push(
+              api.get<UsersResponse>('/admin/users', {
+                params: { page, size: 20 },
+              })
+            );
+          }
+
+          const restPages = await Promise.all(pagePromises);
+          restPages.forEach(res => {
+            allUsers.push(...res.data.users);
+          });
+        }
+
+        if (cancelled) return;
 
         const pending: Applicant[] = [];
         const history: Applicant[] = [];
 
-        users.forEach(user => {
+        allUsers.forEach(user => {
           const normalized = normalizeUser(user);
           if (user.approvalStatus === 'WAITING') {
             pending.push(normalized);
@@ -132,8 +157,9 @@ const AdminSubsScreening: NextPage = () => {
 
         setPendingList(pending);
         setHistoryList(history);
-      } catch {
+      } catch (err) {
         if (cancelled) return;
+        console.error('Failed to fetch users:', err);
         setError('사용자 정보를 불러오지 못했습니다.');
         setPendingList([]);
         setHistoryList([]);
@@ -144,7 +170,7 @@ const AdminSubsScreening: NextPage = () => {
       }
     };
 
-    fetchUsers();
+    fetchAllUsers();
 
     return () => {
       cancelled = true;
@@ -223,22 +249,18 @@ const AdminSubsScreening: NextPage = () => {
     try {
       setError(null);
 
-      // 1) API 호출
       if (confirmAction === 'approve') {
         await approveMut.mutateAsync(selectedApplicant.id);
       } else if (confirmAction === 'reject') {
         await rejectMut.mutateAsync(selectedApplicant.id);
       } else {
-        // reset
         await resetMut.mutateAsync(selectedApplicant.id);
       }
 
-      // 2) UI 리스트 이동
       if (confirmAction === 'approve' || confirmAction === 'reject') {
         const statusToSet: Applicant['status'] =
           confirmAction === 'approve' ? 'approved' : 'rejected';
 
-        // pending -> history
         setPendingList(prev => {
           const idx = prev.findIndex(
             a => a.id === selectedApplicant.id && a.email === selectedApplicant.email
@@ -255,7 +277,6 @@ const AdminSubsScreening: NextPage = () => {
           return next;
         });
       } else {
-        // reset: history(REJECTED) -> pending(WAITING)
         setHistoryList(prev =>
           prev.filter(a => !(a.id === selectedApplicant.id && a.email === selectedApplicant.email))
         );
@@ -268,12 +289,10 @@ const AdminSubsScreening: NextPage = () => {
           return [{ ...selectedApplicant, status: 'pending' }, ...prev];
         });
 
-        // UX: pending 탭으로 이동
         setActiveTab('pending');
         setCurrentPage(1);
       }
 
-      // 3) 모달 처리
       setShowConfirm(false);
       setShowComplete(true);
       setSelectedApplicant(null);
@@ -1183,7 +1202,6 @@ const SecondaryButton = styled.button`
   transition:
     border-color 0.2s ease,
     background 0.2s ease;
-
   &:hover {
     border-color: #4285f4;
     background: rgba(66, 133, 244, 0.08);
