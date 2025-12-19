@@ -18,10 +18,16 @@ import styled from 'styled-components';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export function resolveIconUrl(iconUrl: string) {
+  if (!iconUrl) return '';
+
   if (iconUrl.startsWith('http')) {
     return iconUrl;
   }
-  return `${API_BASE_URL}${iconUrl}`;
+
+  const base = API_BASE_URL?.replace(/\/$/, '') ?? '';
+  const path = iconUrl.startsWith('/') ? iconUrl : `/${iconUrl}`;
+
+  return `${base}${path}`;
 }
 
 const MDPreview = dynamic(() => import('@uiw/react-markdown-preview').then(mod => mod.default), {
