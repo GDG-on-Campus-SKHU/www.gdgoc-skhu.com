@@ -69,7 +69,7 @@ export default function Step3({
 
   useEffect(() => {
     if (orgType === 'internal') setSchool('성공회대학교');
-    if (!cohort) setCohort('22-23');
+    if (!cohort) setCohort('25-26');
     if (!part) setPart('PM');
     if (!role) setRole('MEMBER');
   }, [orgType, cohort, part, role, setSchool, setCohort, setPart, setRole]);
@@ -471,8 +471,8 @@ export default function Step3({
           <div css={formGroup}>
             <label css={labelCss}>기수</label>
             <SelectBoxBasic
-              options={['22-23', '23-24', '24-25', '25-26']}
-              placeholder="22-23"
+              options={['25-26', '24-25', '23-24', '22-23']}
+              placeholder="25-26"
               onChange={([value]) => setCohort(value)}
             />
             {!!localErrors.cohort && <p css={errorText}>{localErrors.cohort}</p>}
