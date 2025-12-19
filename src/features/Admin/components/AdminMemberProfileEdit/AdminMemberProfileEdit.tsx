@@ -116,7 +116,18 @@ const AdminMemberProfileEdit: NextPage = () => {
 
   const sortedGenerations = useMemo(() => {
     if (!member) return [];
-    return [...member.generations].sort((a, b) => (a.isMain === b.isMain ? 0 : a.isMain ? -1 : 1));
+
+    const main = member.generations.find(gen => gen.isMain);
+
+    const subs = member.generations
+      .filter(gen => !gen.isMain)
+      .sort((a, b) => {
+        const aStartYear = Number(a.generation.split('-')[0]);
+        const bStartYear = Number(b.generation.split('-')[0]);
+        return bStartYear - aStartYear;
+      });
+
+    return main ? [main, ...subs] : subs;
   }, [member]);
 
   if (!member) {

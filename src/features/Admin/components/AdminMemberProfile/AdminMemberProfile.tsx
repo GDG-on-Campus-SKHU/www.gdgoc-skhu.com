@@ -73,10 +73,18 @@ const AdminMemberProfile = ({ memberProps, onBack }: Props) => {
   const sortedGenerations = useMemo(() => {
     if (!member) return [];
 
-    return [...member.generations].sort((a, b) => {
-      if (a.isMain === b.isMain) return 0;
-      return a.isMain ? -1 : 1;
-    });
+    const main = member.generations.find(gen => gen.isMain);
+
+    const subs = member.generations
+      .filter(gen => !gen.isMain)
+      .sort((a, b) => {
+        const aStartYear = Number(a.generation.split('-')[0]);
+        const bStartYear = Number(b.generation.split('-')[0]);
+
+        return bStartYear - aStartYear;
+      });
+
+    return main ? [main, ...subs] : subs;
   }, [member]);
 
   const handleUserProfileEdit = (userId: number) => {
