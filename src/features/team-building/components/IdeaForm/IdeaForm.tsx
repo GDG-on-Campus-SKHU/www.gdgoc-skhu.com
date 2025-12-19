@@ -6,7 +6,7 @@ import usePreferredSync from '../../hooks/usePreferredSync';
 import { useIdeaStore } from '../store/IdeaStore';
 import { DEFAULT_TEAM_COUNTS, INTRO_MAX_LENGTH, TITLE_MAX_LENGTH } from './constants';
 import { TeamRole } from './IdeaFormUtils';
-import IdeaFormView from './IdeaFormView';
+import IdeaFormView, { LABEL_TO_ROLE_MAP, ROLE_LABEL_MAP } from './IdeaFormView';
 
 export interface Props {
   form: {
@@ -21,6 +21,8 @@ export interface Props {
     team: Partial<Record<TeamRole, number>>;
   };
   topicOptions?: string[];
+  enabledTeamRoles?: TeamRole[];
+  maxMemberCount?: number | null;
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => void;
@@ -45,12 +47,19 @@ export default function IdeaForm(props: Props) {
     lastSavedAt,
     isSaving,
     onModalStateChange,
+    enabledTeamRoles,
+    maxMemberCount,
   } = props;
 
   const router = useRouter();
   const addIdea = useIdeaStore(s => s.addIdea);
 
   const team = React.useMemo(() => ({ ...DEFAULT_TEAM_COUNTS, ...(form.team ?? {}) }), [form.team]);
+
+  const isRoleEnabled = (role: TeamRole) => {
+    if (!enabledTeamRoles) return true; // configurations 안 쓰는 경우
+    return enabledTeamRoles.includes(role);
+  };
 
   const applyLengthLimit = React.useCallback((name: string, value: string) => {
     if (name === 'title') return value.slice(0, TITLE_MAX_LENGTH);
@@ -143,6 +152,22 @@ export default function IdeaForm(props: Props) {
     };
   }, [isAnyModalOpen]);
 
+  React.useEffect(() => {
+    if (!enabledTeamRoles || enabledTeamRoles.length === 0) return;
+
+    const current = form.preferredPart;
+    if (!current) return;
+
+    const role = LABEL_TO_ROLE_MAP[current];
+    if (!role) return;
+
+    if (!enabledTeamRoles.includes(role)) {
+      const firstAllowedLabel = ROLE_LABEL_MAP[enabledTeamRoles[0]];
+
+      emitFieldChange('preferredPart', firstAllowedLabel);
+    }
+  }, [enabledTeamRoles, form.preferredPart, emitFieldChange]);
+
   const handleModalDone = React.useCallback(async () => {
     try {
       if (onRegister) {
@@ -199,6 +224,9 @@ export default function IdeaForm(props: Props) {
       topicOptions={topicOptions}
       preferredRoleKey={preferredRoleKey}
       radioRenderVersion={radioRenderVersion}
+      isRoleEnabled={isRoleEnabled}
+      maxMemberCount={maxMemberCount}
+      enabledTeamRoles={enabledTeamRoles}
       // handlers
       onChange={handleChange}
       emitFieldChange={emitFieldChange}
@@ -219,7 +247,7 @@ export default function IdeaForm(props: Props) {
       draftSavedAt={draftPayload?.savedAt ?? localSavedAt ?? null}
       onLoadDraft={handleLoadDraft}
       onSkipDraft={handleSkipDraft}
-      // autosave text
+      // autosave
       autoSaveSaving={Boolean(isSaving ?? localIsSaving)}
       autoSaveSavedAt={lastSavedAt ?? localSavedAt ?? ''}
     />

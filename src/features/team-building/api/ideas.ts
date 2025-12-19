@@ -25,6 +25,15 @@ export interface IdeaUpdatePayload {
   topicId?: number;
 }
 
+export interface IdeaConfigurationsResponse {
+  topics: Array<{
+    topicId: number;
+    topic: string;
+  }>;
+  availableParts: IdeaPartCode[];
+  maxMemberCount: number;
+}
+
 export const fetchCurrentTeamBuildingProject = (config?: AxiosRequestConfig) =>
   teamBuildingApi.get('/team-building/projects/current', config);
 
@@ -123,6 +132,9 @@ export const fetchEnrollmentAvailability = (ideaId: number, config?: AxiosReques
     `/enrollments/availability/ideas/${ideaId}`,
     config
   );
+
+export const fetchIdeaConfigurations = (config?: AxiosRequestConfig) =>
+  teamBuildingApi.get<IdeaConfigurationsResponse>('/projects/current/ideas/configurations', config);
 
 export type TeamBuildingScheduleType =
   | 'IDEA_REGISTRATION'

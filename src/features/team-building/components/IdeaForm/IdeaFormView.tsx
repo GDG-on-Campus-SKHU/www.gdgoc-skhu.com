@@ -89,7 +89,23 @@ interface IdeaFormViewProps {
   onSkipDraft: () => void;
   autoSaveSaving: boolean;
   autoSaveSavedAt: string;
+  enabledTeamRoles?: TeamRole[];
+  isRoleEnabled: (role: TeamRole) => boolean;
+  maxMemberCount?: number | null;
 }
+
+export const ROLE_LABEL_MAP: Record<TeamRole, string> = {
+  planning: '기획',
+  design: '디자인',
+  frontendWeb: '프론트엔드 (웹)',
+  frontendMobile: '프론트엔드 (모바일)',
+  backend: '백엔드',
+  aiMl: 'AI/ML',
+};
+
+export const LABEL_TO_ROLE_MAP: Record<string, TeamRole> = Object.fromEntries(
+  Object.entries(ROLE_LABEL_MAP).map(([k, v]) => [v, k as TeamRole])
+);
 
 export default function IdeaFormView({
   form,
@@ -114,6 +130,9 @@ export default function IdeaFormView({
   onSkipDraft,
   autoSaveSaving,
   autoSaveSavedAt,
+  enabledTeamRoles,
+  isRoleEnabled,
+  maxMemberCount,
 }: IdeaFormViewProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -135,6 +154,11 @@ export default function IdeaFormView({
     : autoSaveSavedAt
       ? `임시저장 완료 ${autoSaveSavedAt}`
       : AUTO_SAVE_PLACEHOLDER;
+
+  const totalSelectedMembers = Object.values(team).reduce((sum, v) => sum + (v ?? 0), 0);
+
+  const isOverMaxMember =
+    typeof maxMemberCount === 'number' && totalSelectedMembers >= maxMemberCount;
 
   return (
     <PageContainer $isModalOpen={modalState !== 'idle' || isDraftModalOpen}>
@@ -223,7 +247,12 @@ export default function IdeaFormView({
             <FieldLabel as="span">작성자의 파트</FieldLabel>
           </PreferredHeading>
           <RadioGroup>
-            {PREFERRED_OPTIONS.map(option => (
+            {PREFERRED_OPTIONS.filter(option => {
+              if (!enabledTeamRoles) return true;
+
+              const role = LABEL_TO_ROLE_MAP[option];
+              return role ? enabledTeamRoles.includes(role) : false;
+            }).map(option => (
               <Radio
                 key={`${option}-${radioRenderVersion}`}
                 name="preferredPart"
@@ -238,11 +267,17 @@ export default function IdeaFormView({
         <TeamSection>
           <TeamHeading>
             <TeamTitle>팀원 구성</TeamTitle>
-            <TeamHint>팀 당 최대 n명까지 가능합니다.</TeamHint>
+            {typeof maxMemberCount === 'number' && (
+              <TeamHint>팀 당 최대 {maxMemberCount}명까지 가능합니다.</TeamHint>
+            )}
           </TeamHeading>
+
           <TeamList>
             {TEAM_ROLES.map(r => {
+              if (!isRoleEnabled(r.key)) return null;
+
               const currentCount = team[r.key] ?? 0;
+
               return (
                 <TeamRow key={r.key}>
                   <TeamLabel>{r.label}</TeamLabel>
@@ -255,7 +290,14 @@ export default function IdeaFormView({
                       -
                     </StepButton>
                     <TeamCount>{currentCount}</TeamCount>
-                    <StepButton type="button" onClick={() => onTeamAdjust(r.key, currentCount + 1)}>
+                    <StepButton
+                      type="button"
+                      disabled={isOverMaxMember}
+                      onClick={() => {
+                        if (isOverMaxMember) return;
+                        onTeamAdjust(r.key, currentCount + 1);
+                      }}
+                    >
                       +
                     </StepButton>
                   </TeamControls>
