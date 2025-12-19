@@ -435,8 +435,8 @@ const AdminProjectManagement: NextPage = () => {
   }, []);
 
   const mapParticipantIds = useCallback(
-    (participants?: Array<{ participantId: number }>) =>
-      participants?.map(p => p.participantId) ?? [],
+    (participants?: Array<{ userId: number }>) =>
+      Array.from(new Set(participants?.map(p => p.userId))),
     []
   );
 
