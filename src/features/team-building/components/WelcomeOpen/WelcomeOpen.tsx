@@ -191,6 +191,7 @@ export default function WelcomeView() {
   const [projectName, setProjectName] = useState<string>('');
   const [schedules, setSchedules] = useState<CurrentProjectSchedule[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [isRegistrable, setIsRegistrable] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -243,8 +244,10 @@ export default function WelcomeView() {
         const resp = await fetchCurrentTeamBuildingProject({ signal: controller.signal });
         const data = resp.data;
         const project = data?.project;
+        const registrable = data?.registrable;
 
         setSchedules(Array.isArray(project?.schedules) ? project.schedules : []);
+        setIsRegistrable(registrable);
 
         const nextProjectId = Number(project?.projectId);
         if (!Number.isNaN(nextProjectId) && nextProjectId > 0) {
@@ -475,28 +478,30 @@ export default function WelcomeView() {
             </StatusText>
 
             <StatusActions>
-              <RegisterButtonLink href="/IdeaForm">
-                <Button
-                  title="아이디어 등록하기"
-                  disabled={false}
-                  className="IdeaButton"
-                  css={{
-                    display: 'flex',
-                    width: '200px',
-                    height: '50px',
-                    padding: '10px 8px',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    flexShrink: 0,
-                    color: 'var(--grayscale-100, #f9f9fa)',
-                    fontFamily: 'Pretendard',
-                    fontSize: '18px',
-                    fontStyle: 'normal',
-                    fontWeight: 500,
-                    lineHeight: '160%',
-                  }}
-                />
-              </RegisterButtonLink>
+              {isRegistrable && (
+                <RegisterButtonLink href="/IdeaForm">
+                  <Button
+                    title="아이디어 등록하기"
+                    disabled={false}
+                    className="IdeaButton"
+                    css={{
+                      display: 'flex',
+                      width: '200px',
+                      height: '50px',
+                      padding: '10px 8px',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      flexShrink: 0,
+                      color: 'var(--grayscale-100, #f9f9fa)',
+                      fontFamily: 'Pretendard',
+                      fontSize: '18px',
+                      fontStyle: 'normal',
+                      fontWeight: 500,
+                      lineHeight: '160%',
+                    }}
+                  />
+                </RegisterButtonLink>
+              )}
             </StatusActions>
           </StatusBar>
 
@@ -539,7 +544,7 @@ export default function WelcomeView() {
               <IdeaHeaderRow>
                 <NumberCTNR>순번</NumberCTNR>
                 <IdeaContentCTNR>아이디어 내용</IdeaContentCTNR>
-                <ApplyCTNR>지원 현황</ApplyCTNR>
+                <ApplyCTNR>팀원 현황</ApplyCTNR>
                 <RecruitStatusCTNR>모집 상태</RecruitStatusCTNR>
               </IdeaHeaderRow>
 

@@ -79,10 +79,24 @@ export interface TechStack {
 }
 
 export interface UserLink {
-  linkType: string;
+  linkType: LinkType;
   url: string;
-  iconUrl: string;
 }
+
+export type LinkType =
+  | 'GITHUB'
+  | 'VELOG'
+  | 'BLOG'
+  | 'TISTORY'
+  | 'YOUTUBE'
+  | 'FACEBOOK'
+  | 'BAEKJOON'
+  | 'INSTAGRAM'
+  | 'TWITTER'
+  | 'X'
+  | 'LINKEDIN'
+  | 'NOTION'
+  | 'OTHER';
 
 export interface MyProfile {
   userId: number;
@@ -96,7 +110,7 @@ export interface MyProfile {
 }
 
 export interface UserLinkOption {
-  type: string;
+  type: LinkType;
   name: string;
   iconUrl: string;
 }
@@ -124,16 +138,23 @@ function mapProfileDtoToDomain(dto: GetMyProfileResponse): MyProfile {
     generations: dto.generations ?? [],
     part: dto.part,
     techStacks: dto.techStacks ?? [],
-    userLinks: dto.userLinks ?? [],
+    userLinks: dto.userLinks.map(mapUserLinkDtoToDomain),
     introduction: dto.introduction ?? '',
   };
 }
 
 function mapUserLinkOptionDtoToDomain(dto: UserLinkOptionDto): UserLinkOption {
   return {
-    type: dto.type,
+    type: dto.type as LinkType,
     name: dto.name,
     iconUrl: dto.iconUrl,
+  };
+}
+
+function mapUserLinkDtoToDomain(dto: UserLinkDto): UserLink {
+  return {
+    linkType: dto.linkType as LinkType,
+    url: dto.url,
   };
 }
 
@@ -173,7 +194,7 @@ export async function fetchUserLinkOptions(): Promise<UserLinkOption[]> {
 }
 
 export function useUserLinkOptions(
-  options?: Omit<UseQueryOptions<UserLinkOption[], Error>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<UserLinkOption[], Error, UserLinkOption[]>, 'queryKey' | 'queryFn'>
 ) {
   return useQuery<UserLinkOption[], Error>({
     queryKey: mypageProfileKeys.userLinkOptions(),
