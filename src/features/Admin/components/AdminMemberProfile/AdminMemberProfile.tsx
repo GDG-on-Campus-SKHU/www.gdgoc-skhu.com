@@ -18,10 +18,16 @@ import styled from 'styled-components';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export function resolveIconUrl(iconUrl: string) {
+  if (!iconUrl) return '';
+
   if (iconUrl.startsWith('http')) {
     return iconUrl;
   }
-  return `${API_BASE_URL}${iconUrl}`;
+
+  const base = API_BASE_URL?.replace(/\/$/, '') ?? '';
+  const path = iconUrl.startsWith('/') ? iconUrl : `/${iconUrl}`;
+
+  return `${base}${path}`;
 }
 
 const MDPreview = dynamic(() => import('@uiw/react-markdown-preview').then(mod => mod.default), {
@@ -73,10 +79,18 @@ const AdminMemberProfile = ({ memberProps, onBack }: Props) => {
   const sortedGenerations = useMemo(() => {
     if (!member) return [];
 
-    return [...member.generations].sort((a, b) => {
-      if (a.isMain === b.isMain) return 0;
-      return a.isMain ? -1 : 1;
-    });
+    const main = member.generations.find(gen => gen.isMain);
+
+    const subs = member.generations
+      .filter(gen => !gen.isMain)
+      .sort((a, b) => {
+        const aStartYear = Number(a.generation.split('-')[0]);
+        const bStartYear = Number(b.generation.split('-')[0]);
+
+        return bStartYear - aStartYear;
+      });
+
+    return main ? [main, ...subs] : subs;
   }, [member]);
 
   const handleUserProfileEdit = (userId: number) => {

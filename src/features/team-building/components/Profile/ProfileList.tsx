@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { resolveIconUrl } from '@/features/Admin/components/AdminMemberProfile/AdminMemberProfile';
 import { MyProfile, useTechStackOptions, useUserLinkOptions } from '@/lib/mypageProfile.api';
 import { css } from '@emotion/react';
@@ -50,12 +51,28 @@ export default function ProfileList({
     { label: '파트', value: profile.part, isRole: false },
   ] as const;
 
+  const sortedGenerations = useMemo(() => {
+    const gens = profile.generations ?? [];
+
+    const main = gens.find(gen => gen.isMain);
+
+    const subs = gens
+      .filter(gen => !gen.isMain)
+      .sort((a, b) => {
+        const aStartYear = Number(a.generation.split('-')[0]);
+        const bStartYear = Number(b.generation.split('-')[0]);
+        return bStartYear - aStartYear; // 최신 → 과거
+      });
+
+    return main ? [main, ...subs] : subs;
+  }, [profile.generations]);
+
   const renderBaseProfileItem = (item: (typeof baseProfileItems)[number]) => (
     <li key={item.label} css={profileItemCss}>
       <p css={labelCss}>{item.label}</p>
       {item.isRole ? (
         <div css={roleContainerCss}>
-          {profile.generations.map(gen => (
+          {sortedGenerations.map(gen => (
             <Tag key={gen.id} label={`${gen.generation} ${gen.position}`} disabled={!gen.isMain} />
           ))}
         </div>
