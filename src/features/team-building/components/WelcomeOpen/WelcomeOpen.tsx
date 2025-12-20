@@ -544,7 +544,7 @@ export default function WelcomeView() {
               <IdeaHeaderRow>
                 <NumberCTNR>순번</NumberCTNR>
                 <IdeaContentCTNR>아이디어 내용</IdeaContentCTNR>
-                <ApplyCTNR>팀원 현황</ApplyCTNR>
+                <ApplyCTNR>지원 현황</ApplyCTNR>
                 <RecruitStatusCTNR>모집 상태</RecruitStatusCTNR>
               </IdeaHeaderRow>
 

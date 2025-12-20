@@ -255,6 +255,7 @@ export const IdeaHeaderRow = styled.div`
   padding-top: 8px;
   padding-bottom: 8px;
   padding-right: 22px;
+  padding-left: 1px;
   align-items: center;
   gap: 40px;
   border-bottom: 1px solid var(--grayscale-200, #ededef);
@@ -274,7 +275,7 @@ export const NumberCTNR = styled.div`
   line-height: 160%; /* 28.8px */
 `;
 export const IdeaContentCTNR = styled.div`
-  width: 660px;
+  width: 705px;
   height: 29px;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -438,7 +439,7 @@ export const ScheduleModalCard = styled.div`
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
-  padding: 40px 40px;
+  padding: 40px 35px 40px 40px;
   overflow-y: auto;
 
   position: relative;
@@ -479,11 +480,6 @@ export const ScheduleModalSubtitle = styled.p`
 export const ScheduleModalCloseButton = styled.button`
   width: 36px;
   height: 36px;
-
-  &:hover {
-    background: ${colors.grayscale[200]};
-    transform: translateY(-1px);
-  }
 
   &:active {
     transform: translateY(0);

@@ -25,6 +25,16 @@ export interface IdeaUpdatePayload {
   topicId?: number;
 }
 
+export interface IdeaUpdateBeforeEnrollmentPayload {
+  title: string;
+  introduction: string;
+  description: string;
+  topicId: number;
+
+  creatorPart: IdeaPartCode;
+  compositions: IdeaMemberComposition[];
+}
+
 export const fetchCurrentTeamBuildingProject = (config?: AxiosRequestConfig) =>
   teamBuildingApi.get('/team-building/projects/current', config);
 
@@ -80,13 +90,22 @@ export const updateIdea = (
   ideaId: number,
   payload: IdeaUpdatePayload,
   config?: AxiosRequestConfig
-) => teamBuildingApi.put(`/projects/${projectId}/ideas/${ideaId}`, payload, config);
+) => teamBuildingApi.put<void>(`/projects/${projectId}/ideas/${ideaId}`, payload, config);
+
+export const updateIdeaBeforeEnrollment = (
+  projectId: number,
+  ideaId: number,
+  payload: IdeaUpdateBeforeEnrollmentPayload,
+  config?: AxiosRequestConfig
+) =>
+  teamBuildingApi.put<void>(
+    `/projects/${projectId}/ideas/${ideaId}/before-enrollment`,
+    payload,
+    config
+  );
 
 export const deleteIdea = (projectId: number, ideaId: number, config?: AxiosRequestConfig) =>
   teamBuildingApi.delete(`/projects/${projectId}/ideas/${ideaId}`, config);
-
-export const deleteIdeaMember = (ideaId: number, memberId: number, config?: AxiosRequestConfig) =>
-  teamBuildingApi.delete(`/ideas/${ideaId}/members/${memberId}`, config);
 
 export type EnrollmentAvailabilityChoice = {
   choice: 'FIRST' | 'SECOND' | 'THIRD';
