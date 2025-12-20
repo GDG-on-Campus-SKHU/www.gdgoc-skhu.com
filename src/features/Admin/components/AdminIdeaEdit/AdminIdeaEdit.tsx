@@ -131,6 +131,8 @@ export default function AdminIdeaEdit() {
     team: { ...DEFAULT_TEAM },
   });
 
+  const [availableParts, setAvailableParts] = useState<Set<string>>(new Set());
+
   // 1. Fetch Data
   useEffect(() => {
     if (!id || !projectId) return;
@@ -145,12 +147,21 @@ export default function AdminIdeaEdit() {
         const data = res.data;
 
         const loadedTeam = { ...DEFAULT_TEAM };
+        const parts = new Set<string>();
+
         data.rosters.forEach(roster => {
           const uiKey = ROLE_API_TO_UI[roster.part];
           if (uiKey) {
             loadedTeam[uiKey] = roster.maxMemberCount;
           }
+          // 프로젝트에서 사용 가능한 파트 저장
+          const koreanPart = API_PART_TO_KOREAN[roster.part];
+          if (koreanPart) {
+            parts.add(koreanPart);
+          }
         });
+
+        setAvailableParts(parts);
 
         setForm({
           title: data.title,
@@ -187,6 +198,13 @@ export default function AdminIdeaEdit() {
 
   const handlePreferredChange = (option: string, checked: boolean) => {
     if (!checked) return;
+
+    // 사용 불가능한 파트 선택 방지
+    if (!availableParts.has(option)) {
+      alert('해당 파트는 이 프로젝트에서 사용할 수 없습니다.');
+      return;
+    }
+
     setForm(prev => ({ ...prev, preferredPart: option }));
   };
 
@@ -222,6 +240,12 @@ export default function AdminIdeaEdit() {
         return;
       }
 
+      // 선택한 파트가 사용 가능한지 재확인
+      if (!availableParts.has(form.preferredPart)) {
+        alert('선택한 파트는 이 프로젝트에서 사용할 수 없습니다.');
+        return;
+      }
+
       const requestBody: AdminIdeaUpdateRequest = {
         title: form.title,
         introduction: form.intro,
@@ -244,6 +268,16 @@ export default function AdminIdeaEdit() {
       });
     } catch (error) {
       console.error('Failed to update idea:', error);
+
+      // 400 에러 처리
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status: number } };
+        if (axiosError.response?.status === 400) {
+          alert('선택한 파트가 유효하지 않습니다. 프로젝트에서 사용 가능한 파트를 선택해주세요.');
+          return;
+        }
+      }
+
       alert('아이디어 수정에 실패했습니다.');
     }
   };
@@ -330,14 +364,18 @@ export default function AdminIdeaEdit() {
                 <HelperText>하나의 파트만 선택할 수 있습니다.</HelperText>
               </PreferredHeading>
               <RadioGroup>
-                {PREFERRED_OPTIONS.map(option => (
-                  <Radio
-                    key={option}
-                    label={option}
-                    checked={form.preferredPart === option}
-                    onChange={event => handlePreferredChange(option, event.target.checked)}
-                  />
-                ))}
+                {PREFERRED_OPTIONS.map(option => {
+                  const isDisabled = !availableParts.has(option);
+                  return (
+                    <Radio
+                      key={option}
+                      label={option}
+                      checked={form.preferredPart === option}
+                      onChange={event => handlePreferredChange(option, event.target.checked)}
+                      disabled={isDisabled}
+                    />
+                  );
+                })}
               </RadioGroup>
             </PreferredSection>
           </FieldCNTR>
