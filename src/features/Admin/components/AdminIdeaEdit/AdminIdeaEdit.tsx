@@ -148,7 +148,7 @@ export default function AdminIdeaEdit() {
 
         const loadedTeam = { ...DEFAULT_TEAM };
         const parts = new Set<string>();
-        
+
         data.rosters.forEach(roster => {
           const uiKey = ROLE_API_TO_UI[roster.part];
           if (uiKey) {
@@ -198,13 +198,13 @@ export default function AdminIdeaEdit() {
 
   const handlePreferredChange = (option: string, checked: boolean) => {
     if (!checked) return;
-    
+
     // 사용 불가능한 파트 선택 방지
     if (!availableParts.has(option)) {
       alert('해당 파트는 이 프로젝트에서 사용할 수 없습니다.');
       return;
     }
-    
+
     setForm(prev => ({ ...prev, preferredPart: option }));
   };
 
@@ -268,7 +268,7 @@ export default function AdminIdeaEdit() {
       });
     } catch (error) {
       console.error('Failed to update idea:', error);
-      
+
       // 400 에러 처리
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { status: number } };
@@ -277,7 +277,7 @@ export default function AdminIdeaEdit() {
           return;
         }
       }
-      
+
       alert('아이디어 수정에 실패했습니다.');
     }
   };
