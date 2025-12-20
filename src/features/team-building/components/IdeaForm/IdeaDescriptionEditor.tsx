@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic';
 import { useUploadImage } from '@/lib/image.api';
+import { css } from '@emotion/react';
 import type React from 'react';
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor').then(mod => mod.default), {
@@ -86,7 +87,7 @@ export default function IdeaDescriptionEditor({ value, onChange }: Props) {
   };
 
   return (
-    <div data-color-mode="light">
+    <div data-color-mode="light" css={editorContainerCss}>
       <MDEditor
         value={value}
         onChange={val => onChange(val || '')}
@@ -103,3 +104,33 @@ export default function IdeaDescriptionEditor({ value, onChange }: Props) {
     </div>
   );
 }
+
+const editorContainerCss = css`
+  background: #fff;
+  min-height: 400px;
+
+  & .wmde-markdown {
+    background: transparent;
+    ul {
+      list-style: disc !important;
+      padding-left: 1rem !important;
+    }
+    ol {
+      list-style: decimal !important;
+      padding-left: 1rem !important;
+    }
+  }
+
+  & .wmde-markdown h1,
+  & .wmde-markdown h2,
+  & .wmde-markdown h3,
+  & .wmde-markdown h4,
+  & .wmde-markdown h5,
+  & .wmde-markdown h6 {
+    font-family: 'Pretendard', sans-serif;
+  }
+
+  & .wmde-markdown code {
+    font-family: 'Courier New', monospace;
+  }
+`;

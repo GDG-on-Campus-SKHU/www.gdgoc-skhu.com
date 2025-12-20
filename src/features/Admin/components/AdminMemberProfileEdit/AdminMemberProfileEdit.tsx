@@ -736,21 +736,34 @@ const LinkAddButton = styled.button`
 `;
 
 const editorContainerCss = css`
+  width: 1080px;
   margin-top: 1.5rem;
   border-radius: 8px;
-  overflow: hidden;
   background: #fff;
+  min-height: 400px;
 
-  & .w-md-editor {
-    border-radius: 8px;
-    border: 1px solid #c3c6cb;
+  & .wmde-markdown {
+    background: transparent;
+    ul {
+      list-style: disc !important;
+      padding-left: 1rem !important;
+    }
+    ol {
+      list-style: decimal !important;
+      padding-left: 1rem !important;
+    }
   }
 
-  & .w-md-editor-toolbar {
-    border-bottom: 1px solid #d0d7de;
+  & .wmde-markdown h1,
+  & .wmde-markdown h2,
+  & .wmde-markdown h3,
+  & .wmde-markdown h4,
+  & .wmde-markdown h5,
+  & .wmde-markdown h6 {
+    font-family: 'Pretendard', sans-serif;
   }
 
-  & .w-md-editor-text-pre {
+  & .wmde-markdown code {
     font-family: 'Courier New', monospace;
   }
 `;

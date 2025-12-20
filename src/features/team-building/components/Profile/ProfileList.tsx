@@ -83,7 +83,7 @@ export default function ProfileList({
   );
 
   const renderTechStackContent = () => {
-    if (showEditFields) {
+    if (isEditing && !isPreviewMode) {
       const techStackSelectOptions = techStackOptions.map(opt => opt.code);
 
       return (
