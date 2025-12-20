@@ -72,7 +72,7 @@ export default function ProfilePage() {
 
           <ProfileBio
             isEditing={isEditing}
-            isPreviewMode={isPreviewMode} // 추가
+            isPreviewMode={isPreviewMode}
             bioMarkdown={bioMarkdown}
             tempMarkdown={tempMarkdown}
             setTempMarkdown={setTempMarkdown}

@@ -1,20 +1,19 @@
 import React, { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 // --- Constants & Utils Imports ---
 import {
   INTRO_MAX_LENGTH,
   TITLE_MAX_LENGTH,
   TOPIC_OPTIONS,
-} from '@/features/team-building/components/IdeaForm/constants'; // 경로 프로젝트에 맞게 수정 필요
+} from '@/features/team-building/components/IdeaForm/constants';
 import {
   PREFERRED_OPTIONS,
   TEAM_ROLES,
   TeamRole,
-} from '@/features/team-building/components/IdeaForm/IdeaFormUtils'; // 경로 프로젝트에 맞게 수정 필요
+} from '@/features/team-building/components/IdeaForm/IdeaFormUtils';
 // --- Components Imports ---
 import Radio from '@/features/team-building/components/Radio';
-import ReQuill from '@/features/team-building/components/ReQuill';
-import useQuillImages from '@/features/team-building/hooks/useQuillImages';
 // --- Styles Imports (Team Building) ---
 import {
   FieldCounter,
@@ -36,7 +35,6 @@ import {
   TeamRow,
   TeamSection,
   TeamTitle,
-  TextAreaWrapper,
 } from '@/features/team-building/styles/IdeaForm';
 // --- API Imports ---
 import {
@@ -48,7 +46,6 @@ import {
 import { css } from '@emotion/react';
 
 // --- Styles Imports (Admin Idea Edit) ---
-// 사이드바 관련 스타일은 제거하고 콘텐츠 영역 스타일만 남김
 import {
   ApplyButton,
   ApplyButtonText,
@@ -61,11 +58,17 @@ import {
   HeaderActions,
   HeaderTop,
   HelperText,
-  QuillWrapper,
   SelectInput,
   Title,
   TitleCNTR,
 } from '../../styles/AdminIdeaEdit';
+
+import '@uiw/react-md-editor/markdown-editor.css';
+import '@uiw/react-markdown-preview/markdown.css';
+
+const MDEditor = dynamic(() => import('@uiw/react-md-editor').then(mod => mod.default), {
+  ssr: false,
+});
 
 const DEFAULT_TEAM: Record<TeamRole, number> = {
   planning: 0,
@@ -78,7 +81,6 @@ const DEFAULT_TEAM: Record<TeamRole, number> = {
 
 // --- MAPPING HELPERS ---
 
-// UI Role Key -> API Part Enum
 const ROLE_UI_TO_API: Record<TeamRole, 'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI'> = {
   planning: 'PM',
   design: 'DESIGN',
@@ -88,7 +90,6 @@ const ROLE_UI_TO_API: Record<TeamRole, 'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BAC
   aiMl: 'AI',
 };
 
-// API Part Enum -> UI Role Key
 const ROLE_API_TO_UI: Record<'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI', TeamRole> = {
   PM: 'planning',
   DESIGN: 'design',
@@ -98,7 +99,6 @@ const ROLE_API_TO_UI: Record<'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'A
   AI: 'aiMl',
 };
 
-// Korean Label -> API Part Enum (For Creator Part)
 const KOREAN_PART_TO_API: Record<string, 'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI'> = {
   기획: 'PM',
   디자인: 'DESIGN',
@@ -108,7 +108,6 @@ const KOREAN_PART_TO_API: Record<string, 'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'B
   'AI/ML': 'AI',
 };
 
-// API Part Enum -> Korean Label
 const API_PART_TO_KOREAN: Record<'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' | 'AI', string> = {
   PM: '기획',
   DESIGN: '디자인',
@@ -204,16 +203,6 @@ export default function AdminIdeaEdit() {
     });
   };
 
-  const handleDescriptionChange = (value: string) => {
-    setForm(prev => ({ ...prev, description: value }));
-  };
-
-  const { quillRef, imageInputRef, pageRef, quillModules, quillFormats, handleImageFileChange } =
-    useQuillImages({
-      description: form.description,
-      onDescriptionChange: handleDescriptionChange,
-    });
-
   // 2. Update Data
   const handleApply = async () => {
     if (!id || !projectId) return;
@@ -262,10 +251,9 @@ export default function AdminIdeaEdit() {
   const titleCount = `${form.title.length}/${TITLE_MAX_LENGTH}`;
   const introCount = `${form.intro.length}/${INTRO_MAX_LENGTH}`;
 
-  // AdminLayout이 적용되므로 Sidebar 등은 제거하고 Content 영역만 반환합니다.
   return (
     <Content css={contentFullWidthCss}>
-      <ContentContainer ref={pageRef} css={contentContainerFullWidthCss}>
+      <ContentContainer css={contentContainerFullWidthCss}>
         <HeaderTop>
           <Title>아이디어 관리</Title>
           <Description>역대 프로젝트에 게시된 아이디어 리스트를 관리할 수 있습니다.</Description>
@@ -385,27 +373,18 @@ export default function AdminIdeaEdit() {
             <FieldHeader>
               <FieldLabel>아이디어 설명</FieldLabel>
             </FieldHeader>
-          </DescriptionCNTR>
-          <TextAreaWrapper>
-            <QuillWrapper css={quillWrapperFullWidthCss}>
-              <input
-                type="file"
-                accept="image/*"
-                ref={imageInputRef}
-                style={{ display: 'none' }}
-                onChange={handleImageFileChange}
-              />
-              <ReQuill
-                ref={quillRef}
+            <div css={editorContainerCss} data-color-mode="light">
+              <MDEditor
                 value={form.description}
-                onChange={handleDescriptionChange}
-                modules={quillModules}
-                formats={quillFormats}
-                placeholder="Github README 작성에 쓰이는 ‘markdown’을 이용해 작성해보세요."
-                height="100%"
+                onChange={val => setForm(prev => ({ ...prev, description: val || '' }))}
+                height={400}
+                hideToolbar={false}
+                textareaProps={{
+                  placeholder: "Github README 생성에 쓰이는 'markdown'을 이용해 작성해보세요.",
+                }}
               />
-            </QuillWrapper>
-          </TextAreaWrapper>
+            </div>
+          </DescriptionCNTR>
         </FormWrapper>
       </ContentContainer>
     </Content>
@@ -429,8 +408,41 @@ const formWrapperFullWidthCss = css`
   max-width: 100%;
 `;
 
-const quillWrapperFullWidthCss = css`
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
+const editorContainerCss = css`
+  border-radius: 8px;
+  background: #fff;
+  min-height: 400px;
+
+  & .w-md-editor-text-pre {
+    font-family: 'Courier New', monospace;
+  }
+
+  & .w-md-editor-bar {
+    display: none !important;
+  }
+
+  & .wmde-markdown {
+    background: transparent;
+    ul {
+      list-style: disc !important;
+      padding-left: 1rem !important;
+    }
+    ol {
+      list-style: decimal !important;
+      padding-left: 1rem !important;
+    }
+  }
+
+  & .wmde-markdown h1,
+  & .wmde-markdown h2,
+  & .wmde-markdown h3,
+  & .wmde-markdown h4,
+  & .wmde-markdown h5,
+  & .wmde-markdown h6 {
+    font-family: 'Pretendard', sans-serif;
+  }
+
+  & .wmde-markdown code {
+    font-family: 'Courier New', monospace;
+  }
 `;
