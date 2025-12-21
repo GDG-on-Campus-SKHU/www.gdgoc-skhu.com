@@ -552,7 +552,7 @@ export default function WelcomeView() {
 
               {ideas.map((idea: Idea, idx: number) => (
                 <IdeaItemCTNR key={idea.id}>
-                  <IdeaItem idea={idea} index={startIndex + idx + 1} />
+                  <IdeaItem idea={idea} index={totalIdeas - (startIndex + idx)} />
                 </IdeaItemCTNR>
               ))}
 
