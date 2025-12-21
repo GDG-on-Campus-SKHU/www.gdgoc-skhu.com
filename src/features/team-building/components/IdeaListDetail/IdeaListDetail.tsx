@@ -1,9 +1,13 @@
 import React from 'react';
 import { useRouter } from 'next/router';
+import { useMyProfile } from '@/lib/mypageProfile.api';
 import axios from 'axios';
 import styled from 'styled-components';
 
-import { fetchCurrentTeamBuildingProject, fetchIdeaDetail } from '../../api/ideas';
+import { deleteIdea, fetchCurrentTeamBuildingProject, fetchIdeaDetail } from '../../api/ideas';
+import Button from '../Button';
+import ButtonRed from '../ButtonRed';
+import Modal from '../Modal_Fix';
 import { partToLabel } from '../MyTeam/ApplyStatusSection';
 import { createEmptyTeamCounts, Idea } from '../store/IdeaStore';
 import { sanitizeDescription } from '../utils/sanitizeDescription';
@@ -41,6 +45,7 @@ type IdeaDetailResponse = {
   topicId: number;
   topic: string;
   creator: {
+    creatorId: number;
     creatorName: string;
     part: string;
     school: string;
@@ -340,31 +345,11 @@ const ResponsiveWrapper = styled.div`
 `;
 
 const ActionRow = styled.div`
-  margin: 120px auto 52px auto;
+  margin: 100px auto 52px auto;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-`;
-
-const ActionButton = styled.button`
-  width: 300px;
-  height: 50px;
-  border-radius: 8px;
-  font-size: 18px;
-  font-weight: 500;
-  line-height: 160%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-`;
-
-const PrimaryButton = styled(ActionButton)`
-  border: 1px solid #4285f4;
-  background: #4285f4;
-  color: #f9f9fa;
-  padding: 10px 8px;
 `;
 
 const LoadingMessage = styled.div`
@@ -390,6 +375,17 @@ export default function IdeaListPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [projectId, setProjectId] = React.useState<number | null>(null);
+  const [showConfirmDelete, setShowConfirmDelete] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+  const [canEnroll, setCanEnroll] = React.useState<boolean>(false);
+
+  const { data: myProfile } = useMyProfile({
+    enabled: true,
+  });
+
+  const myUserId = myProfile?.userId;
+  const creatorId = creatorInfo?.creatorId;
+  const isMyIdea = Boolean(myUserId && creatorId && myUserId === creatorId);
 
   const numericId = React.useMemo(() => {
     if (Array.isArray(id)) return Number(id[0]);
@@ -405,6 +401,8 @@ export default function IdeaListPage() {
         const resp = await fetchCurrentTeamBuildingProject({ signal: controller.signal });
         const project = resp.data?.project;
         const nextProjectId = Number(project?.projectId);
+
+        setCanEnroll(Boolean(resp.data?.canEnroll));
 
         if (Number.isFinite(nextProjectId) && nextProjectId > 0) {
           setProjectId(nextProjectId);
@@ -527,6 +525,43 @@ export default function IdeaListPage() {
     [idea?.description]
   );
 
+  const handleOpenDeleteModal = () => {
+    if (!isMyIdea) return;
+    setShowConfirmDelete(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    if (isDeleting) return;
+    setShowConfirmDelete(false);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!projectId || !idea) return;
+    if (isDeleting) return;
+
+    try {
+      setIsDeleting(true);
+      await deleteIdea(projectId, idea.id);
+
+      setShowConfirmDelete(false);
+      router.push('/WelcomeOpen');
+    } catch (err) {
+      console.error('아이디어 삭제 실패:', err);
+
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        if (status === 403) alert('로그인이 필요합니다.');
+        else if (status === 401) alert('삭제 권한이 없습니다.');
+        else if (status === 400) alert('아이디어를 찾을 수 없습니다.');
+        else alert('삭제에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      } else {
+        alert('삭제 중 오류가 발생했습니다.');
+      }
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <PageContainer>
@@ -609,18 +644,48 @@ export default function IdeaListPage() {
         </ResponsiveWrapper>
 
         <ActionRow>
-          <PrimaryButton
-            type="button"
-            onClick={() =>
-              router.push({
-                pathname: '/IdeaApply',
-                query: { id: idea.id },
-              })
-            }
-          >
-            아이디어 지원하기
-          </PrimaryButton>
+          {isMyIdea ? (
+            <div style={{ display: 'flex', gap: 15 }}>
+              <Button
+                title="수정하기"
+                variant="secondary"
+                onClick={() => {
+                  // src/pages 가서 페이지 파일 별도 추가하기
+                  router.push({ pathname: '/IdeaFormEdit', query: { id: idea.id } });
+                }}
+                css={{ width: '300px', height: '50px', fontSize: '18px', fontWeight: '500' }}
+              />
+              <ButtonRed
+                title="삭제하기"
+                onClick={handleOpenDeleteModal}
+                css={{ width: '300px', height: '50px', fontSize: '18px', fontWeight: '500' }}
+              />
+            </div>
+          ) : canEnroll ? (
+            <Button
+              title="아이디어 지원하기"
+              onClick={() =>
+                router.push({
+                  pathname: '/IdeaApply',
+                  query: { id: idea.id },
+                })
+              }
+              css={{ width: '300px', height: '50px', fontSize: '18px', fontWeight: '500' }}
+            />
+          ) : null}
         </ActionRow>
+
+        {showConfirmDelete && idea && (
+          <Modal
+            type="smallConfirm"
+            title={idea.title}
+            message="아이디어를 삭제하겠습니까?"
+            confirmText={isDeleting ? '삭제 중...' : '삭제하기'}
+            cancelText="취소"
+            onConfirm={handleConfirmDelete}
+            onClose={handleCloseDeleteModal}
+          />
+        )}
       </PreviewCanvas>
     </PageContainer>
   );

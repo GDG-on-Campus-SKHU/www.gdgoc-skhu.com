@@ -27,13 +27,16 @@ export interface Props {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => void;
   onSave: () => void;
-  onRegister?: () => Promise<number | void> | number | void;
+  onRegister?: () => Promise<boolean> | boolean;
   onPreview: () => void;
   onDescriptionChange: (value: string) => void;
   onBack?: () => void;
   lastSavedAt?: string;
   isSaving?: boolean;
   onModalStateChange?: (open: boolean) => void;
+  mode?: 'create' | 'edit';
+  onComplete?: () => void;
+  lockComposition?: boolean;
 }
 
 export default function IdeaForm(props: Props) {
@@ -49,6 +52,9 @@ export default function IdeaForm(props: Props) {
     onModalStateChange,
     enabledTeamRoles,
     maxMemberCount,
+    mode = 'create',
+    onComplete,
+    lockComposition = false,
   } = props;
 
   const router = useRouter();
@@ -130,6 +136,7 @@ export default function IdeaForm(props: Props) {
     intro.length > INTRO_MAX_LENGTH;
 
   const [modalState, setModalState] = React.useState<'idle' | 'confirm' | 'success'>('idle');
+  const [isSubmittingInModal, setIsSubmittingInModal] = React.useState(false);
   const isAnyModalOpen = modalState !== 'idle' || isDraftModalOpen;
 
   React.useEffect(() => {
@@ -168,11 +175,25 @@ export default function IdeaForm(props: Props) {
     }
   }, [enabledTeamRoles, form.preferredPart, emitFieldChange]);
 
-  const handleModalDone = React.useCallback(async () => {
+  /**
+   * confirm 모달에서 "예"를 눌렀을 때:
+   * - 여기서 onRegister를 실행한다.
+   * - 성공(true)일 때만 success 모달로 전환한다.
+   * - 실패(false)면 success 모달 없이 닫는다.
+   */
+  const handleConfirmSubmit = React.useCallback(async () => {
+    if (isSubmittingInModal) return;
+
+    setIsSubmittingInModal(true);
     try {
       if (onRegister) {
-        await onRegister();
+        const ok = await onRegister();
+        if (!ok) {
+          setModalState('idle'); // 실패면 성공모달 없이 닫기
+          return;
+        }
       } else {
+        // create + 로컬스토어/스토어 기반 (기존 로직 유지)
         const teamCounts = form.team ?? {};
         const teamTotal = Object.values(teamCounts).reduce((s, c) => s + (c ?? 0), 0);
         const totalMembers =
@@ -199,20 +220,52 @@ export default function IdeaForm(props: Props) {
         sessionStorage.setItem('completedIdea', JSON.stringify(created));
       }
 
+      // 성공일 때만
+      setModalState('success');
+    } catch {
+      // onRegister 내부에서 alert 처리해도 됨
+      setModalState('idle');
+    } finally {
+      setIsSubmittingInModal(false);
+    }
+  }, [isSubmittingInModal, onRegister, form, addIdea, topic, title, intro, preferredPart]);
+
+  /**
+   * success 모달의 "확인" 버튼
+   * - 여기서는 절대 onRegister를 다시 호출하지 않는다.
+   * - 완료 후 이동만 한다.
+   */
+  const handleModalDone = React.useCallback(() => {
+    try {
+      if (mode === 'edit') {
+        // edit은 상세로 이동하는 게 목적이므로 onComplete 우선
+        if (onComplete) {
+          onComplete();
+          return;
+        }
+        // onComplete가 없으면 fallback (원하면 수정 가능)
+        router.push('/WelcomeOpen');
+        return;
+      }
+
+      // create는 기존대로
+      if (onComplete) onComplete();
       router.push('/WelcomeOpen');
-    } catch (error) {
-      console.error('아이디어 등록 실패', error);
     } finally {
       setModalState('idle');
     }
-  }, [addIdea, form, intro, onRegister, preferredPart, router, title, topic]);
+  }, [mode, onComplete, router]);
 
   const handlePreviewClick = React.useCallback(() => {
+    // ✅ 부모가 create/edit에 맞게 sessionStorage 세팅하도록 맡김
     onPreview?.();
+
+    // ✅ 폼 데이터는 공통 저장
     sessionStorage.setItem(
       'ideaFormData',
       JSON.stringify({ form, savedAt: new Date().toISOString() })
     );
+
     router.push('/IdeaPreview');
   }, [form, onPreview, router]);
 
@@ -236,9 +289,11 @@ export default function IdeaForm(props: Props) {
       onDescriptionChange={onDescriptionChange}
       onPreview={handlePreviewClick}
       onOpenSubmitModal={() => setModalState('confirm')}
-      onConfirmSubmit={() => setModalState('success')}
+      onConfirmSubmit={handleConfirmSubmit}
       onCloseModal={() => setModalState('idle')}
       onModalDone={handleModalDone}
+      mode={mode}
+      lockComposition={lockComposition}
       // ui state
       isSubmitDisabled={isSubmitDisabled}
       modalState={modalState}

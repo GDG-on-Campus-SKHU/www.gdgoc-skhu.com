@@ -255,6 +255,9 @@ const emptyCss = css`
   background-color: ${colors.grayscale[200]};
   border: 1px solid ${colors.grayscale[400]};
 
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 38.4px;
   display: flex;
   align-items: center;
   justify-content: center;

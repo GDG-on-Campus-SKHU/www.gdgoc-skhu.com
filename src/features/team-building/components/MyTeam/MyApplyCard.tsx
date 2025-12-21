@@ -225,10 +225,6 @@ const emptyCardCss = css`
   gap: 14px;
 
   cursor: pointer;
-
-  &:hover {
-    background-color: ${colors.grayscale[100]};
-  }
 `;
 
 const emptyResultCardCss = css`

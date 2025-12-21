@@ -193,8 +193,8 @@ export default function IdeaFormPage() {
   }, []);
 
   // 정식 등록 함수
-  const handleRegister = useCallback(async () => {
-    if (isSubmitting) return;
+  const handleRegister = useCallback(async (): Promise<boolean> => {
+    if (isSubmitting) return false;
 
     const targetProjectId = resolveProjectId();
     if (!targetProjectId) {
@@ -250,7 +250,6 @@ export default function IdeaFormPage() {
       const resp = await createIdea(targetProjectId, payload);
       const data = resp.data as IdeaResponse;
 
-      const createdId = data.idea?.ideaId;
       const savedAt = new Date().toISOString();
       setLastSavedAt(formatSavedAt(savedAt) ?? savedAt);
 
@@ -262,7 +261,7 @@ export default function IdeaFormPage() {
         }
       }
 
-      return createdId;
+      return true;
     } catch (error) {
       console.error('아이디어 등록에 실패했습니다.', error);
 
@@ -304,6 +303,12 @@ export default function IdeaFormPage() {
   ]);
 
   const handlePreview = useCallback(() => {
+    sessionStorage.setItem('ideaPreview:mode', 'create');
+    sessionStorage.setItem('ideaPreview:returnTo', '/IdeaForm');
+
+    sessionStorage.removeItem('ideaPreview:ideaId');
+    sessionStorage.removeItem('ideaPreview:origin');
+
     router.push('/IdeaPreview');
   }, [router]);
 

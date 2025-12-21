@@ -339,10 +339,18 @@ export default function ProjectPostForm({
     }
   };
 
+  // ProjectPostForm.tsx 내부
+
   const handlePreviewClick = () => {
+    // edit 페이지(/project-gallery/[id]/edit)에서 id 확보
+    const rawId = (router.query.projectId ?? router.query.id) as string | string[] | undefined;
+    const parsedId = Number(Array.isArray(rawId) ? rawId[0] : rawId);
+    const projectId = Number.isFinite(parsedId) ? parsedId : 0;
+
     router.push({
       pathname: '/project-gallery/preview',
       query: {
+        // ✅ 미리보기 화면용 데이터
         title,
         oneLiner,
         generation: generation[0] ?? '',
@@ -351,9 +359,16 @@ export default function ProjectPostForm({
         teamMembers: JSON.stringify(teamMembers),
         serviceStatus,
         leader: JSON.stringify(leader),
+        thumbnailUrl: thumbnailUrl ?? '',
+
+        // ✅ 기능을 위한 메타데이터
+        mode: isEditMode ? 'edit' : 'create',
+        returnTo: router.asPath, // 작성/수정 어디든 정확히 복귀
+        projectId: isEditMode ? String(projectId) : '',
       },
     });
   };
+
   return (
     <>
       <form css={formCss} onSubmit={e => e.preventDefault()}>

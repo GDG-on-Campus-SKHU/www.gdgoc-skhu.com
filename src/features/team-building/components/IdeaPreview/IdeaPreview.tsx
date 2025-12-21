@@ -1,13 +1,20 @@
 import React from 'react';
 import { useRouter } from 'next/router';
+import { useMyProfile } from '@/lib/mypageProfile.api';
+import axios from 'axios';
 import ReactDOM from 'react-dom';
 import styled from 'styled-components';
 
-import { useIdeaStore } from '../store/IdeaStore';
+import {
+  createIdea,
+  fetchCurrentTeamBuildingProject,
+  fetchIdeaConfigurations,
+  updateIdea,
+  updateIdeaBeforeEnrollment,
+} from '../../api/ideas';
+import { resolveCreatorPart, toMemberCompositions } from '../IdeaForm/IdeaFormUtils';
 import { sanitizeDescription } from '../utils/sanitizeDescription';
 
-const MOBILE_BREAKPOINT = '900px';
-const SMALL_BREAKPOINT = '600px';
 const TEAM_ROLES = [
   { key: 'planning', label: '기획' },
   { key: 'design', label: '디자인' },
@@ -21,8 +28,6 @@ const TEAM_GROUPS: TeamRole[][] = [
   ['planning', 'design', 'aiMl'],
   ['frontendWeb', 'frontendMobile', 'backend'],
 ];
-
-type TeamRole = (typeof TEAM_ROLES)[number]['key'];
 
 const DEFAULT_TEAM_COUNTS: Record<TeamRole, number> = {
   planning: 0,
@@ -398,6 +403,12 @@ const ModalButton = styled.button<{ $variant?: 'primary' | 'secondary' }>`
   }
 `;
 
+type ModalState = 'idle' | 'confirm' | 'success';
+
+type IdeaFormMode = 'create' | 'edit';
+
+type TeamRole = (typeof TEAM_ROLES)[number]['key'];
+
 interface Props {
   form?: {
     topic: string;
@@ -409,12 +420,64 @@ interface Props {
   };
   onBack?: () => void;
   onRegister?: () => Promise<number | void> | number | void;
+  mode?: 'create' | 'edit';
 }
 
-export default function IdeaPreview({ form, onBack, onRegister }: Props) {
+// origin 비교용(= EditPage에서 쓰던 로직 최소 복사)
+function sortCompositions(comps: any[]) {
+  return [...(comps ?? [])].sort((a, b) => String(a.part).localeCompare(String(b.part)));
+}
+
+function isSameCompositions(a: any[], b: any[]) {
+  const aa = sortCompositions(a ?? []);
+  const bb = sortCompositions(b ?? []);
+  if (aa.length !== bb.length) return false;
+  for (let i = 0; i < aa.length; i++) {
+    if (aa[i].part !== bb[i].part) return false;
+    if ((aa[i].maxCount ?? 0) !== (bb[i].maxCount ?? 0)) return false;
+  }
+  return true;
+}
+
+export default function IdeaPreview({ form, onBack, mode }: Props) {
   const router = useRouter();
   const [resolvedForm, setResolvedForm] = React.useState(form);
-  const addIdea = useIdeaStore(state => state.addIdea);
+
+  const [modalState, setModalState] = React.useState<ModalState>('idle');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const [createdIdeaId, setCreatedIdeaId] = React.useState<number | null>(null);
+
+  function normalizeErrorMessage(errorData: any) {
+    if (typeof errorData === 'string') return errorData;
+    if (typeof errorData?.message === 'string') return errorData.message;
+    return '';
+  }
+
+  const resolvedMode = React.useMemo<IdeaFormMode>(() => {
+    if (mode) return mode;
+    if (typeof window === 'undefined') return 'create';
+
+    const storedMode = window.sessionStorage.getItem('ideaPreview:mode');
+    const storedIdeaId = window.sessionStorage.getItem('ideaPreview:ideaId');
+
+    // ✅ edit 진입인데 mode 저장이 누락된 경우를 방어
+    if (storedIdeaId) return 'edit';
+
+    return storedMode === 'edit' ? 'edit' : 'create';
+  }, [mode]);
+
+  const actionText = resolvedMode === 'edit' ? '아이디어 수정하기' : '아이디어 등록하기';
+  const confirmTitle =
+    resolvedMode === 'edit' ? '아이디어를 수정하겠습니까?' : '해당 아이디어를 게시하겠습니까?';
+  const successTitle =
+    resolvedMode === 'edit' ? '수정이 완료되었습니다.' : '게시가 완료되었습니다.';
+
+  const { data: myProfile } = useMyProfile({ enabled: true });
+
+  const writerSchool = myProfile?.school ?? '';
+  const writerName = myProfile?.name ?? '';
+  const writerPartLabel = resolvedForm?.preferredPart ?? '';
 
   React.useEffect(() => {
     if (form) {
@@ -437,49 +500,190 @@ export default function IdeaPreview({ form, onBack, onRegister }: Props) {
   }, [form, router]);
 
   const handleBack = React.useCallback(() => {
-    if (onBack) {
-      onBack();
-      return;
+    if (onBack) return onBack();
+
+    if (typeof window !== 'undefined') {
+      const returnTo = window.sessionStorage.getItem('ideaPreview:returnTo');
+      if (returnTo) {
+        router.push(returnTo);
+        return;
+      }
     }
-    router.push('/IdeaForm');
+    router.back();
   }, [onBack, router]);
 
-  const handleRegister = React.useCallback(async () => {
-    if (onRegister) {
-      return onRegister();
+  const handleConfirmSubmit = React.useCallback(async () => {
+    if (isSubmitting) return;
+    if (!resolvedForm) return;
+
+    setIsSubmitting(true);
+
+    try {
+      // projectId 확보 (없으면 current에서 가져오기)
+      const projectResp = await fetchCurrentTeamBuildingProject();
+      const projectId = Number(projectResp.data?.project?.projectId);
+      if (!Number.isFinite(projectId)) {
+        alert('프로젝트 정보를 불러올 수 없습니다.');
+        setModalState('idle');
+        return;
+      }
+
+      // topicId 맵 확보
+      const configResp = await fetchIdeaConfigurations();
+      const topics = configResp.data?.topics ?? [];
+      const topicId =
+        topics.find(t => t.topic === resolvedForm.topic)?.topicId ?? Number(resolvedForm.topic); // 혹시 숫자로 들어오는 경우
+      if (!topicId || !Number.isFinite(topicId)) {
+        alert('아이디어 주제를 선택해주세요.');
+        setModalState('idle');
+        return;
+      }
+
+      // 공통: creatorPart / compositions
+      const creatorPart = resolveCreatorPart(resolvedForm.preferredPart);
+      if (!creatorPart) {
+        alert('작성자의 파트를 선택해주세요.');
+        setModalState('idle');
+        return;
+      }
+
+      const compositions = toMemberCompositions(resolvedForm.team);
+      if (!compositions.length) {
+        alert('모집 인원을 1명 이상 입력해주세요.');
+        setModalState('idle');
+        return;
+      }
+
+      if (resolvedMode === 'create') {
+        // 등록
+        const payload = {
+          title: resolvedForm.title.trim(),
+          introduction: resolvedForm.intro.trim(),
+          description: resolvedForm.description,
+          topicId,
+          creatorPart,
+          registerStatus: 'REGISTERED',
+          compositions,
+        } as const;
+
+        const resp = await createIdea(projectId, payload);
+        const newId = resp.data?.ideaId ?? resp.data?.id ?? null;
+
+        if (typeof newId === 'number') setCreatedIdeaId(newId);
+
+        setModalState('success');
+        return;
+      }
+
+      const ideaIdRaw =
+        typeof window !== 'undefined' ? window.sessionStorage.getItem('ideaPreview:ideaId') : null;
+      const ideaId = ideaIdRaw ? Number(ideaIdRaw) : NaN;
+      if (!Number.isFinite(ideaId)) {
+        alert('수정할 아이디어 id를 찾을 수 없습니다.');
+        setModalState('idle');
+        return;
+      }
+
+      // origin 읽기
+      const originRaw =
+        typeof window !== 'undefined' ? window.sessionStorage.getItem('ideaPreview:origin') : null;
+      const origin = originRaw ? JSON.parse(originRaw) : null;
+
+      // origin 없으면(비정상) -> 안전하게 텍스트 update만 시도
+      if (!origin) {
+        await updateIdea(projectId, ideaId, {
+          title: resolvedForm.title.trim(),
+          introduction: resolvedForm.intro.trim(),
+          description: resolvedForm.description,
+          topicId,
+        });
+        setModalState('success');
+        return;
+      }
+
+      const nextCreatorPart = creatorPart;
+      const nextComps = compositions;
+
+      const creatorChanged = nextCreatorPart !== origin.creatorPart;
+      const compsChanged = !isSameCompositions(origin.compositions, nextComps);
+      const hasPartOrCompositionChanged = creatorChanged || compsChanged;
+
+      if (hasPartOrCompositionChanged) {
+        // before-enrollment (일정 지나면 여기서 막혀야 함)
+        try {
+          await updateIdeaBeforeEnrollment(projectId, ideaId, {
+            title: resolvedForm.title.trim(),
+            introduction: resolvedForm.intro.trim(),
+            description: resolvedForm.description,
+            topicId,
+            creatorPart: nextCreatorPart,
+            compositions: nextComps,
+          });
+        } catch (e) {
+          if (axios.isAxiosError(e)) {
+            const status = e.response?.status;
+            const msg = normalizeErrorMessage(e.response?.data);
+            if (status === 400 && msg) {
+              alert(msg); // "일정이 지났습니다."
+              setModalState('idle'); // success 모달 안 뜸
+              return;
+            }
+          }
+          throw e;
+        }
+
+        setModalState('success');
+        return;
+      }
+
+      await updateIdea(projectId, ideaId, {
+        title: resolvedForm.title.trim(),
+        introduction: resolvedForm.intro.trim(),
+        description: resolvedForm.description,
+        topicId,
+      });
+
+      setModalState('success');
+    } catch (e) {
+      console.error(e);
+
+      if (axios.isAxiosError(e)) {
+        const status = e.response?.status;
+        const msg = normalizeErrorMessage(e.response?.data);
+
+        if (status === 401) return alert('권한이 없습니다. 다시 로그인해주세요.');
+        if (status === 404) return alert('아이디어를 찾을 수 없습니다.');
+        if (status === 500) return alert('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        if (msg) return alert(msg);
+
+        return alert('요청에 실패했습니다.');
+      }
+
+      alert('요청 중 오류가 발생했습니다.');
+    } finally {
+      setIsSubmitting(false);
     }
-    if (!resolvedForm) {
-      router.push('/IdeaForm');
-      return undefined;
+  }, [isSubmitting, resolvedForm, resolvedMode]);
+
+  // success 모달 확인 버튼
+  const handleModalDone = React.useCallback(() => {
+    setModalState('idle');
+
+    if (resolvedMode === 'create') {
+      if (createdIdeaId) {
+        router.push(`/IdeaComplete?id=${createdIdeaId}`);
+      } else {
+        router.push('/IdeaComplete');
+      }
+      return;
     }
 
-    const team = resolvedForm.team ?? {};
-    const teamTotal = Object.values(team).reduce((sum, count) => sum + (count ?? 0), 0);
-    const computedTotal = teamTotal > 0 ? teamTotal : 1;
-    const ideaData = {
-      topic: resolvedForm.topic,
-      title: resolvedForm.title,
-      intro: resolvedForm.intro,
-      description: resolvedForm.description,
-      preferredPart: resolvedForm.preferredPart,
-      team: {
-        planning: team.planning ?? 0,
-        design: team.design ?? 0,
-        frontendWeb: team.frontendWeb ?? 0,
-        frontendMobile: team.frontendMobile ?? 0,
-        backend: team.backend ?? 0,
-        aiMl: team.aiMl ?? 0,
-      },
-      currentMembers: 0,
-      totalMembers: computedTotal,
-    };
-    const created = addIdea(ideaData);
+    // edit success 이동
     if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem('completedIdea', JSON.stringify(created));
+      const ideaIdRaw = window.sessionStorage.getItem('ideaPreview:ideaId');
+      if (ideaIdRaw) router.push(`/IdeaListDetail?id=${ideaIdRaw}`);
     }
-    router.push({ pathname: '/IdeaComplete', query: { id: created.id } });
-    return created.id;
-  }, [addIdea, onRegister, resolvedForm, router]);
+  }, [createdIdeaId, resolvedMode, router]);
 
   const team = React.useMemo(
     () => ({
@@ -508,33 +712,11 @@ export default function IdeaPreview({ form, onBack, onRegister }: Props) {
     }
     return currents;
   }, [preferredRoleKey]);
-  const [modalState, setModalState] = React.useState<'idle' | 'confirm' | 'success'>('idle');
-  const handleModalDone = React.useCallback(async () => {
-    setModalState('idle');
-    const ideaId = await handleRegister();
 
-    if (typeof ideaId === 'number') {
-      router.push(`/IdeaComplete?id=${ideaId}`);
-      return;
-    }
-
-    if (typeof window !== 'undefined') {
-      const stored = window.sessionStorage.getItem('completedIdea');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (parsed?.id) {
-            router.push(`/IdeaComplete?id=${parsed.id}`);
-            return;
-          }
-        } catch (error) {
-          console.error('Failed to parse completedIdea', error);
-        }
-      }
-    }
-
-    router.push('/IdeaComplete');
-  }, [handleRegister, router]);
+  const safeDescription = React.useMemo(
+    () => sanitizeDescription(resolvedForm?.description ?? ''),
+    [resolvedForm?.description]
+  );
 
   const roleMap = React.useMemo(
     () =>
@@ -548,10 +730,6 @@ export default function IdeaPreview({ form, onBack, onRegister }: Props) {
     []
   );
 
-  const safeDescription = React.useMemo(
-    () => sanitizeDescription(resolvedForm?.description ?? ''),
-    [resolvedForm?.description]
-  );
   const PreviewBadgeIcon = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
@@ -575,8 +753,16 @@ export default function IdeaPreview({ form, onBack, onRegister }: Props) {
           <TitleInfoRow>
             <IntroText>{resolvedForm?.intro || '아이디어 한줄소개'}</IntroText>
             <WriterContainer>
-              <WriterContent>{`성공회대 디자인`}</WriterContent>
-              <WriterName>{`주현지`}</WriterName>
+              <WriterContent>
+                {writerSchool && writerPartLabel
+                  ? `${writerSchool} ${writerPartLabel}`
+                  : writerSchool
+                    ? writerSchool
+                    : writerPartLabel
+                      ? writerPartLabel
+                      : ' '}
+              </WriterContent>
+              <WriterName>{writerName || ' '}</WriterName>
             </WriterContainer>
           </TitleInfoRow>
         </TitleSection>
@@ -628,7 +814,7 @@ export default function IdeaPreview({ form, onBack, onRegister }: Props) {
             작성화면으로 돌아가기
           </SecondaryButton>
           <PrimaryButton type="button" onClick={() => setModalState('confirm')}>
-            아이디어 등록하기
+            {actionText}
           </PrimaryButton>
         </ActionRow>
       </PreviewCanvas>
@@ -639,9 +825,9 @@ export default function IdeaPreview({ form, onBack, onRegister }: Props) {
               <ModalCard>
                 {modalState === 'confirm' ? (
                   <>
-                    <ModalTitle>해당 아이디어를 게시하겠습니까?</ModalTitle>
+                    <ModalTitle>{confirmTitle}</ModalTitle>
                     <ModalActions>
-                      <ModalButton type="button" onClick={() => setModalState('success')}>
+                      <ModalButton type="button" onClick={handleConfirmSubmit}>
                         예
                       </ModalButton>
                       <ModalButton
@@ -655,7 +841,7 @@ export default function IdeaPreview({ form, onBack, onRegister }: Props) {
                   </>
                 ) : (
                   <>
-                    <ModalTitle>게시가 완료되었습니다.</ModalTitle>
+                    <ModalTitle>{successTitle}</ModalTitle>
                     <ModalActions>
                       <ModalButton type="button" onClick={handleModalDone}>
                         확인
