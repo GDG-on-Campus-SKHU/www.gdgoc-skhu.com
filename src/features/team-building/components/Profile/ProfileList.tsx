@@ -109,6 +109,8 @@ export default function ProfileList({
                 <div css={iconCss}>
                   <img src={resolveIconUrl(option.iconUrl)} alt={code} />
                 </div>
+
+                <div css={tooltipCss}>{option.displayName}</div>
               </div>
             );
           })}
@@ -266,5 +268,38 @@ const linkIconSimpleCss = css`
     width: 100%;
     height: 100%;
     object-fit: contain;
+  }
+`;
+
+const tooltipCss = css`
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+
+  background-color: #4a4a4a;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+
+  font-size: 14px;
+  white-space: nowrap;
+
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+
+  z-index: 10;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: #4a4a4a transparent transparent transparent;
   }
 `;
