@@ -116,3 +116,17 @@ export function usePublishedActivities(
     ...options,
   });
 }
+
+/* =========================================================
+ * Check Video Exists
+ * ======================================================= */
+export async function checkYoutubeExists(youtubeId: string): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json`
+    );
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
