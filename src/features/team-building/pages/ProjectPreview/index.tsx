@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
+import { useCreateProjectGallery, useUpdateProjectGallery } from '@/lib/projectGallery.api';
 
 import Modal from '../../components/Modal_Fix';
 import ProjectDetailView from '../../components/ProjectDetail/ProjectDetailView';
@@ -10,7 +11,6 @@ import type {
   ProjectMemberBase,
   ServiceStatus,
 } from '../../types/gallery';
-import { useCreateProjectGallery, useUpdateProjectGallery } from '@/lib/projectGallery.api';
 
 type PreviewQuery = {
   title?: string | string[];

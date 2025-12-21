@@ -1,12 +1,10 @@
 import React from 'react';
 import { useRouter } from 'next/router';
+import { useMyProfile } from '@/lib/mypageProfile.api';
+import axios from 'axios';
 import ReactDOM from 'react-dom';
 import styled from 'styled-components';
 
-import { useIdeaStore } from '../store/IdeaStore';
-import { sanitizeDescription } from '../utils/sanitizeDescription';
-import { useMyProfile } from '@/lib/mypageProfile.api';
-import axios from 'axios';
 import {
   createIdea,
   fetchCurrentTeamBuildingProject,
@@ -15,6 +13,7 @@ import {
   updateIdeaBeforeEnrollment,
 } from '../../api/ideas';
 import { resolveCreatorPart, toMemberCompositions } from '../IdeaForm/IdeaFormUtils';
+import { sanitizeDescription } from '../utils/sanitizeDescription';
 
 const TEAM_ROLES = [
   { key: 'planning', label: '기획' },
@@ -424,7 +423,23 @@ interface Props {
   mode?: 'create' | 'edit';
 }
 
-export default function IdeaPreview({ form, onBack, onRegister, mode }: Props) {
+// origin 비교용(= EditPage에서 쓰던 로직 최소 복사)
+function sortCompositions(comps: any[]) {
+  return [...(comps ?? [])].sort((a, b) => String(a.part).localeCompare(String(b.part)));
+}
+
+function isSameCompositions(a: any[], b: any[]) {
+  const aa = sortCompositions(a ?? []);
+  const bb = sortCompositions(b ?? []);
+  if (aa.length !== bb.length) return false;
+  for (let i = 0; i < aa.length; i++) {
+    if (aa[i].part !== bb[i].part) return false;
+    if ((aa[i].maxCount ?? 0) !== (bb[i].maxCount ?? 0)) return false;
+  }
+  return true;
+}
+
+export default function IdeaPreview({ form, onBack, mode }: Props) {
   const router = useRouter();
   const [resolvedForm, setResolvedForm] = React.useState(form);
 
@@ -437,21 +452,6 @@ export default function IdeaPreview({ form, onBack, onRegister, mode }: Props) {
     if (typeof errorData === 'string') return errorData;
     if (typeof errorData?.message === 'string') return errorData.message;
     return '';
-  }
-
-  // origin 비교용(= EditPage에서 쓰던 로직 최소 복사)
-  function sortCompositions(comps: any[]) {
-    return [...(comps ?? [])].sort((a, b) => String(a.part).localeCompare(String(b.part)));
-  }
-  function isSameCompositions(a: any[], b: any[]) {
-    const aa = sortCompositions(a ?? []);
-    const bb = sortCompositions(b ?? []);
-    if (aa.length !== bb.length) return false;
-    for (let i = 0; i < aa.length; i++) {
-      if (aa[i].part !== bb[i].part) return false;
-      if ((aa[i].maxCount ?? 0) !== (bb[i].maxCount ?? 0)) return false;
-    }
-    return true;
   }
 
   const resolvedMode = React.useMemo<IdeaFormMode>(() => {
@@ -472,8 +472,6 @@ export default function IdeaPreview({ form, onBack, onRegister, mode }: Props) {
     resolvedMode === 'edit' ? '아이디어를 수정하겠습니까?' : '해당 아이디어를 게시하겠습니까?';
   const successTitle =
     resolvedMode === 'edit' ? '수정이 완료되었습니다.' : '게시가 완료되었습니다.';
-
-  const addIdea = useIdeaStore(state => state.addIdea);
 
   const { data: myProfile } = useMyProfile({ enabled: true });
 

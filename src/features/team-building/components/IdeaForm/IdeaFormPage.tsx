@@ -129,7 +129,6 @@ export default function IdeaFormPage() {
   const [lastSavedAt, setLastSavedAt] = useState<string | undefined>(undefined);
   const [availableParts, setAvailableParts] = useState<IdeaPartCode[]>([]);
   const [maxMemberCount, setMaxMemberCount] = useState<number | null>(null);
-  const [createdIdeaId, setCreatedIdeaId] = useState<number | null>(null);
 
   const getAccessToken = useCallback(() => {
     if (typeof window === 'undefined') return null;
@@ -251,8 +250,6 @@ export default function IdeaFormPage() {
       const resp = await createIdea(targetProjectId, payload);
       const data = resp.data as IdeaResponse;
 
-      const createdId = data.idea?.ideaId ?? null;
-      if (createdId) setCreatedIdeaId(createdId);
       const savedAt = new Date().toISOString();
       setLastSavedAt(formatSavedAt(savedAt) ?? savedAt);
 

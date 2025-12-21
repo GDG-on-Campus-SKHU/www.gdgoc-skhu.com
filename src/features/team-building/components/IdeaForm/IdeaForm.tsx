@@ -222,7 +222,7 @@ export default function IdeaForm(props: Props) {
 
       // 성공일 때만
       setModalState('success');
-    } catch (e) {
+    } catch {
       // onRegister 내부에서 alert 처리해도 됨
       setModalState('idle');
     } finally {

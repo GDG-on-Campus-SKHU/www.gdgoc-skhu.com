@@ -6,19 +6,17 @@ import {
   fetchCurrentTeamBuildingProject,
   fetchIdeaConfigurations,
   fetchIdeaDetail,
+  type IdeaMemberComposition,
+  type IdeaUpdateBeforeEnrollmentPayload,
+  type IdeaUpdatePayload,
   updateIdea,
   updateIdeaBeforeEnrollment,
-  type IdeaConfigurationsResponse,
-  type IdeaUpdatePayload,
-  type IdeaUpdateBeforeEnrollmentPayload,
-  type IdeaMemberComposition,
 } from '../../api/ideas';
-
 import IdeaForm from '../../components/IdeaForm/IdeaForm';
 import {
+  type IdeaPartCode,
   resolveCreatorPart,
   toMemberCompositions,
-  type IdeaPartCode,
 } from '../../components/IdeaForm/IdeaFormUtils';
 
 type TeamCounts = {
@@ -131,7 +129,6 @@ export default function IdeaFormEditPage() {
 
   const [projectId, setProjectId] = useState<number | null>(null);
 
-  const [configs, setConfigs] = useState<IdeaConfigurationsResponse | null>(null);
   const [topicOptions, setTopicOptions] = useState<string[]>([]);
   const [topicIdMap, setTopicIdMap] = useState<Record<string, number>>({});
   const [availableParts, setAvailableParts] = useState<IdeaPartCode[]>([]);
@@ -225,8 +222,6 @@ export default function IdeaFormEditPage() {
         const resp = await fetchIdeaConfigurations({ signal: controller.signal });
         const data = resp.data;
 
-        setConfigs(data);
-
         // topics
         const labels = (data.topics ?? []).map(t => t.topic);
         const map: Record<string, number> = {};
@@ -238,9 +233,7 @@ export default function IdeaFormEditPage() {
         // parts / max
         setAvailableParts(data.availableParts ?? []);
         setMaxMemberCount(typeof data.maxMemberCount === 'number' ? data.maxMemberCount : null);
-      } catch {
-        setConfigs(null);
-      }
+      } catch {}
     })();
 
     return () => controller.abort();
@@ -333,7 +326,7 @@ export default function IdeaFormEditPage() {
       sessionStorage.removeItem('ideaPreview:origin');
     }
     router.push('/IdeaPreview');
-  }, [ideaId, origin]);
+  }, [ideaId, origin, router]);
 
   /**
    * IdeaForm이 "성공모달을 띄울지" 판단할 수 있도록 boolean 반환

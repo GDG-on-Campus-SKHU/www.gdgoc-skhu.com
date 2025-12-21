@@ -1,16 +1,16 @@
 import React from 'react';
 import { useRouter } from 'next/router';
+import { useMyProfile } from '@/lib/mypageProfile.api';
 import axios from 'axios';
 import styled from 'styled-components';
 
 import { deleteIdea, fetchCurrentTeamBuildingProject, fetchIdeaDetail } from '../../api/ideas';
-import { partToLabel } from '../MyTeam/ApplyStatusSection';
-import { createEmptyTeamCounts, Idea } from '../store/IdeaStore';
-import { sanitizeDescription } from '../utils/sanitizeDescription';
-import { useMyProfile } from '@/lib/mypageProfile.api';
 import Button from '../Button';
 import ButtonRed from '../ButtonRed';
 import Modal from '../Modal_Fix';
+import { partToLabel } from '../MyTeam/ApplyStatusSection';
+import { createEmptyTeamCounts, Idea } from '../store/IdeaStore';
+import { sanitizeDescription } from '../utils/sanitizeDescription';
 
 const SMALL_BREAKPOINT = '600px';
 const TEAM_ROLES = [
@@ -350,26 +350,6 @@ const ActionRow = styled.div`
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-`;
-
-const ActionButton = styled.button`
-  width: 300px;
-  height: 50px;
-  border-radius: 8px;
-  font-size: 18px;
-  font-weight: 500;
-  line-height: 160%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-`;
-
-const PrimaryButton = styled(ActionButton)`
-  border: 1px solid #4285f4;
-  background: #4285f4;
-  color: #f9f9fa;
-  padding: 10px 8px;
 `;
 
 const LoadingMessage = styled.div`
