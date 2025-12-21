@@ -430,7 +430,6 @@ const Page = styled.div`
 
 const Content = styled.main`
   background: #ffffff;
-  padding: 91px 40px 0 40px;
   display: flex;
   justify-content: center;
   align-items: flex-start;
