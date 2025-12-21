@@ -13,7 +13,7 @@ interface ProfileHeaderProps {
 export default function ProfileHeader({
   isEditing,
   isPreviewMode,
-  userName = '김규빈',
+  userName,
   onEditClick,
 }: ProfileHeaderProps) {
   return (
