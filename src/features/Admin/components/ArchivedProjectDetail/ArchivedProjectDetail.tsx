@@ -233,7 +233,6 @@ export default ArchivedProjectDetail;
 
 const pageCss = css`
   width: 100%;
-  padding: 0 20px;
 `;
 const titleBlockCss = css`
   margin-bottom: 28px;
@@ -241,7 +240,7 @@ const titleBlockCss = css`
 const pageTitleCss = css`
   margin: 0;
   font-size: 36px;
-  font-weight: 800;
+  font-weight: 700;
 `;
 const pageDescCss = css`
   margin: 10px 0 0;

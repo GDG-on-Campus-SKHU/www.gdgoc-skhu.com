@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import {
   AdminIdeaDetail as AdminIdeaDetailType,
@@ -6,6 +7,7 @@ import {
   getAdminProjectIdeaDetail,
   removeAdminIdeaMember,
 } from '@/lib/adminIdea.api';
+import { colors } from '@/styles/constants';
 import styled from 'styled-components';
 
 import MyTeamCount from '../../../team-building/components/MyTeam/MyTeamCount';
@@ -16,7 +18,6 @@ import {
   ContentContainer,
   DeleteButtonText,
   Description,
-  DescriptionBox,
   DescriptionSection,
   Heading,
   IntroRow,
@@ -44,7 +45,12 @@ import {
   TitleSection,
   TitleText,
 } from '../../styles/AdminIdeaDetail';
-import { sanitizeDescription } from '../../utils/sanitizeDescription';
+
+import '@uiw/react-markdown-preview/markdown.css';
+
+const MDPreview = dynamic(() => import('@uiw/react-markdown-preview').then(mod => mod.default), {
+  ssr: false,
+});
 
 /* ===============================
  * Constants
@@ -130,6 +136,39 @@ const TeamPartTitle = styled.span`
   font-weight: 700;
 `;
 
+const MarkdownPreviewBox = styled.div`
+  border-radius: 8px;
+  padding: 32px;
+  outline: 1px ${colors.grayscale[400]} solid;
+  outline-offset: -1px;
+  background: #fff;
+  min-height: 400px;
+
+  & .wmde-markdown {
+    background: transparent;
+    ul {
+      list-style: disc !important;
+      padding-left: 1rem !important;
+    }
+    ol {
+      list-style: decimal !important;
+      padding-left: 1rem !important;
+    }
+  }
+
+  & h1,
+  & h2,
+  & h3,
+  & h4,
+  & h5,
+  & h6 {
+    font-family: 'Pretendard', sans-serif;
+  }
+  & code {
+    font-family: 'Courier New', monospace;
+  }
+`;
+
 /* ===============================
  * Component
  * =============================== */
@@ -179,11 +218,6 @@ export default function AdminIdeaDetail() {
       };
     });
   }, [ideaData]);
-
-  const safeDescription = useMemo(
-    () => sanitizeDescription(ideaData?.description ?? ''),
-    [ideaData]
-  );
 
   const confirmRemoveMember = async () => {
     if (!ideaData || !memberModal.memberId) return;
@@ -260,7 +294,9 @@ export default function AdminIdeaDetail() {
 
           <DescriptionSection>
             <SectionTitle>아이디어 설명</SectionTitle>
-            <DescriptionBox dangerouslySetInnerHTML={{ __html: safeDescription }} />
+            <MarkdownPreviewBox data-color-mode="light">
+              <MDPreview source={ideaData.description} />
+            </MarkdownPreviewBox>
           </DescriptionSection>
         </ResponsiveWrapper>
       </PreviewCanvas>

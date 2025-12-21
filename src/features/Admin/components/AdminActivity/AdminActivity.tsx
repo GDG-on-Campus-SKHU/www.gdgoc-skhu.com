@@ -156,12 +156,12 @@ const Container = styled.div`
 
 const MainContent = styled.main`
   flex: 1;
-  margin: 0 40px 0;
-  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 0 40px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  max-width: 100%;
+  align-items: center;
+  max-width: 1120px;
 `;
 
 const ContentWrapper = styled.section`
@@ -178,7 +178,6 @@ const ContentWrapper = styled.section`
 
 const HeaderBlock = styled.div`
   width: 100%;
-  margin-top: 91px;
 `;
 
 const FormBlock = styled.div`
@@ -265,7 +264,8 @@ const ApplyButton = styled.button`
 
 const CategoryList = styled.div`
   width: 100%;
-  max-width: 1105px;
+  width: 100%;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -292,6 +292,7 @@ const ContentTitle = styled.div`
   flex: 3 1 0;
   display: flex;
   align-items: center;
+  max-width: 500px;
   padding: 8px;
   box-sizing: border-box;
   text-align: left;

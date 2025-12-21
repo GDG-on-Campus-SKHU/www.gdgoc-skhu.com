@@ -328,24 +328,21 @@ const MenuArrowIcon = styled(Image)`
 
 const MainContent = styled.main`
   flex: 1;
-  padding: 0 45px 0 40px; /* margin 대신 padding 사용 */
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   min-height: 100vh;
-  overflow-x: hidden; /* 가로 스크롤 방지 */
 `;
 
 const Header = styled.div`
   display: flex;
-  width: 472px;
+  width: 100%;
+  max-width: 472px;
   height: 100px;
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
   margin-bottom: 60px;
-  margin-top: 91px;
 `;
 
 const Title = styled.h1`

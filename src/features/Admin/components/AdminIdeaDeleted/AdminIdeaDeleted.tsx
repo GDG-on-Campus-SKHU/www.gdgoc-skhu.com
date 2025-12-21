@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import {
   AdminIdeaDetail as AdminIdeaDetailType,
@@ -6,6 +7,7 @@ import {
   getAdminProjectIdeaDetail,
   restoreAdminIdea,
 } from '@/lib/adminIdea.api';
+import { colors } from '@/styles/constants';
 import styled from 'styled-components';
 
 import {
@@ -19,7 +21,6 @@ import {
   DeletedMarkContainer,
   DeletedText,
   Description,
-  DescriptionBox,
   DescriptionSection,
   Heading,
   IntroRow,
@@ -55,7 +56,6 @@ import {
   TitleSection,
   TitleText,
 } from '../../styles/AdminIdeaDeleted'; // 스타일 파일 경로는 프로젝트에 맞게 확인 필요
-import { sanitizeDescription } from '../../utils/sanitizeDescription';
 
 // --- Constants & Types ---
 
@@ -130,6 +130,43 @@ const SubjectRow = styled.div`
   margin: 40px 0 20px 0;
 `;
 
+const MarkdownPreviewBox = styled.div`
+  border-radius: 8px;
+  padding: 32px;
+  outline: 1px ${colors.grayscale[400]} solid;
+  outline-offset: -1px;
+  background: #fff;
+  min-height: 400px;
+
+  & .wmde-markdown {
+    background: transparent;
+    ul {
+      list-style: disc !important;
+      padding-left: 1rem !important;
+    }
+    ol {
+      list-style: decimal !important;
+      padding-left: 1rem !important;
+    }
+  }
+
+  & h1,
+  & h2,
+  & h3,
+  & h4,
+  & h5,
+  & h6 {
+    font-family: 'Pretendard', sans-serif;
+  }
+  & code {
+    font-family: 'Courier New', monospace;
+  }
+`;
+
+const MDPreview = dynamic(() => import('@uiw/react-markdown-preview').then(mod => mod.default), {
+  ssr: false,
+});
+
 export default function AdminIdeaDeleted() {
   const router = useRouter();
   const { id, projectId } = router.query;
@@ -180,11 +217,6 @@ export default function AdminIdeaDeleted() {
     });
     return map;
   }, [ideaData]);
-
-  const safeDescription = useMemo(
-    () => sanitizeDescription(ideaData?.description ?? ''),
-    [ideaData]
-  );
 
   // --- Handlers ---
 
@@ -306,11 +338,9 @@ export default function AdminIdeaDeleted() {
 
           <DescriptionSection>
             <SectionTitle>아이디어 설명</SectionTitle>
-            <DescriptionBox
-              dangerouslySetInnerHTML={{
-                __html: safeDescription,
-              }}
-            />
+            <MarkdownPreviewBox data-color-mode="light">
+              <MDPreview source={ideaData.description} />
+            </MarkdownPreviewBox>
           </DescriptionSection>
         </ResponsiveWrapper>
       </PreviewCanvas>

@@ -1,3 +1,4 @@
+import { colors } from '@/styles/constants';
 import styled from 'styled-components';
 
 import Button from '../../team-building/components/Button';
@@ -26,7 +27,6 @@ export const Heading = styled.header`
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
-  margin-top: 91px;
   margin-bottom: 30px;
 `;
 
@@ -205,7 +205,7 @@ export const NavString = styled.span<{ $active?: boolean }>`
   text-align: left;
 `;
 export const ImageContainer = styled.div`
-  aspect-ratio: 30/19;4
+  aspect-ratio: 30/19;
   width: 60px;
   height: 38px;
 `;
@@ -403,61 +403,11 @@ export const DescriptionSection = styled.section`
 
 export const DescriptionBox = styled.div`
   width: 1080px;
-  height: 400px;
-  border-radius: 10px;
-  border: 1px solid #e0e2e5;
-  background: #ffffff;
-  padding: 26px 28px;
-  min-height: 320px;
-  color: #040405;
-  font-size: 18px;
-  font-weight: 400;
-  line-height: 1.7;
-
-  * {
-    color: var(--grayscale-1000, #040405);
-
-    /* body/b4/b4 */
-    font-family: Pretendard;
-    font-size: 16px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: 160%;
-  }
-
-  h1,
-  h2,
-  h3 {
-    margin: 0 0 12px;
-    font-weight: 500;
-    font-style: normal;
-    line-height: 160%;
-  }
-
-  h1 {
-    font-size: 24px;
-    font-weight: 500;
-  }
-
-  h2 {
-    font-size: 20px;
-    font-weight: 500;
-  }
-
-  h3 {
-    font-size: 18px;
-    font-weight: 500;
-    margin-bottom: 12px;
-  }
-
-  p {
-    margin: 0 0 16px;
-  }
-
-  img {
-    max-width: 100%;
-    border-radius: 8px;
-  }
+  border-radius: 8px;
+  outline: 1px ${colors.grayscale[400]} solid;
+  outline-offset: -1px;
+  background: #fff;
+  min-height: 400px;
 `;
 
 export const ActionButton = styled.button`
@@ -591,7 +541,7 @@ export const DeleteButtonText = styled.span`
   line-height: 160%; /* 28.8px */
 `;
 export const CancelButtonText = styled.span`
-  color: var(--primary-600-main, #4285f4);
+  color: var(--primary-600-main, #ffffff);
 
   /* body/b3/b3 */
   font-family: Pretendard;

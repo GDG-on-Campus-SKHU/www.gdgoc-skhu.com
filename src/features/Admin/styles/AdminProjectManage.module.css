@@ -115,14 +115,16 @@
 
 /* Main Content */
 .mainContent {
-  width: 1440px;
-  min-height: 100vh;
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0 60px 40px 40px;
-  overflow-x: hidden;
+
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0;
 }
+
 
 /* Loading */
 .loadingContainer {
@@ -137,14 +139,17 @@
   font-weight: 500;
 }
 
+/* ==================== 헤더 섹션 ==================== */
 .headerSection {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto 60px;
+
   display: flex;
-  width: 1105px;
   justify-content: space-between;
   align-items: flex-start;
-  margin-top: 91px;
-  margin-bottom: 60px;
 }
+
 
 .headerLeft {
   display: flex;
@@ -386,17 +391,16 @@
 
 /* Content Wrapper */
 .contentWrapper {
-  display: flex;
-  width: 1105px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 20px;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
 }
 
 .projectNameContainer {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 0 0 16px 0;
 }
 
 .projectName {
@@ -465,7 +469,8 @@
 
 /* Schedule Table */
 .scheduleTable {
-  width: 1105px;
+  width: 100%;
+  max-width: 1120px;
   margin-bottom: 8px;
 }
 
@@ -564,7 +569,8 @@
 
 .tableBody {
   display: flex;
-  width: 1105px;
+  width: 100%;
+  max-width: 1120px;
   flex-direction: column;
   align-items: flex-start;
 }
@@ -715,7 +721,8 @@
   align-items: center;
   gap: 16px;
   margin-top: 60px;
-  width: 1105px;
+  width: 100%;
+  max-width: 1120px;
 }
 
 .deleteButton {

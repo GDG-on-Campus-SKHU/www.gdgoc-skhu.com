@@ -1019,26 +1019,31 @@ const MarkdownContainer = styled.div`
   width: 1080px;
   border-radius: 8px;
   background: #fff;
+  min-height: 400px;
 
-  .w-md-editor {
-    border-radius: 8px;
-    border: 1px solid var(--grayscale-400, #c3c6cb);
-    box-shadow: none;
-    background-color: #fff;
+  & .wmde-markdown {
+    background: transparent;
+    ul {
+      list-style: disc !important;
+      padding-left: 1rem !important;
+    }
+    ol {
+      list-style: decimal !important;
+      padding-left: 1rem !important;
+    }
   }
 
-  .w-md-editor-toolbar {
-    border-bottom: 1px solid #d0d7de;
-    background-color: #fff;
-    border-radius: 8px 8px 0 0;
-  }
-
-  .w-md-editor-text-pre {
-    font-family: 'Courier New', monospace;
-  }
-
-  .wmde-markdown {
+  & .wmde-markdown h1,
+  & .wmde-markdown h2,
+  & .wmde-markdown h3,
+  & .wmde-markdown h4,
+  & .wmde-markdown h5,
+  & .wmde-markdown h6 {
     font-family: 'Pretendard', sans-serif;
+  }
+
+  & .wmde-markdown code {
+    font-family: 'Courier New', monospace;
   }
 `;
 
