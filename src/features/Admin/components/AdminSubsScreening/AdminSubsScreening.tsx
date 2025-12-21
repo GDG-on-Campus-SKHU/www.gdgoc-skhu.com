@@ -78,6 +78,9 @@ const AdminSubsScreening: NextPage = () => {
   const [showComplete, setShowComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [historyCount, setHistoryCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   const approveMut = useApproveUserSignup();
   const rejectMut = useRejectUserSignup();
@@ -109,69 +112,83 @@ const AdminSubsScreening: NextPage = () => {
   useEffect(() => {
     let cancelled = false;
 
-    const fetchAllUsers = async () => {
+    const loadUsers = async () => {
+      setIsLoading(true);
+      setError(null);
+
       try {
-        setIsLoading(true);
-        setError(null);
-
-        // 첫 페이지를 먼저 가져와서 전체 페이지 수 확인
-        const firstPageRes = await api.get<UsersResponse>('/admin/users', {
-          params: { page: 0, size: 20 },
-        });
-
-        if (cancelled) return;
-
-        const totalPages = firstPageRes.data.pageInfo.totalPages;
-        const allUsers: ApiUser[] = [...firstPageRes.data.users];
-
-        // 나머지 페이지들을 병렬로 가져오기
-        if (totalPages > 1) {
-          const pagePromises = [];
-          for (let page = 1; page < totalPages; page++) {
-            pagePromises.push(
-              api.get<UsersResponse>('/admin/users', {
-                params: { page, size: 20 },
+        const res =
+          activeTab === 'pending'
+            ? await api.get<UsersResponse>('/admin/waiting/users', {
+                params: {
+                  page: currentPage - 1,
+                  size: 10,
+                  sortBy: 'id',
+                  order: 'DESC',
+                },
               })
-            );
-          }
+            : await api.get<UsersResponse>('/admin/decided/users', {
+                params: {
+                  page: currentPage - 1,
+                  size: 10,
+                  sortBy: 'id',
+                  order: 'DESC',
+                },
+              });
 
-          const restPages = await Promise.all(pagePromises);
-          restPages.forEach(res => {
-            allUsers.push(...res.data.users);
-          });
+        if (cancelled) return;
+
+        const normalized = res.data.users.map(normalizeUser);
+        setTotalPages(res.data.pageInfo.totalPages);
+
+        if (activeTab === 'pending') {
+          setPendingList(normalized);
+        } else {
+          setHistoryList(normalized);
         }
 
-        if (cancelled) return;
-
-        const pending: Applicant[] = [];
-        const history: Applicant[] = [];
-
-        allUsers.forEach(user => {
-          const normalized = normalizeUser(user);
-          if (user.approvalStatus === 'WAITING') {
-            pending.push(normalized);
-          } else if (user.approvalStatus === 'APPROVED' || user.approvalStatus === 'REJECTED') {
-            history.push(normalized);
-          }
-        });
-
-        setPendingList(pending);
-        setHistoryList(history);
-      } catch (err) {
-        if (cancelled) return;
-        console.error('Failed to fetch users:', err);
-        setError('사용자 정보를 불러오지 못했습니다.');
-        setPendingList([]);
-        setHistoryList([]);
+        if (activeTab === 'pending') {
+          setPendingCount(res.data.pageInfo.totalElements);
+        } else {
+          setHistoryCount(res.data.pageInfo.totalElements);
+        }
+      } catch {
+        if (!cancelled) setError('사용자 정보를 불러오지 못했습니다.');
       } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
+        if (!cancelled) setIsLoading(false);
       }
     };
 
-    fetchAllUsers();
+    loadUsers();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, currentPage]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCounts = async () => {
+      try {
+        const [waitingRes, decidedRes] = await Promise.all([
+          api.get<UsersResponse>('/admin/waiting/users', {
+            params: { page: 0, size: 1 },
+          }),
+          api.get<UsersResponse>('/admin/decided/users', {
+            params: { page: 0, size: 1 },
+          }),
+        ]);
+
+        if (cancelled) return;
+
+        setPendingCount(waitingRes.data.pageInfo.totalElements);
+        setHistoryCount(decidedRes.data.pageInfo.totalElements);
+      } catch (e) {
+        console.error('Failed to load counts', e);
+      }
+    };
+
+    loadCounts();
     return () => {
       cancelled = true;
     };
@@ -184,20 +201,12 @@ const AdminSubsScreening: NextPage = () => {
     [activeTab, pendingList, normalizedHistoryList]
   );
 
-  const totalPages = useMemo(
-    () => Math.max(Math.ceil(applicants.length / TABLE_VISIBLE_ROWS), 1),
-    [applicants.length]
-  );
-
   const safeCurrentPage = useMemo(
     () => Math.min(Math.max(currentPage, 1), totalPages),
     [currentPage, totalPages]
   );
 
-  const paginatedApplicants = useMemo(() => {
-    const startIndex = (safeCurrentPage - 1) * TABLE_VISIBLE_ROWS;
-    return applicants.slice(startIndex, startIndex + TABLE_VISIBLE_ROWS);
-  }, [applicants, safeCurrentPage]);
+  const paginatedApplicants = applicants;
 
   const pageSlots = useMemo(
     () => Array.from({ length: totalPages }, (_, idx) => idx + 1),
@@ -324,8 +333,8 @@ const AdminSubsScreening: NextPage = () => {
           <ToggleCTNR>
             <Toggle
               activeTab={activeTab}
-              pendingCount={pendingList.length}
-              historyCount={normalizedHistoryList.length}
+              pendingCount={pendingCount}
+              historyCount={historyCount}
               onChange={handleTabChange}
             />
           </ToggleCTNR>
