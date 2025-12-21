@@ -285,26 +285,20 @@ const MenuArrowIcon = styled(Image)`
 
 const MainContent = styled.main`
   flex: 1;
-  margin: 0 40px 0;
-  box-sizing: border-box;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  max-width: 100%;
+  align-items: center;
+  max-width: 1120px;
 `;
 
 const HeaderBlock = styled.div`
   width: 100%;
-  margin-top: 90px;
 `;
 
 const Header = styled.div`
-  display: flex;
-  width: 472px;
-  height: 100px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  width: 100%;
+  max-width: 472px;
 `;
 
 const Title = styled.h1`
@@ -477,6 +471,7 @@ const Pagination = styled.nav`
 
 const PageNumberGroup = styled.div`
   display: flex;
+  gap: 8px;
 `;
 
 const HeaderName = styled.div`
