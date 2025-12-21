@@ -137,16 +137,21 @@ const carouselWrapCss = css`
 const viewportCss = css`
   overflow: hidden;
   width: 100%;
+  display: flex;
+  justify-content: center;
 `;
 
 const cardRowCss = css`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, 312px);
   gap: 40px;
+  justify-content: center;
 `;
 
 const cardCss = css`
-  width: 100%;
+  width: 312px;
+  min-width: 312px;
+  max-width: 312px;
 `;
 
 const thumbFrameCss = css`
@@ -173,8 +178,11 @@ const metaCss = css`
 const titleItemCss = css`
   font-size: 24px;
   font-weight: 600;
-  color: #111111;
   line-height: 140%;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const descItemCss = css`
@@ -183,6 +191,10 @@ const descItemCss = css`
   font-weight: 400;
   color: #979ca5;
   line-height: 150%;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const badgeRowCss = css`
@@ -190,6 +202,8 @@ const badgeRowCss = css`
   min-height: 28px;
   display: flex;
   align-items: center;
+  max-width: 100%;
+  overflow: hidden;
 `;
 
 const arrowBaseCss = css`
