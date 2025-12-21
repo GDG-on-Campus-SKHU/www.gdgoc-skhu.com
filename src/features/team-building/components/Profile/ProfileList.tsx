@@ -97,17 +97,20 @@ export default function ProfileList({
       );
     }
 
-    if (showPreview && profile.techStacks.length > 0) {
+    if (showPreview && selectedTechStack.length > 0) {
       return (
         <div css={previewContainerCss}>
-          {profile.techStacks.map(stack => {
-            if (!stack.iconUrl) return null;
+          {selectedTechStack.map(code => {
+            const option = techStackOptions.find(opt => opt.code === code);
+            if (!option?.iconUrl) return null;
 
             return (
-              <div key={stack.techStackType} css={iconWrapperCss}>
+              <div key={code} css={iconWrapperCss}>
                 <div css={iconCss}>
-                  <img src={resolveIconUrl(stack.iconUrl)} alt={stack.techStackType} />
+                  <img src={resolveIconUrl(option.iconUrl)} alt={code} />
                 </div>
+
+                <div css={tooltipCss}>{option.displayName}</div>
               </div>
             );
           })}
@@ -122,21 +125,26 @@ export default function ProfileList({
     if (showEditFields) {
       return (
         <div css={componentWrapperCss}>
-          <SelectBoxLink value={links} onChange={onLinksChange} options={userLinkOptions} />
+          <SelectBoxLink
+            value={links}
+            onChange={onLinksChange}
+            options={userLinkOptions}
+            maxLinks={5}
+          />
         </div>
       );
     }
 
-    if (showPreview && profile.userLinks.length > 0) {
+    if (showPreview && validLinks.length > 0) {
       return (
         <div css={previewContainerCss}>
-          {profile.userLinks.map(link => {
-            const option = userLinkOptions.find(opt => opt.type === link.linkType);
+          {validLinks.map(link => {
+            const option = userLinkOptions.find(opt => opt.type === link.platform);
             if (!option?.iconUrl) return null;
 
             return (
               <a
-                key={`${link.linkType}-${link.url}`}
+                key={`${link.platform}-${link.url}`}
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -265,5 +273,38 @@ const linkIconSimpleCss = css`
     width: 100%;
     height: 100%;
     object-fit: contain;
+  }
+`;
+
+const tooltipCss = css`
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+
+  background-color: #4a4a4a;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+
+  font-size: 14px;
+  white-space: nowrap;
+
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+
+  z-index: 10;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: #4a4a4a transparent transparent transparent;
   }
 `;

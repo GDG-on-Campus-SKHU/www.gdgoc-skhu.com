@@ -40,6 +40,8 @@ import {
   ScheduleStepDate,
   ScheduleSteps,
   ScheduleStepTitle,
+  Spinner,
+  SpinnerWrapper,
   StateLabel,
   StateRow,
   StateToggle,
@@ -528,7 +530,9 @@ export default function WelcomeView() {
 
           {isLoading ? (
             <EmptyCard>
-              <EmptyMessage>로딩 중...</EmptyMessage>
+              <SpinnerWrapper>
+                <Spinner />
+              </SpinnerWrapper>
             </EmptyCard>
           ) : visibleIdeasCount === 0 ? (
             <EmptyCard>

@@ -292,7 +292,8 @@ const ContentTitle = styled.div`
   flex: 3 1 0;
   display: flex;
   align-items: center;
-  max-width: 500px;
+  min-width: 0;
+  max-width: 40vw;
   padding: 8px;
   box-sizing: border-box;
   text-align: left;
@@ -304,6 +305,7 @@ const ContentTitleText = styled.div`
   line-height: 160%;
   font-weight: 500;
   font-size: 20px;
+  width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

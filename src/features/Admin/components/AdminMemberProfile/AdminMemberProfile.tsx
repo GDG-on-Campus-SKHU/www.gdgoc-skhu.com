@@ -164,6 +164,8 @@ const AdminMemberProfile = ({ memberProps, onBack }: Props) => {
                       width={36}
                       height={36}
                     />
+
+                    <Tooltip>{option.displayName}</Tooltip>
                   </TechStackIcon>
                 );
               })}
@@ -492,10 +494,10 @@ const TechStackList = styled.div`
 `;
 
 const TechStackIcon = styled.div`
+  position: relative;
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -504,6 +506,47 @@ const TechStackIcon = styled.div`
     width: 100%;
     height: 100%;
     object-fit: contain;
+  }
+
+  &:hover > div {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -6px);
+  }
+`;
+
+const Tooltip = styled.div`
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translate(-50%, -2px);
+
+  margin-bottom: 8px;
+  padding: 6px 12px;
+
+  background-color: #4a4a4a;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  border-radius: 8px;
+
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+
+  z-index: 20;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: #4a4a4a transparent transparent transparent;
   }
 `;
 

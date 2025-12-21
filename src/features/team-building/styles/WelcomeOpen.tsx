@@ -553,3 +553,26 @@ export const ScheduleStepDate = styled.p`
   font-weight: 500;
   line-height: 160%; /* 32px */
 `;
+
+export const SpinnerWrapper = styled.div`
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+export const Spinner = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 4px solid #e0e2e5;
+  border-top-color: #4285f4;
+  animation: spin 0.8s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
