@@ -301,26 +301,26 @@ const AdminMemberProfileEdit: NextPage = () => {
                   placeholder="보유하고 있는 기술 스택을 선택해주세요."
                   multiple
                   searchable
-                  value={member.techStacks.map(s => s.techStackType)}
-                  onChange={selected =>
-                    setMember(prev =>
-                      prev
-                        ? {
-                            ...prev,
-                            techStacks: selected.map(displayName => {
-                              const option = techStackOptions.find(
-                                o => o.displayName === displayName
-                              );
+                  value={member.techStacks
+                    .map(s => techStackOptions.find(o => o.code === s.techStackType)?.displayName)
+                    .filter((v): v is string => Boolean(v))}
+                  onChange={selected => {
+                    setMember(prev => {
+                      if (!prev) return prev;
 
-                              return {
-                                techStackType: option?.code ?? displayName,
-                                iconUrl: option?.iconUrl ?? '',
-                              };
-                            }),
-                          }
-                        : prev
-                    )
-                  }
+                      return {
+                        ...prev,
+                        techStacks: selected.map(displayName => {
+                          const option = techStackOptions.find(o => o.displayName === displayName);
+
+                          return {
+                            techStackType: option?.code ?? displayName,
+                            iconUrl: option?.iconUrl ?? '',
+                          };
+                        }),
+                      };
+                    });
+                  }}
                 />
               </SelectBoxWrapper>
               <TechStackList>
