@@ -489,11 +489,6 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
   );
   const [part, setPart] = useState<keyof Idea['team']>('planning');
 
-  const allPrioritiesTaken = useMemo(
-    () => PRIORITY_OPTIONS.every(option => priorityLocks[option] !== null),
-    [priorityLocks]
-  );
-
   const priorityStorageKey = useMemo(() => {
     const pid = applyInfo?.projectId ?? projectId ?? 'unknown';
     const st = applyInfo?.scheduleType ?? 'unknown';
@@ -580,14 +575,23 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
     return map;
   }, [applyInfo]);
 
+  const allPrioritiesTaken = useMemo(
+    () => PRIORITY_OPTIONS.every(p => choiceAvailabilityMap[PRIORITY_TO_CHOICE[p]] === false),
+    [choiceAvailabilityMap]
+  );
+
   // priorityOptions (로컬락 + 서버 availability)
   const priorityOptions = useMemo(
     () =>
       PRIORITY_OPTIONS.map(option => {
-        const locked = priorityLocks[option] !== null;
         const choice = PRIORITY_TO_CHOICE[option];
         const serverDisabled = choiceAvailabilityMap[choice] === false;
-        return { value: option, disabled: locked || serverDisabled };
+
+        const locked = priorityLocks[option] !== null;
+        // ✅ 서버가 가능(true)이라고 하면 로컬 잠금은 무시한다.
+        // (서버가 false일 때만 로컬 잠금 의미가 생김)
+        const disabled = serverDisabled || (locked && serverDisabled);
+        return { value: option, disabled };
       }),
     [priorityLocks, choiceAvailabilityMap]
   );
@@ -689,11 +693,10 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
       const resolved = createEmptyPriorityState();
       PRIORITY_OPTIONS.forEach(option => {
         const value = parsed?.[option];
-        if (typeof value === 'number' && Number.isFinite(value)) {
-          resolved[option] = value;
-        } else {
-          resolved[option] = null;
-        }
+        const asNumber =
+          typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
+
+        resolved[option] = Number.isFinite(asNumber) && asNumber > 0 ? asNumber : null;
       });
       setPriorityLocks(resolved);
     } catch {
@@ -745,7 +748,8 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
       alert('1지망, 2지망, 3지망을 모두 사용하셨습니다. 기존 지원을 취소한 뒤 다시 시도해 주세요.');
       return;
     }
-    if (priorityLocks[priority] !== null) {
+    const selectedChoice = PRIORITY_TO_CHOICE[priority];
+    if (choiceAvailabilityMap[selectedChoice] === false) {
       alert('이미 해당 지망으로 지원하셨어요.');
       return;
     }
@@ -797,7 +801,7 @@ export default function IdeaApplyPage({ ideaId }: IdeaApplyPageProps) {
 
       // 지원 성공 시 로컬 스토리지에 지망 상태 저장
       if (typeof window !== 'undefined') {
-        const nextLocks = { ...priorityLocks, [priority]: idea.id };
+        const nextLocks = { ...priorityLocks, [priority]: idea.id > 0 ? idea.id : null };
         window.localStorage.setItem(priorityStorageKey, JSON.stringify(nextLocks));
         setPriorityLocks(nextLocks);
       }
