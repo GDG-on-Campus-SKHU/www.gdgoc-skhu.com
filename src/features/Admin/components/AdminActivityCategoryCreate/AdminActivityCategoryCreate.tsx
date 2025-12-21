@@ -438,8 +438,9 @@ const Content = styled.main`
 const ContentContainer = styled.div`
   display: flex;
   flex-direction: column;
-  width: 1100px;
-  max-width: 100%;
+  width: 100%;
+  max-width: 1100px;
+  padding: 0 16px;
   gap: 60px;
 `;
 
@@ -602,13 +603,12 @@ const VideoTable = styled.div`
   overflow: hidden;
   background: #fff;
   width: 100%;
-  max-width: 1105px;
   margin: 0 auto;
 `;
 
 const VideoHeader = styled.div`
   display: grid;
-  grid-template-columns: 160px 1fr 80px 80px 132px;
+  grid-template-columns: 160px minmax(0, 1fr) 80px 80px 132px;
   background: #ededef;
   height: 45px;
   padding: 0 8px;
@@ -637,7 +637,7 @@ const HeaderCell = styled.div<{ $thumb?: boolean; $title?: boolean; $management?
 
 const VideoRow = styled.div`
   display: grid;
-  grid-template-columns: 160px 1fr 80px 80px 132px;
+  grid-template-columns: 160px minmax(0, 1fr) 80px 80px 132px;
   align-items: center;
   justify-items: start;
   height: 122px;
@@ -665,7 +665,7 @@ const ThumbImage = styled.img`
 const EmptyRow = styled.div`
   border-bottom: 1px solid var(--grayscale-300, #e0e2e5);
   display: flex;
-  width: 1105px;
+  width: 100%;
   height: 60px;
   padding: 16px 8px;
   justify-content: center;
@@ -765,7 +765,7 @@ const LoadMore = styled.button`
   border: none;
   border-bottom: 1px solid var(--grayscale-300, #e0e2e5);
   display: flex;
-  width: 1105px;
+  width: 100%;
   height: 60px;
 
   padding: 16px 8px;
@@ -830,7 +830,7 @@ const SecondaryButton = styled.button`
 `;
 
 const TitleBody = styled.div`
-  width: 500px;
+  min-width: 0;
   padding: 8px;
   justify-content: flex-start;
   align-items: center;
@@ -841,7 +841,7 @@ const TitleBodyCell = styled.span`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 484px;
+  min-width: 0;
   color: #040405;
   font-size: 20px;
   font-family: Pretendard;
@@ -976,7 +976,7 @@ const ManagementHeaderCell = styled.div`
 const LoadMoreCTNR = styled.div`
   border-bottom: 1px solid var(--grayscale-300, #e0e2e5);
   display: flex;
-  width: 1105px;
+  width: 100%;
   height: 60px;
   padding: 16px 8px;
   justify-content: center;
