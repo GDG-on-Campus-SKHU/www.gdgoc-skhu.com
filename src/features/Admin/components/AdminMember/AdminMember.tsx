@@ -285,11 +285,10 @@ const MenuArrowIcon = styled(Image)`
 
 const MainContent = styled.main`
   flex: 1;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  max-width: 1120px;
+  align-items: stretch;
+  min-height: 100vh;
 `;
 
 const HeaderBlock = styled.div`

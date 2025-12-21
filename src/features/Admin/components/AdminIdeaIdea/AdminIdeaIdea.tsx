@@ -42,7 +42,7 @@ import {
 type IdeaRow = {
   id: number;
   title: string;
-  author: string;
+  creatorName: string;
   status: string;
 };
 
@@ -111,7 +111,7 @@ export default function AdminIdeaIdea() {
           return {
             id: idea.ideaId,
             title: idea.title,
-            author: idea.authorName ?? '작성자',
+            creatorName: idea.creatorName && idea.creatorName.trim() !== '' ? idea.creatorName : '—',
             status,
           };
         });
@@ -191,7 +191,7 @@ export default function AdminIdeaIdea() {
                     <NameBodyCell title={row.title}>{row.title}</NameBodyCell>
                   </NameBodyCTNR>
                   <WriterBodyCTNR>
-                    <WriterBodyCell $muted>{row.author}</WriterBodyCell>
+                    <WriterBodyCell $muted>{row.creatorName}</WriterBodyCell>
                   </WriterBodyCTNR>
                   <StatusBodyCTNR>
                     <StatusBodyCell>{row.status}</StatusBodyCell>

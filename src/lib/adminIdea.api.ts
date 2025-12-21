@@ -68,7 +68,7 @@ export interface AdminIdea {
   currentMemberCount: number;
   maxMemberCount: number;
   deleted: boolean;
-  authorName?: string;
+  creatorName?: string;
 }
 
 /**

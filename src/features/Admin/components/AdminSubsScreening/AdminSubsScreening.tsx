@@ -1006,7 +1006,7 @@ const TableRow = styled.div`
   padding: 0 8px;
   justify-content: center;
   align-items: center;
-  gap: 6px;
+  gap: 14px;
   align-self: stretch;
 `;
 
