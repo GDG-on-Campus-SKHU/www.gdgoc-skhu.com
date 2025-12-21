@@ -125,7 +125,12 @@ export default function ProfileList({
     if (showEditFields) {
       return (
         <div css={componentWrapperCss}>
-          <SelectBoxLink value={links} onChange={onLinksChange} options={userLinkOptions} />
+          <SelectBoxLink
+            value={links}
+            onChange={onLinksChange}
+            options={userLinkOptions}
+            maxLinks={5}
+          />
         </div>
       );
     }
