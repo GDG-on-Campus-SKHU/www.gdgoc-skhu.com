@@ -192,7 +192,12 @@ function mapSearchMemberDtoToDomain(dto: SearchMemberDto): SearchMember {
  * ======================================================= */
 
 export async function fetchProjectGalleryList(): Promise<ProjectGalleryListItem[]> {
-  const res = await api.get<GetProjectGalleryListResponse>('/admin/gallery-project');
+  const res = await api.get<GetProjectGalleryListResponse>('/admin/gallery-project', {
+    params: {
+      order: 'DESC',
+    },
+  });
+
   return (res.data ?? []).map(mapListItemDtoToDomain);
 }
 
