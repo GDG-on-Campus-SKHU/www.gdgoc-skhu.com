@@ -7,14 +7,14 @@ import { Generation, MyProfile, TechStack, UpdateProfileData, UserLink } from '.
 interface UserSummaryDto {
   users: UserSummaryItemDto[];
   pageInfo: {
-    pageNumber: number;
+    pageNumber?: number;
     pageSize: number;
     totalElements: number;
     totalPages: number;
   };
 }
 
-interface UserSummaryItemDto {
+export interface UserSummaryItemDto {
   id: number;
   userName: string;
   email: string | null;
@@ -271,3 +271,47 @@ export const fetchSearchedUser = async ({
 
   return response.data;
 };
+
+export type ApprovalStatusParam = 'WAITING' | 'APPROVED' | 'REJECTED' | 'APPROVED,REJECTED';
+
+export async function fetchWaitingUsers({
+  page,
+  size,
+  order = 'DESC',
+}: {
+  page: number;
+  size: number;
+  order?: 'ASC' | 'DESC';
+}): Promise<UserSummaryDto> {
+  const res = await api.get<UserSummaryDto>('/admin/waiting/users', {
+    params: {
+      page,
+      size,
+      sortBy: 'id',
+      order,
+    },
+  });
+
+  return res.data;
+}
+
+export async function fetchDecidedUsers({
+  page,
+  size,
+  order = 'DESC',
+}: {
+  page: number;
+  size: number;
+  order?: 'ASC' | 'DESC';
+}): Promise<UserSummaryDto> {
+  const res = await api.get<UserSummaryDto>('/admin/decided/users', {
+    params: {
+      page,
+      size,
+      sortBy: 'id',
+      order,
+    },
+  });
+
+  return res.data;
+}
