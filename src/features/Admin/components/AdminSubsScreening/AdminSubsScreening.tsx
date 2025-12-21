@@ -649,10 +649,10 @@ const TableShell = styled.div`
 const TableHeader = styled.div`
   display: flex;
   height: 45px;
-  padding: 0 8px;
+  padding: 0 4px;
   justify-content: center;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   align-self: stretch;
   background: var(--grayscale-200, #ededef);
 `;
@@ -996,17 +996,16 @@ const FalseActionButton = styled.button`
 const TableBody = styled.div`
   display: flex;
   flex-direction: column;
-  min-height: ${TABLE_VISIBLE_ROWS * TABLE_ROW_HEIGHT}px;
 `;
 
 const TableRow = styled.div`
   border-bottom: 1px solid var(--grayscale-300, #e0e2e5);
   display: flex;
   height: 80px;
-  padding: 0 8px;
+  padding: 0 4px;
   justify-content: center;
   align-items: center;
-  gap: 14px;
+  gap: 8px;
   align-self: stretch;
 `;
 

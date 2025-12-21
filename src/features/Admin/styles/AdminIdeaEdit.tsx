@@ -11,8 +11,6 @@ export const Page = styled.div`
 `;
 
 export const Content = styled.main`
-  padding: 60px 65px 40px 40px;
-
   align-items: flex-start;
   justify-content: center;
   overflow: visible;

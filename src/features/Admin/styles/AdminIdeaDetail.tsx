@@ -27,7 +27,6 @@ export const Heading = styled.header`
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
-  margin-top: 91px;
   margin-bottom: 30px;
 `;
 
@@ -542,7 +541,7 @@ export const DeleteButtonText = styled.span`
   line-height: 160%; /* 28.8px */
 `;
 export const CancelButtonText = styled.span`
-  color: var(--primary-600-main, #4285f4);
+  color: var(--primary-600-main, #ffffff);
 
   /* body/b3/b3 */
   font-family: Pretendard;
