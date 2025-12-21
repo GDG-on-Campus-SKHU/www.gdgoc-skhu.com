@@ -97,16 +97,17 @@ export default function ProfileList({
       );
     }
 
-    if (showPreview && profile.techStacks.length > 0) {
+    if (showPreview && selectedTechStack.length > 0) {
       return (
         <div css={previewContainerCss}>
-          {profile.techStacks.map(stack => {
-            if (!stack.iconUrl) return null;
+          {selectedTechStack.map(code => {
+            const option = techStackOptions.find(opt => opt.code === code);
+            if (!option?.iconUrl) return null;
 
             return (
-              <div key={stack.techStackType} css={iconWrapperCss}>
+              <div key={code} css={iconWrapperCss}>
                 <div css={iconCss}>
-                  <img src={resolveIconUrl(stack.iconUrl)} alt={stack.techStackType} />
+                  <img src={resolveIconUrl(option.iconUrl)} alt={code} />
                 </div>
               </div>
             );
@@ -127,16 +128,16 @@ export default function ProfileList({
       );
     }
 
-    if (showPreview && profile.userLinks.length > 0) {
+    if (showPreview && validLinks.length > 0) {
       return (
         <div css={previewContainerCss}>
-          {profile.userLinks.map(link => {
-            const option = userLinkOptions.find(opt => opt.type === link.linkType);
+          {validLinks.map(link => {
+            const option = userLinkOptions.find(opt => opt.type === link.platform);
             if (!option?.iconUrl) return null;
 
             return (
               <a
-                key={`${link.linkType}-${link.url}`}
+                key={`${link.platform}-${link.url}`}
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
