@@ -347,7 +347,7 @@ export const Pagination = styled.nav`
 
 export const PageNumberGroup = styled.div`
   display: flex;
-  gap: 0;
+  gap: 8px;
 `;
 
 export const PageButton = styled.button<{ $active?: boolean; $isArrow?: boolean }>`

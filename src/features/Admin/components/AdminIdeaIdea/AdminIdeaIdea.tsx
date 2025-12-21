@@ -111,7 +111,8 @@ export default function AdminIdeaIdea() {
           return {
             id: idea.ideaId,
             title: idea.title,
-            creatorName: idea.creatorName && idea.creatorName.trim() !== '' ? idea.creatorName : '—',
+            creatorName:
+              idea.creatorName && idea.creatorName.trim() !== '' ? idea.creatorName : '—',
             status,
           };
         });
