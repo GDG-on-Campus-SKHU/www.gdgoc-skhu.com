@@ -564,25 +564,22 @@ const Container = styled.div`
 
 const MainContent = styled.main`
   flex: 1;
-  margin: 0 40px 0;
-  box-sizing: border-box;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  max-width: 100%;
+  align-items: center;
+  max-width: 1120px;
 `;
 
 const HeaderBlock = styled.div`
   width: 100%;
-  margin-top: 90px;
 `;
 
 const Header = styled.div`
   display: flex;
-  width: 472px;
+  width: 100%;
+  max-width: 472px;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
 `;
 
 const Title = styled.h1`
@@ -652,10 +649,10 @@ const TableShell = styled.div`
 const TableHeader = styled.div`
   display: flex;
   height: 45px;
-  padding: 0 8px;
+  padding: 0 4px;
   justify-content: center;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   align-self: stretch;
   background: var(--grayscale-200, #ededef);
 `;
@@ -999,17 +996,16 @@ const FalseActionButton = styled.button`
 const TableBody = styled.div`
   display: flex;
   flex-direction: column;
-  min-height: ${TABLE_VISIBLE_ROWS * TABLE_ROW_HEIGHT}px;
 `;
 
 const TableRow = styled.div`
   border-bottom: 1px solid var(--grayscale-300, #e0e2e5);
   display: flex;
   height: 80px;
-  padding: 0 8px;
+  padding: 0 4px;
   justify-content: center;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   align-self: stretch;
 `;
 
@@ -1024,6 +1020,7 @@ const Pagination = styled.nav`
 
 const PageNumberGroup = styled.div`
   display: flex;
+  gap: 8px;
 `;
 
 export const PageButton = styled.button<{ $active?: boolean; $isArrow?: boolean }>`

@@ -609,7 +609,6 @@ const MenuArrowIcon = styled(Image)`
 
 const MainContent = styled.main`
   flex: 1;
-  margin: 0 45px 0 40px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -620,13 +619,13 @@ const MainContent = styled.main`
 
 const Header = styled.div`
   display: flex;
-  width: 472px;
+  width: 100%;
+  max-width: 472px;
   height: 100px;
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
   margin-bottom: 60px;
-  margin-top: 91px;
 `;
 
 const Title = styled.h1`

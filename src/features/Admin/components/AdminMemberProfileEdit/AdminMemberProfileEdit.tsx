@@ -532,25 +532,24 @@ const MenuArrowIcon = styled(Image)`
   height: 16px;
   object-fit: contain;
 `;
+
 const MainContent = styled.main`
-  width: 1440px;
-  min-height: 100vh;
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0 60px 40px 40px;
-  overflow-x: hidden;
+  align-items: stretch;
+  min-height: 100vh;
 `;
 
 const Header = styled.div`
   display: flex;
-  width: 472px;
+  width: 100%;
+  max-width: 472px;
   height: 100px;
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
   margin-bottom: 60px;
-  margin-top: 91px;
 `;
 
 const Title = styled.h1`
