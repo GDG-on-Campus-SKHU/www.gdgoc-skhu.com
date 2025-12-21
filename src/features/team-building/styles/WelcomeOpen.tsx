@@ -11,6 +11,7 @@ export const Container = styled.div`
   background: #ffffff;
   display: flex;
   justify-content: center;
+  maring-top: 50px;
   padding: 0 1.5rem;
   font-family: 'Pretendard', sans-serif;
   color: #040405;

@@ -390,9 +390,7 @@ export default function WelcomeView() {
     return (
       <Container>
         <Wrapper>
-          <EmptyCard>
-            <EmptyMessage>프로젝트 정보를 불러오는 중...</EmptyMessage>
-          </EmptyCard>
+          <EmptyMessage>프로젝트 정보를 불러오는 중...</EmptyMessage>
         </Wrapper>
       </Container>
     );

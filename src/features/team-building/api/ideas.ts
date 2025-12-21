@@ -35,6 +35,15 @@ export interface IdeaUpdateBeforeEnrollmentPayload {
   compositions: IdeaMemberComposition[];
 }
 
+export interface IdeaConfigurationsResponse {
+  topics: Array<{
+    topicId: number;
+    topic: string;
+  }>;
+  availableParts: IdeaPartCode[];
+  maxMemberCount: number;
+}
+
 export const fetchCurrentTeamBuildingProject = (config?: AxiosRequestConfig) =>
   teamBuildingApi.get('/team-building/projects/current', config);
 
@@ -143,6 +152,9 @@ export const fetchEnrollmentAvailability = (ideaId: number, config?: AxiosReques
     config
   );
 
+export const fetchIdeaConfigurations = (config?: AxiosRequestConfig) =>
+  teamBuildingApi.get<IdeaConfigurationsResponse>('/projects/current/ideas/configurations', config);
+
 export type TeamBuildingScheduleType =
   | 'IDEA_REGISTRATION'
   | 'FIRST_TEAM_BUILDING'
@@ -170,3 +182,13 @@ export type CurrentProjectResponse = {
   registrable: boolean;
   canEnroll: boolean;
 };
+
+export type CurrentProjectEnrollabilityResponse = {
+  canEnroll: boolean;
+};
+
+export const fetchCanEnroll = (config?: AxiosRequestConfig) =>
+  teamBuildingApi.get<CurrentProjectEnrollabilityResponse>(
+    '/team-building/projects/current',
+    config
+  );

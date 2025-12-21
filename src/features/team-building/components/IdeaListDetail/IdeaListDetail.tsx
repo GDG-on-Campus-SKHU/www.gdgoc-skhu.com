@@ -397,6 +397,7 @@ export default function IdeaListPage() {
   const [projectId, setProjectId] = React.useState<number | null>(null);
   const [showConfirmDelete, setShowConfirmDelete] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [canEnroll, setCanEnroll] = React.useState<boolean>(false);
 
   const { data: myProfile } = useMyProfile({
     enabled: true,
@@ -420,6 +421,8 @@ export default function IdeaListPage() {
         const resp = await fetchCurrentTeamBuildingProject({ signal: controller.signal });
         const project = resp.data?.project;
         const nextProjectId = Number(project?.projectId);
+
+        setCanEnroll(Boolean(resp.data?.canEnroll));
 
         if (Number.isFinite(nextProjectId) && nextProjectId > 0) {
           setProjectId(nextProjectId);
@@ -668,8 +671,7 @@ export default function IdeaListPage() {
                 variant="secondary"
                 onClick={() => {
                   // src/pages 가서 페이지 파일 별도 추가하기
-                  // router.push({ pathname: '/IdeaForm', query: { id: idea.id } });
-                  alert('수정하기는 아직 연결 전입니다.');
+                  router.push({ pathname: '/IdeaFormEdit', query: { id: idea.id } });
                 }}
                 css={{ width: '300px', height: '50px', fontSize: '18px', fontWeight: '500' }}
               />
@@ -679,7 +681,7 @@ export default function IdeaListPage() {
                 css={{ width: '300px', height: '50px', fontSize: '18px', fontWeight: '500' }}
               />
             </div>
-          ) : (
+          ) : canEnroll ? (
             <Button
               title="아이디어 지원하기"
               onClick={() =>
@@ -690,7 +692,7 @@ export default function IdeaListPage() {
               }
               css={{ width: '300px', height: '50px', fontSize: '18px', fontWeight: '500' }}
             />
-          )}
+          ) : null}
         </ActionRow>
 
         {showConfirmDelete && idea && (

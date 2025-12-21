@@ -6,7 +6,11 @@ import axios from 'axios';
 import Quill from 'quill';
 import MarkdownShortcuts from 'quill-markdown-shortcuts';
 
-import { createIdea, fetchCurrentTeamBuildingProject } from '../../api/ideas';
+import {
+  createIdea,
+  fetchCurrentTeamBuildingProject,
+  fetchIdeaConfigurations,
+} from '../../api/ideas';
 import { formatSavedAt, TOPIC_OPTIONS } from './constants';
 import IdeaForm from './IdeaForm';
 import { resolveCreatorPart, toMemberCompositions } from './IdeaFormUtils';
@@ -86,6 +90,15 @@ const DEFAULT_TOPIC_ID_MAP: Record<string, number> = {
   주제2: 4,
 };
 
+const PART_TO_TEAM_KEY: Record<IdeaPartCode, keyof TeamCounts> = {
+  PM: 'planning',
+  DESIGN: 'design',
+  WEB: 'frontendWeb',
+  MOBILE: 'frontendMobile',
+  BACKEND: 'backend',
+  AI: 'aiMl',
+};
+
 const createInitialForm = (): IdeaFormState => ({
   totalMembers: 1,
   currentMembers: 0,
@@ -114,6 +127,9 @@ export default function IdeaFormPage() {
   const [, setIsRegistrable] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<string | undefined>(undefined);
+  const [availableParts, setAvailableParts] = useState<IdeaPartCode[]>([]);
+  const [maxMemberCount, setMaxMemberCount] = useState<number | null>(null);
+  const [createdIdeaId, setCreatedIdeaId] = useState<number | null>(null);
 
   const getAccessToken = useCallback(() => {
     if (typeof window === 'undefined') return null;
@@ -178,8 +194,8 @@ export default function IdeaFormPage() {
   }, []);
 
   // 정식 등록 함수
-  const handleRegister = useCallback(async () => {
-    if (isSubmitting) return;
+  const handleRegister = useCallback(async (): Promise<boolean> => {
+    if (isSubmitting) return false;
 
     const targetProjectId = resolveProjectId();
     if (!targetProjectId) {
@@ -235,7 +251,8 @@ export default function IdeaFormPage() {
       const resp = await createIdea(targetProjectId, payload);
       const data = resp.data as IdeaResponse;
 
-      const createdId = data.idea?.ideaId;
+      const createdId = data.idea?.ideaId ?? null;
+      if (createdId) setCreatedIdeaId(createdId);
       const savedAt = new Date().toISOString();
       setLastSavedAt(formatSavedAt(savedAt) ?? savedAt);
 
@@ -247,7 +264,7 @@ export default function IdeaFormPage() {
         }
       }
 
-      return createdId;
+      return true;
     } catch (error) {
       console.error('아이디어 등록에 실패했습니다.', error);
 
@@ -289,8 +306,18 @@ export default function IdeaFormPage() {
   ]);
 
   const handlePreview = useCallback(() => {
+    sessionStorage.setItem('ideaPreview:mode', 'create');
+    sessionStorage.setItem('ideaPreview:returnTo', '/IdeaForm');
+
+    sessionStorage.removeItem('ideaPreview:ideaId');
+    sessionStorage.removeItem('ideaPreview:origin');
+
     router.push('/IdeaPreview');
   }, [router]);
+
+  const enabledTeamKeys = React.useMemo(() => {
+    return availableParts.map(part => PART_TO_TEAM_KEY[part]).filter(Boolean);
+  }, [availableParts]);
 
   // URL에서 projectId 가져오기
   useEffect(() => {
@@ -302,6 +329,45 @@ export default function IdeaFormPage() {
       setProjectId(parsed);
     }
   }, [router.query.projectId]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadIdeaConfigurations = async () => {
+      try {
+        const resp = await fetchIdeaConfigurations({
+          signal: controller.signal,
+        });
+
+        const data = resp.data;
+
+        // 1. topic 설정
+        if (Array.isArray(data.topics) && data.topics.length > 0) {
+          const labels = data.topics.map(t => t.topic);
+          const map: Record<string, number> = {};
+
+          data.topics.forEach(t => {
+            map[t.topic] = t.topicId;
+          });
+
+          setTopicOptions(labels);
+          setTopicIdMap(map);
+          setForm(prev => ({ ...prev, topic: labels[0] }));
+        }
+
+        // 2. availableParts
+        setAvailableParts(data.availableParts ?? []);
+
+        // 3. maxMemberCount
+        setMaxMemberCount(typeof data.maxMemberCount === 'number' ? data.maxMemberCount : null);
+      } catch {
+        console.warn('아이디어 설정 정보를 불러오지 못했습니다.');
+      }
+    };
+
+    loadIdeaConfigurations();
+    return () => controller.abort();
+  }, []);
 
   // 프로젝트 정보 가져오기 (실패해도 기본값 유지)
   useEffect(() => {
@@ -352,12 +418,12 @@ export default function IdeaFormPage() {
     return () => controller.abort();
   }, [getAccessToken]);
 
-  // 자동 임시저장 useEffect 제거됨
-
   return (
     <IdeaForm
       form={form}
       topicOptions={topicOptions}
+      enabledTeamRoles={enabledTeamKeys}
+      maxMemberCount={maxMemberCount}
       onChange={handleChange}
       onSave={handleSave}
       onRegister={handleRegister}

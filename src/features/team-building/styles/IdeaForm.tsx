@@ -19,7 +19,6 @@ export const PageContainer = styled.div<{ $isModalOpen?: boolean }>`
       position: fixed;
       inset: 0;
       background: rgba(15, 23, 42, 0.4);
-      backdrop-filter: blur(6px);
       z-index: 9998;
       color: #626673;
       content: '';

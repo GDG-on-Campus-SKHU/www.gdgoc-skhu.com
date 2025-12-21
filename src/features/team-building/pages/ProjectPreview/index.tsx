@@ -3,7 +3,14 @@ import { useRouter } from 'next/router';
 
 import Modal from '../../components/Modal_Fix';
 import ProjectDetailView from '../../components/ProjectDetail/ProjectDetailView';
-import type { GenerationValue, Part, ProjectMemberBase, ServiceStatus } from '../../types/gallery';
+import type {
+  GenerationValue,
+  Part,
+  ProjectGalleryUpsertBody,
+  ProjectMemberBase,
+  ServiceStatus,
+} from '../../types/gallery';
+import { useCreateProjectGallery, useUpdateProjectGallery } from '@/lib/projectGallery.api';
 
 type PreviewQuery = {
   title?: string | string[];
@@ -13,8 +20,12 @@ type PreviewQuery = {
   generation?: string | string[];
   serviceStatus: ServiceStatus;
   teamMembers?: string | string[];
-
   leader?: string | string[];
+
+  mode?: string | string[]; // 'create' | 'edit'
+  returnTo?: string | string[];
+  projectId?: string | string[];
+  thumbnailUrl?: string | string[];
 };
 
 // string 변환 함수 (타입 안전성)
@@ -27,6 +38,9 @@ const asString = (value: unknown): string => {
 type RawTeamMember = {
   name: string;
   part?: string[];
+  userId?: number; // ✅ 실제 payload 만들려면 userId가 있어야 함 (현재 ProjectPostForm teamMembers는 userId 포함)
+  school?: string;
+  badge?: string;
 };
 
 /** JSON.parse 안전 유틸 (preview query에서 공통으로 재사용 가능) */
@@ -97,6 +111,14 @@ export default function ProjectPreviewPage() {
   const oneLiner = asString(query.oneLiner);
   const description = asString(query.description);
 
+  const mode = asString(query.mode) || 'create'; // 'create' | 'edit'
+  const returnTo = asString(query.returnTo) || '/project-gallery/post';
+
+  const projectId = useMemo(() => {
+    const n = Number(asString(query.projectId));
+    return Number.isFinite(n) ? n : 0;
+  }, [query.projectId]);
+
   const generation = useMemo<GenerationValue>(() => {
     const raw = asString(query.generation);
     return parseGeneration(raw);
@@ -113,6 +135,7 @@ export default function ProjectPreviewPage() {
     return {
       name: leaderFromQuery?.name ?? '내 이름',
       role: mapUiPartToEnum(leaderPartUi),
+      userId: leaderFromQuery?.userId ?? 0,
     };
   }, [router.query]);
 
@@ -120,17 +143,46 @@ export default function ProjectPreviewPage() {
     return teamMembers.map(m => ({
       name: m.name,
       role: mapUiPartToEnum(m.part?.[0] ?? ''),
+      userId: m.userId ?? 0,
     }));
   }, [teamMembers]);
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [savedProjectId, setSavedProjectId] = useState<number>(0);
+
+  const createMutation = useCreateProjectGallery();
+  const updateMutation = useUpdateProjectGallery();
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   const handleBackToForm = () => {
-    router.push({
-      pathname: '/project-gallery/post',
-      query,
-    });
+    router.push(returnTo);
+  };
+
+  const buildBody = (): ProjectGalleryUpsertBody => {
+    const leaderPart = leader.role;
+    if (!leaderPart || !leader.userId) {
+      throw new Error('팀장 정보가 올바르지 않습니다.');
+    }
+
+    // teamMembers는 ProjectPostForm에서 userId 포함해서 넘기고 있으므로,
+    // 여기서도 userId가 있어야 서버 payload를 만들 수 있음.
+    const memberPayload = teamMembers.map(m => ({
+      userId: Number(m.userId),
+      part: mapUiPartToEnum(m.part?.[0] ?? '') as Part,
+    }));
+
+    return {
+      projectName: title.trim(),
+      generation,
+      shortDescription: oneLiner.trim(),
+      serviceStatus: status,
+      description: description.trim(),
+      leader: { userId: leader.userId, part: leaderPart },
+      members: memberPayload,
+      // thumbnailUrl: thumbnailUrl ?? null,
+    };
   };
 
   // 프로젝트 전시하기 버튼 클릭
@@ -138,9 +190,41 @@ export default function ProjectPreviewPage() {
     setShowConfirmModal(true);
   };
 
-  const handleConfirmSubmit = () => {
-    setShowConfirmModal(false);
-    setShowSuccessModal(true);
+  const handleConfirmSubmit = async () => {
+    if (isSubmitting) return;
+
+    try {
+      const body = buildBody();
+
+      if (mode === 'edit') {
+        if (projectId <= 0) throw new Error('수정할 프로젝트 ID가 없습니다.');
+
+        const res = await updateMutation.mutateAsync({
+          projectId,
+          body: { ...body, thumbnailUrl: body.thumbnailUrl ?? null },
+        });
+
+        setSavedProjectId(res.galleryProjectId);
+      } else {
+        const res = await createMutation.mutateAsync({
+          ...body,
+          thumbnailUrl: body.thumbnailUrl ?? null,
+        });
+
+        setSavedProjectId(res.galleryProjectId);
+      }
+
+      setShowConfirmModal(false);
+      setShowSuccessModal(true);
+    } catch (e: any) {
+      setShowConfirmModal(false);
+      alert(e?.message ?? '전시에 실패했습니다.');
+    }
+  };
+
+  const handleCloseSuccess = () => {
+    setShowSuccessModal(false);
+    if (savedProjectId > 0) router.push(`/project-gallery/${savedProjectId}`);
   };
 
   if (!router.isReady) return null;
@@ -166,9 +250,9 @@ export default function ProjectPreviewPage() {
           type="textConfirm"
           title="해당 프로젝트를 전시하시겠습니까?"
           message=""
-          confirmText="예"
+          confirmText={isSubmitting ? '전시 중...' : '예'}
           cancelText="아니오"
-          onClose={() => setShowConfirmModal(false)}
+          onClose={() => (isSubmitting ? null : setShowConfirmModal(false))}
           onConfirm={handleConfirmSubmit}
           customTitleAlign="center"
         />
@@ -181,7 +265,7 @@ export default function ProjectPreviewPage() {
           title="전시가 완료되었습니다."
           message=""
           buttonText="확인"
-          onClose={() => setShowSuccessModal(false)}
+          onClose={handleCloseSuccess}
           customTitleAlign="center"
         />
       )}

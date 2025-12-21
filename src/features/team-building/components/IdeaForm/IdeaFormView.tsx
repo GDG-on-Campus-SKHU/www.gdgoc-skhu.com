@@ -55,6 +55,8 @@ import 'react-quill/dist/quill.snow.css';
 
 type ModalState = 'idle' | 'confirm' | 'success';
 
+type IdeaFormMode = 'create' | 'edit';
+
 interface IdeaFormValues {
   title?: string;
   intro?: string;
@@ -89,7 +91,25 @@ interface IdeaFormViewProps {
   onSkipDraft: () => void;
   autoSaveSaving: boolean;
   autoSaveSavedAt: string;
+  enabledTeamRoles?: TeamRole[];
+  isRoleEnabled: (role: TeamRole) => boolean;
+  maxMemberCount?: number | null;
+  mode?: IdeaFormMode;
+  lockComposition?: boolean;
 }
+
+export const ROLE_LABEL_MAP: Record<TeamRole, string> = {
+  planning: '기획',
+  design: '디자인',
+  frontendWeb: '프론트엔드 (웹)',
+  frontendMobile: '프론트엔드 (모바일)',
+  backend: '백엔드',
+  aiMl: 'AI/ML',
+};
+
+export const LABEL_TO_ROLE_MAP: Record<string, TeamRole> = Object.fromEntries(
+  Object.entries(ROLE_LABEL_MAP).map(([k, v]) => [v, k as TeamRole])
+);
 
 export default function IdeaFormView({
   form,
@@ -114,6 +134,11 @@ export default function IdeaFormView({
   onSkipDraft,
   autoSaveSaving,
   autoSaveSavedAt,
+  enabledTeamRoles,
+  isRoleEnabled,
+  maxMemberCount,
+  mode = 'create',
+  lockComposition = false,
 }: IdeaFormViewProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -136,33 +161,48 @@ export default function IdeaFormView({
       ? `임시저장 완료 ${autoSaveSavedAt}`
       : AUTO_SAVE_PLACEHOLDER;
 
+  const totalSelectedMembers = Object.values(team).reduce((sum, v) => sum + (v ?? 0), 0);
+
+  const isOverMaxMember =
+    typeof maxMemberCount === 'number' && totalSelectedMembers >= maxMemberCount;
+
+  const pageTitle = mode === 'edit' ? '아이디어 수정' : '아이디어 작성';
+  const submitText = mode === 'edit' ? '아이디어 수정하기' : '아이디어 등록하기';
+
+  const confirmTitle =
+    mode === 'edit' ? '아이디어를 수정하겠습니까?' : '해당 아이디어를 게시하겠습니까?';
+  const successTitle = mode === 'edit' ? '수정이 완료되었습니다.' : '게시가 완료되었습니다.';
+
   return (
     <PageContainer $isModalOpen={modalState !== 'idle' || isDraftModalOpen}>
       <FormContainer>
         <HeaderRow>
-          <SectionTitle>아이디어 작성</SectionTitle>
+          <SectionTitle>{pageTitle}</SectionTitle>
           <AutoSaveStatus $saving={autoSaveSaving}>{autoSaveDisplay}</AutoSaveStatus>
         </HeaderRow>
 
-        {isDraftModalOpen && (
-          <ModalOverlay className="modal">
-            <ModalCard>
-              <ModalTitle>
-                {draftSavedAtLabel}에 저장된 글이 있습니다.
-                <br />
-                불러오시겠습니까?
-              </ModalTitle>
-              <ModalActions>
-                <ModalButton type="button" onClick={onLoadDraft}>
-                  예
-                </ModalButton>
-                <ModalButton type="button" $variant="secondary" onClick={onSkipDraft}>
-                  아니오
-                </ModalButton>
-              </ModalActions>
-            </ModalCard>
-          </ModalOverlay>
-        )}
+        {mounted &&
+          isDraftModalOpen &&
+          createPortal(
+            <ModalOverlay className="modal">
+              <ModalCard>
+                <ModalTitle>
+                  {draftSavedAtLabel}에 저장된 글이 있습니다.
+                  <br />
+                  불러오시겠습니까?
+                </ModalTitle>
+                <ModalActions>
+                  <ModalButton type="button" onClick={onLoadDraft}>
+                    예
+                  </ModalButton>
+                  <ModalButton type="button" $variant="secondary" onClick={onSkipDraft}>
+                    아니오
+                  </ModalButton>
+                </ModalActions>
+              </ModalCard>
+            </ModalOverlay>,
+            document.body
+          )}
 
         <FormSection>
           <FieldSet>
@@ -223,13 +263,22 @@ export default function IdeaFormView({
             <FieldLabel as="span">작성자의 파트</FieldLabel>
           </PreferredHeading>
           <RadioGroup>
-            {PREFERRED_OPTIONS.map(option => (
+            {PREFERRED_OPTIONS.filter(option => {
+              if (!enabledTeamRoles) return true;
+
+              const role = LABEL_TO_ROLE_MAP[option];
+              return role ? enabledTeamRoles.includes(role) : false;
+            }).map(option => (
               <Radio
                 key={`${option}-${radioRenderVersion}`}
                 name="preferredPart"
                 label={option}
                 checked={form.preferredPart === option}
-                onClick={() => onPreferredPartSelect(option, form.preferredPart !== option)}
+                disabled={lockComposition}
+                onClick={() => {
+                  if (lockComposition) return;
+                  onPreferredPartSelect(option, form.preferredPart !== option);
+                }}
               />
             ))}
           </RadioGroup>
@@ -238,24 +287,40 @@ export default function IdeaFormView({
         <TeamSection>
           <TeamHeading>
             <TeamTitle>팀원 구성</TeamTitle>
-            <TeamHint>팀 당 최대 n명까지 가능합니다.</TeamHint>
+            {typeof maxMemberCount === 'number' && (
+              <TeamHint>팀 당 최대 {maxMemberCount}명까지 가능합니다.</TeamHint>
+            )}
           </TeamHeading>
+
           <TeamList>
             {TEAM_ROLES.map(r => {
+              if (!isRoleEnabled(r.key)) return null;
+
               const currentCount = team[r.key] ?? 0;
+
               return (
                 <TeamRow key={r.key}>
                   <TeamLabel>{r.label}</TeamLabel>
                   <TeamControls>
                     <StepButton
                       type="button"
-                      disabled={currentCount <= 0}
-                      onClick={() => onTeamAdjust(r.key, Math.max(0, currentCount - 1))}
+                      disabled={lockComposition || currentCount <= 0}
+                      onClick={() => {
+                        if (lockComposition) return;
+                        onTeamAdjust(r.key, Math.max(0, currentCount - 1));
+                      }}
                     >
                       -
                     </StepButton>
                     <TeamCount>{currentCount}</TeamCount>
-                    <StepButton type="button" onClick={() => onTeamAdjust(r.key, currentCount + 1)}>
+                    <StepButton
+                      type="button"
+                      disabled={lockComposition || isOverMaxMember}
+                      onClick={() => {
+                        if (lockComposition || isOverMaxMember) return;
+                        onTeamAdjust(r.key, currentCount + 1);
+                      }}
+                    >
                       +
                     </StepButton>
                   </TeamControls>
@@ -275,7 +340,7 @@ export default function IdeaFormView({
             아이디어 미리보기
           </PreviewButton>
           <SubmitButton type="button" onClick={onOpenSubmitModal} disabled={isSubmitDisabled}>
-            아이디어 등록하기
+            {submitText}
           </SubmitButton>
         </ButtonGroup>
 
@@ -286,7 +351,7 @@ export default function IdeaFormView({
               <ModalCard>
                 {modalState === 'confirm' ? (
                   <>
-                    <ModalTitle>해당 아이디어를 게시하겠습니까?</ModalTitle>
+                    <ModalTitle>{confirmTitle}</ModalTitle>
                     <ModalActions>
                       <ModalButton type="button" onClick={onConfirmSubmit}>
                         예
@@ -298,7 +363,7 @@ export default function IdeaFormView({
                   </>
                 ) : (
                   <>
-                    <ModalTitle>게시가 완료되었습니다.</ModalTitle>
+                    <ModalTitle>{successTitle}</ModalTitle>
                     <ModalActions>
                       <ModalButton type="button" onClick={onModalDone}>
                         확인
