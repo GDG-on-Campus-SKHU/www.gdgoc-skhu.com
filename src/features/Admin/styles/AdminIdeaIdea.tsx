@@ -170,7 +170,7 @@ export const IDCNTR = styled.div`
 `;
 export const NameCNTR = styled.div`
   display: flex;
-  width: 700px;
+  width: 650px;
   padding: 8px;
   align-items: center;
   gap: 8px;
@@ -272,7 +272,7 @@ export const IdBodyCTNR = styled.div`
 
 export const NameBodyCTNR = styled.div`
   display: flex;
-  width: 700px;
+  width: 650px;
   padding: 8px;
   align-items: center;
   gap: 8px;
