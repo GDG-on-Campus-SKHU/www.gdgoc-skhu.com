@@ -14,6 +14,9 @@ export const Content = styled(BaseContent)`
 
 export const ContentContainer = styled(BaseContentContainer)`
   gap: 60px;
+  max-width: 1120px;
+  margin: 0 auto;
+  width: 100%;
 `;
 
 export const Heading = styled.header`
@@ -34,8 +37,7 @@ export const Description = styled(BaseDescription)`
 
 export const SummaryGrid = styled.div`
   display: flex;
-  width: 1105px;
-  height: 147px;
+  width: 100%;
   align-items: center;
   gap: 20px;
 `;
@@ -99,7 +101,7 @@ export const SummaryUnit = styled.span`
 
 export const Section = styled.section`
   display: flex;
-  width: 1105px;
+  width: 100%;
   flex-direction: column;
   align-items: flex-start;
   gap: 24px;
