@@ -147,6 +147,18 @@ export default function SelectBoxLink({
           </button>
         </div>
       )}
+
+      {links.length >= maxLinks && (
+        <p
+          css={{
+            fontSize: '14px',
+            color: '#979CA5',
+            marginTop: '4px',
+          }}
+        >
+          링크는 최대 {maxLinks}개까지 추가할 수 있어요.
+        </p>
+      )}
     </div>
   );
 }

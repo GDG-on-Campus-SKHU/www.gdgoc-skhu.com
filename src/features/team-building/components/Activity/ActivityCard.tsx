@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { checkYoutubeExists } from '@/lib/activity.api';
 import { css } from '@emotion/react';
 
 import StatusBadge from './Badge';
@@ -10,32 +12,41 @@ interface ActivityCardProps {
   year: string;
 }
 
-export default function ActivityCard({
-  title,
-  author,
-  thumbnailUrl,
-  youtubeId,
-  year,
-}: ActivityCardProps) {
-  const resolvedThumbnail = thumbnailUrl
-    ? thumbnailUrl
-    : youtubeId
+const FALLBACK_THUMB = '/gdgoc_logo.svg';
+
+export default function ActivityCard({ title, author, youtubeId, year }: ActivityCardProps) {
+  const [isValidVideo, setIsValidVideo] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!youtubeId) {
+      setIsValidVideo(false);
+      return;
+    }
+
+    checkYoutubeExists(youtubeId).then(setIsValidVideo);
+  }, [youtubeId]);
+
+  const thumbnailUrl =
+    youtubeId && isValidVideo
       ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
-      : undefined;
+      : FALLBACK_THUMB;
 
   return (
     <article css={articleCss}>
       <div css={thumbFrameCss}>
-        {resolvedThumbnail && youtubeId && (
+        {isValidVideo ? (
           <a
             href={`https://www.youtube.com/watch?v=${youtubeId}`}
             target="_blank"
             rel="noopener noreferrer"
           >
-            <img src={resolvedThumbnail} alt={title} css={thumbnailImgCss} />
+            <img src={thumbnailUrl} alt={title} css={thumbnailImgCss} />
           </a>
+        ) : (
+          <img src={thumbnailUrl} alt="기본 썸네일" css={thumbnailImgCss} />
         )}
       </div>
+
       <div css={metaCss}>
         <h3 css={contentTitleCss}>{title}</h3>
         <div css={badgeContainerCss}>

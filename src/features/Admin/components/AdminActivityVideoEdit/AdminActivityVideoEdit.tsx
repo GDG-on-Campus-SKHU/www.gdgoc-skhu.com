@@ -39,6 +39,8 @@ const AdminActivityVideoEdit: NextPage = () => {
 
   const [showModal, setShowModal] = useState(false);
   const [presetThumbnailUrl, setPresetThumbnailUrl] = useState('');
+  const [isUrlValid, setIsUrlValid] = useState<boolean | null>(null);
+  const [urlErrorMessage, setUrlErrorMessage] = useState('');
 
   // Validation
   const titleCount = `${videoTitle.length}/20`;
@@ -47,32 +49,84 @@ const AdminActivityVideoEdit: NextPage = () => {
   const isPresenterMax = presenterName.length >= 5;
   const hasKoreanInUrl = /[ㄱ-ㅎ가-힣]/.test(videoUrl);
 
+  function extractYoutubeId(url: string): string | null {
+    try {
+      const { hostname, searchParams, pathname } = new URL(url);
+
+      if (hostname.includes('youtu.be')) {
+        return pathname.replace('/', '') || null;
+      }
+
+      if (hostname.includes('youtube.com')) {
+        if (searchParams.get('v')) return searchParams.get('v');
+        const parts = pathname.split('/').filter(Boolean);
+        if (parts[0] === 'embed' || parts[0] === 'shorts') {
+          return parts[1] || null;
+        }
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  }
+
+  const youtubeId = useMemo(() => extractYoutubeId(videoUrl.trim()), [videoUrl]);
+
+  const isValidYoutubeUrl = !!youtubeId && !hasKoreanInUrl;
+
   // Thumbnail Logic
   const derivedThumbnailUrl = useMemo(() => {
-    const extractId = (url: string) => {
-      try {
-        const { hostname, searchParams, pathname } = new URL(url);
-        if (hostname.includes('youtu.be')) {
-          return pathname.replace('/', '') || null;
-        }
-        if (hostname.includes('youtube.com')) {
-          if (searchParams.get('v')) return searchParams.get('v');
-          const pathParts = pathname.split('/').filter(Boolean);
-          if (pathParts[0] === 'embed' || pathParts[0] === 'shorts') {
-            return pathParts[1] || null;
-          }
-        }
-      } catch {
-        return null;
-      }
-      return null;
-    };
-
-    const id = extractId(videoUrl.trim());
-    return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : '';
-  }, [videoUrl]);
+    if (!isValidYoutubeUrl || !youtubeId) return '';
+    return `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+  }, [youtubeId, isValidYoutubeUrl]);
 
   const thumbnailUrl = presetThumbnailUrl || derivedThumbnailUrl;
+
+  useEffect(() => {
+    setUrlErrorMessage('');
+    setFetchedTitle('');
+
+    const trimmed = videoUrl.trim();
+    if (!trimmed) {
+      setIsUrlValid(null);
+      return;
+    }
+
+    if (/[ㄱ-ㅎ가-힣]/.test(trimmed)) {
+      setIsUrlValid(false);
+      setUrlErrorMessage('URL에 한글이 포함되어 있어요.');
+      return;
+    }
+
+    const id = extractYoutubeId(trimmed);
+    if (!id) {
+      setIsUrlValid(false);
+      setUrlErrorMessage('유효한 YouTube 링크가 아니에요.');
+      return;
+    }
+
+    const controller = new AbortController();
+
+    fetch(`https://noembed.com/embed?url=${encodeURIComponent(trimmed)}`, {
+      signal: controller.signal,
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data?.error || !data?.title) {
+          setIsUrlValid(false);
+          setUrlErrorMessage('존재하지 않거나 접근할 수 없는 영상이에요.');
+        } else {
+          setIsUrlValid(true);
+          setFetchedTitle(data.title);
+        }
+      })
+      .catch(() => {
+        setIsUrlValid(false);
+        setUrlErrorMessage('영상 정보를 확인할 수 없어요.');
+      });
+
+    return () => controller.abort();
+  }, [videoUrl]);
 
   // Fetch YouTube Title
   useEffect(() => {
@@ -145,7 +199,7 @@ const AdminActivityVideoEdit: NextPage = () => {
           owner: presenterName.trim(),
           generation,
           url: videoUrl.trim(),
-          thumbnailUrl: thumbnailUrl || undefined,
+          thumbnailUrl,
         })
       );
     }
@@ -155,6 +209,9 @@ const AdminActivityVideoEdit: NextPage = () => {
     // 그래야 생성 페이지면 생성 페이지로, 수정 페이지면 수정 페이지로 돌아가서 데이터를 반영함
     router.back();
   };
+
+  const isSaveDisabled =
+    !videoTitle.trim() || !presenterName.trim() || !generation.trim() || isUrlValid !== true;
 
   return (
     <Page>
@@ -221,7 +278,19 @@ const AdminActivityVideoEdit: NextPage = () => {
                 $isUrlError={hasKoreanInUrl}
               />
             </Field>
-            {thumbnailUrl && (
+            {videoUrl && isUrlValid === false && (
+              <span
+                style={{
+                  color: '#ea4335',
+                  fontSize: '14px',
+                  marginTop: '4px',
+                }}
+              >
+                {urlErrorMessage || '올바른 YouTube 영상 URL을 입력해주세요.'}
+              </span>
+            )}
+
+            {isValidYoutubeUrl && thumbnailUrl && (
               <PreviewForm>
                 <PreviewLabel>영상 미리보기</PreviewLabel>
                 <PreviewBox>
@@ -236,26 +305,8 @@ const AdminActivityVideoEdit: NextPage = () => {
             )}
           </FormSection>
           <Actions>
-            <PrimaryButton
-              type="button"
-              disabled={
-                !videoTitle.trim() ||
-                !presenterName.trim() ||
-                !generation.trim() ||
-                (!videoUrl.trim() && !thumbnailUrl)
-              }
-              onClick={handleSave}
-            >
-              <PrimaryButtonText
-                $disabled={
-                  !videoTitle.trim() ||
-                  !presenterName.trim() ||
-                  !generation.trim() ||
-                  (!videoUrl.trim() && !thumbnailUrl)
-                }
-              >
-                저장하기
-              </PrimaryButtonText>
+            <PrimaryButton type="button" disabled={isSaveDisabled} onClick={handleSave}>
+              <PrimaryButtonText $disabled={isSaveDisabled}>저장하기</PrimaryButtonText>
             </PrimaryButton>
           </Actions>
         </ContentContainer>
