@@ -40,6 +40,7 @@ const AdminMember: NextPage = () => {
   const [submittedField, setSubmittedField] = useState<SearchField>('userName');
   const [submittedKeyword, setSubmittedKeyword] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
 
   const selectedSearchLabel = useMemo(
     () =>
@@ -49,11 +50,12 @@ const AdminMember: NextPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const members = await fetchUserSummaryList();
-      setMembers(members);
+      const result = await fetchUserSummaryList(currentPage - 1, TABLE_VISIBLE_ROWS);
+      setMembers(result.users);
+      setTotalElements(result.pageInfo.totalElements);
     };
     fetchData();
-  }, []);
+  }, [currentPage]);
 
   const handleSearchFieldChange = (selected: string[]) => {
     const nextLabel = selected[0];
@@ -63,6 +65,7 @@ const AdminMember: NextPage = () => {
     }
   };
 
+  // 클라이언트 사이드 필터링 (현재 페이지 내에서만)
   const filteredMembers = useMemo(() => {
     const keyword = submittedKeyword.trim().toLowerCase();
     if (!keyword) return members;
@@ -74,8 +77,8 @@ const AdminMember: NextPage = () => {
   }, [members, submittedField, submittedKeyword]);
 
   const totalPages = useMemo(
-    () => Math.max(Math.ceil(filteredMembers.length / TABLE_VISIBLE_ROWS), 1),
-    [filteredMembers.length]
+    () => Math.max(Math.ceil(totalElements / TABLE_VISIBLE_ROWS), 1),
+    [totalElements]
   );
 
   const safeCurrentPage = useMemo(
@@ -83,10 +86,7 @@ const AdminMember: NextPage = () => {
     [currentPage, totalPages]
   );
 
-  const paginatedMembers = useMemo(() => {
-    const startIndex = (safeCurrentPage - 1) * TABLE_VISIBLE_ROWS;
-    return filteredMembers.slice(startIndex, startIndex + TABLE_VISIBLE_ROWS);
-  }, [filteredMembers, safeCurrentPage]);
+  const paginatedMembers = filteredMembers;
 
   const pageSlots = useMemo(
     () => Array.from({ length: totalPages }, (_, idx) => idx + 1),
