@@ -2,6 +2,7 @@ import dynamic from 'next/dynamic';
 import { useUploadImage } from '@/lib/image.api';
 import { css } from '@emotion/react';
 import type React from 'react';
+import remarkBreaks from 'remark-breaks';
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor').then(mod => mod.default), {
   ssr: false,
@@ -93,6 +94,11 @@ export default function IdeaDescriptionEditor({ value, onChange }: Props) {
         onChange={val => onChange(val || '')}
         height={400}
         preview="live"
+        hideToolbar={false}
+        visibleDragbar={true}
+        previewOptions={{
+          remarkPlugins: [remarkBreaks],
+        }}
         textareaProps={{
           placeholder: "Github README 작성에 쓰이는 'markdown'을 이용해 작성해보세요.",
           onDrop: handleDrop,
