@@ -176,10 +176,23 @@ function mapProfileDtoToDomain(dto: GetMyProfileResponse): MyProfile {
 /* =========================================================
  * API: Get User Summary
  * ======================================================= */
-export async function fetchUserSummaryList(): Promise<UserSummary[]> {
-  const res = await api.get<UserSummaryDto>('/admin/approved/users');
-  console.log(res.data);
-  return res.data.users.map(mapUserSummaryToDomain);
+export async function fetchUserSummaryList(
+  page: number = 0, 
+  size: number = 20
+): Promise<{ users: UserSummary[]; pageInfo: any }> {
+  const res = await api.get<UserSummaryDto>('/admin/approved/users', {
+    params: {
+      page,
+      size,
+      sortBy: 'id',
+      order: 'ASC',
+    },
+  });
+  
+  return {
+    users: res.data.users.map(mapUserSummaryToDomain),
+    pageInfo: res.data.pageInfo,
+  };
 }
 
 /* =========================================================
