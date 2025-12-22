@@ -3,7 +3,12 @@ import { useEffect, useMemo, useState } from 'react';
 import type { NextPage } from 'next';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { fetchUserSummaryList } from '@/lib/adminMember.api';
+import {
+  fetchUserSummaryList,
+  searchUsersByName,
+  searchUsersByPart,
+  searchUsersBySchool,
+} from '@/lib/adminMember.api';
 import styled from 'styled-components';
 
 import SelectBoxBasic from '../../../team-building/components/SelectBoxBasic';
@@ -37,7 +42,6 @@ const AdminMember: NextPage = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [searchField, setSearchField] = useState<SearchField>('userName');
   const [inputKeyword, setInputKeyword] = useState('');
-  const [submittedField, setSubmittedField] = useState<SearchField>('userName');
   const [submittedKeyword, setSubmittedKeyword] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
@@ -48,33 +52,73 @@ const AdminMember: NextPage = () => {
     [searchField]
   );
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const result = await fetchUserSummaryList(currentPage - 1, TABLE_VISIBLE_ROWS);
+  // 데이터 fetch 함수
+  const fetchData = async (page: number, keyword: string, field: SearchField) => {
+    try {
+      let result;
+
+      if (!keyword) {
+        // 검색어가 없으면 전체 목록
+        result = await fetchUserSummaryList(page, TABLE_VISIBLE_ROWS);
+      } else {
+        // 검색 필드에 따라 다른 API 호출
+        switch (field) {
+          case 'userName':
+            result = await searchUsersByName(keyword, page, TABLE_VISIBLE_ROWS);
+            break;
+          case 'school':
+            result = await searchUsersBySchool(keyword, page, TABLE_VISIBLE_ROWS);
+            break;
+          case 'part':
+            result = await searchUsersByPart(keyword, page, TABLE_VISIBLE_ROWS);
+            break;
+          case 'generation':
+          case 'position':
+            // generation과 position은 클라이언트 사이드 필터링을 위해 전체 조회
+            result = await fetchUserSummaryList(page, TABLE_VISIBLE_ROWS);
+            break;
+          default:
+            result = await fetchUserSummaryList(page, TABLE_VISIBLE_ROWS);
+        }
+      }
+
       setMembers(result.users);
       setTotalElements(result.pageInfo.totalElements);
-    };
-    fetchData();
-  }, [currentPage]);
+    } catch (error) {
+      console.error('Failed to fetch members:', error);
+      setMembers([]);
+      setTotalElements(0);
+    }
+  };
+
+  useEffect(() => {
+    fetchData(currentPage - 1, submittedKeyword, searchField);
+  }, [currentPage, submittedKeyword, searchField]);
 
   const handleSearchFieldChange = (selected: string[]) => {
     const nextLabel = selected[0];
     const matchedOption = SEARCH_OPTIONS.find(option => option.label === nextLabel);
     if (matchedOption) {
       setSearchField(matchedOption.value);
+      // 검색 필드 변경 시 검색어 초기화
+      setInputKeyword('');
+      setSubmittedKeyword('');
+      setCurrentPage(1);
     }
   };
 
-  // 클라이언트 사이드 필터링 (현재 페이지 내에서만)
+  // generation과 position은 클라이언트 사이드 필터링
   const filteredMembers = useMemo(() => {
-    const keyword = submittedKeyword.trim().toLowerCase();
-    if (!keyword) return members;
+    if (!submittedKeyword || (searchField !== 'generation' && searchField !== 'position')) {
+      return members;
+    }
 
+    const keyword = submittedKeyword.trim().toLowerCase();
     return members.filter(member => {
-      const target = member[submittedField] ?? '';
+      const target = member[searchField] ?? '';
       return target.toLowerCase().includes(keyword);
     });
-  }, [members, submittedField, submittedKeyword]);
+  }, [members, searchField, submittedKeyword]);
 
   const totalPages = useMemo(
     () => Math.max(Math.ceil(totalElements / TABLE_VISIBLE_ROWS), 1),
@@ -99,7 +143,6 @@ const AdminMember: NextPage = () => {
   };
 
   const handleSearch = () => {
-    setSubmittedField(searchField);
     setSubmittedKeyword(inputKeyword.trim());
     setCurrentPage(1);
   };
@@ -133,7 +176,7 @@ const AdminMember: NextPage = () => {
             <Search>
               <SearchInput
                 type="text"
-                placeholder="이름을 검색하세요."
+                placeholder={`${selectedSearchLabel}을(를) 검색하세요.`}
                 value={inputKeyword}
                 onChange={event => setInputKeyword(event.target.value)}
                 onKeyDown={event => {
@@ -153,7 +196,6 @@ const AdminMember: NextPage = () => {
           <TableShell>
             <TableHeaderRow>
               <HeaderName>
-                {' '}
                 <HeaderNameCell>이름</HeaderNameCell>
               </HeaderName>
               <HeaderGen>
@@ -174,7 +216,6 @@ const AdminMember: NextPage = () => {
               {paginatedMembers.map(member => (
                 <TableRow key={member.id} onClick={() => handleUserDetail(member.id)}>
                   <BodyName>
-                    {' '}
                     <BodyNameCell>{member.userName}</BodyNameCell>
                   </BodyName>
                   <BodyGen>

@@ -177,7 +177,7 @@ function mapProfileDtoToDomain(dto: GetMyProfileResponse): MyProfile {
  * API: Get User Summary
  * ======================================================= */
 export async function fetchUserSummaryList(
-  page: number = 0, 
+  page: number = 0,
   size: number = 20
 ): Promise<{ users: UserSummary[]; pageInfo: any }> {
   const res = await api.get<UserSummaryDto>('/admin/approved/users', {
@@ -188,7 +188,7 @@ export async function fetchUserSummaryList(
       order: 'ASC',
     },
   });
-  
+
   return {
     users: res.data.users.map(mapUserSummaryToDomain),
     pageInfo: res.data.pageInfo,
@@ -327,4 +327,76 @@ export async function fetchDecidedUsers({
   });
 
   return res.data;
+}
+
+/* =========================================================
+ * API: Search Users by School
+ * ======================================================= */
+export async function searchUsersBySchool(
+  school: string,
+  page: number = 0,
+  size: number = 20
+): Promise<{ users: UserSummary[]; pageInfo: any }> {
+  const res = await api.get<UserSummaryDto>('/admin/approved/search-school', {
+    params: {
+      school,
+      page,
+      size,
+      sortBy: 'id',
+      order: 'ASC',
+    },
+  });
+
+  return {
+    users: res.data.users.map(mapUserSummaryToDomain),
+    pageInfo: res.data.pageInfo,
+  };
+}
+
+/* =========================================================
+ * API: Search Users by Part
+ * ======================================================= */
+export async function searchUsersByPart(
+  part: string,
+  page: number = 0,
+  size: number = 20
+): Promise<{ users: UserSummary[]; pageInfo: any }> {
+  const res = await api.get<UserSummaryDto>('/admin/approved/search-part', {
+    params: {
+      part,
+      page,
+      size,
+      sortBy: 'id',
+      order: 'ASC',
+    },
+  });
+
+  return {
+    users: res.data.users.map(mapUserSummaryToDomain),
+    pageInfo: res.data.pageInfo,
+  };
+}
+
+/* =========================================================
+ * API: Search Users by Name
+ * ======================================================= */
+export async function searchUsersByName(
+  name: string,
+  page: number = 0,
+  size: number = 20
+): Promise<{ users: UserSummary[]; pageInfo: any }> {
+  const res = await api.get<UserSummaryDto>('/admin/approved/search-name', {
+    params: {
+      name,
+      page,
+      size,
+      sortBy: 'id',
+      order: 'ASC',
+    },
+  });
+
+  return {
+    users: res.data.users.map(mapUserSummaryToDomain),
+    pageInfo: res.data.pageInfo,
+  };
 }
