@@ -436,7 +436,7 @@ export const ScheduleModalOverlay = styled.div`
 
 export const ScheduleModalCard = styled.div`
   width: min(640px, 100%);
-  max-height: min(90vh, 840px);
+  max-height: min(82vh, 840px);
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
@@ -537,7 +537,7 @@ export const ScheduleStepTitle = styled.p`
 
   /* body/b1/b1-bold */
   font-family: Pretendard;
-  font-size: 24px;
+  font-size: 20px;
   font-style: normal;
   font-weight: 700;
   line-height: 160%; /* 38.4px */
@@ -548,7 +548,7 @@ export const ScheduleStepDate = styled.p`
 
   /* body/b2/b2 */
   font-family: Pretendard;
-  font-size: 20px;
+  font-size: 18px;
   font-style: normal;
   font-weight: 500;
   line-height: 160%; /* 32px */
