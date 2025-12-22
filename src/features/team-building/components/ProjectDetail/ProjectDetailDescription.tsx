@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic';
 import { css } from '@emotion/react';
+import remarkBreaks from 'remark-breaks';
 
 import { colors } from '../../../../styles/constants';
 
@@ -14,7 +15,10 @@ export default function ProjectDetailDescription({ title, content }: Props) {
     <section css={wrapCss}>
       <h3 css={sectionTitleCss}>{title}</h3>
       <div css={boxCss} data-color-mode="light">
-        <MDPreview source={content || '아직 작성된 내용이 없습니다.'} />
+        <MDPreview
+          source={content || '아직 작성된 내용이 없습니다.'}
+          remarkPlugins={[remarkBreaks]}
+        />
       </div>
     </section>
   );

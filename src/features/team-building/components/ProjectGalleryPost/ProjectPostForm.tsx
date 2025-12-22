@@ -26,6 +26,8 @@ import ProjectMemberRow from './ProjectMemberRow';
 // 기수 / 파트 옵션
 const GENERATION_TABS: GenerationTab[] = ['25-26', '24-25', '이전 기수'];
 
+export const PROJECT_GALLERY_DRAFT_KEY = 'project-gallery-draft';
+
 export const PART_OPTIONS = [
   '기획',
   '디자인',
@@ -211,6 +213,29 @@ export default function ProjectPostForm({
     appliedInitKeyRef.current = initKey;
   }, [initKey, initialValues, defaultLeader]);
 
+  useEffect(() => {
+    const raw = sessionStorage.getItem(PROJECT_GALLERY_DRAFT_KEY);
+    if (!raw) return;
+
+    try {
+      const draft = JSON.parse(raw);
+
+      setTitle(draft.title ?? '');
+      setOneLiner(draft.oneLiner ?? '');
+      setGeneration(draft.generation ?? []);
+      if (draft.leader) {
+        setLeader(draft.leader);
+      }
+      setLeaderPart(draft.leaderPart ?? []);
+      setDescription(draft.description ?? '');
+      setTeamMembers(draft.teamMembers ?? []);
+      setServiceStatus(draft.serviceStatus ?? 'NOT_IN_SERVICE');
+      setThumbnailUrl(draft.thumbnailUrl ?? null);
+    } catch {
+      sessionStorage.removeItem(PROJECT_GALLERY_DRAFT_KEY);
+    }
+  }, []);
+
   const isTitleMax = title.length === TITLE_MAX;
   const isOneLinerMax = oneLiner.length === ONE_LINER_MAX;
 
@@ -225,6 +250,37 @@ export default function ProjectPostForm({
       badge: (myProfile as any).badge ?? (myProfile as any).generationAndPosition ?? '',
     });
   }, [myProfile, hasLeader]);
+
+  useEffect(() => {
+    const handleRouteChange = (url: string) => {
+      // 작성/미리보기 플로우를 벗어나면 삭제
+      if (!url.startsWith('/project-gallery/post') && !url.startsWith('/project-gallery/preview')) {
+        sessionStorage.removeItem(PROJECT_GALLERY_DRAFT_KEY);
+      }
+    };
+
+    router.events.on('routeChangeStart', handleRouteChange);
+    return () => {
+      router.events.off('routeChangeStart', handleRouteChange);
+    };
+  }, [router]);
+
+  useEffect(() => {
+    const clearDraft = () => {
+      sessionStorage.removeItem(PROJECT_GALLERY_DRAFT_KEY);
+    };
+
+    window.addEventListener('pagehide', clearDraft);
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        clearDraft();
+      }
+    });
+
+    return () => {
+      window.removeEventListener('pagehide', clearDraft);
+    };
+  }, []);
 
   // 팀원 선택(모달) → 폼에 등록
   const handleSelectMember = (member: Member) => {
@@ -333,6 +389,7 @@ export default function ProjectPostForm({
       const res = await onSubmit(body);
       setShowConfirmModal(false);
 
+      sessionStorage.removeItem(PROJECT_GALLERY_DRAFT_KEY);
       router.push(`/project-gallery/${res.galleryProjectId}`);
     } catch {
       setShowConfirmModal(false);
@@ -342,29 +399,26 @@ export default function ProjectPostForm({
   // ProjectPostForm.tsx 내부
 
   const handlePreviewClick = () => {
-    // edit 페이지(/project-gallery/[id]/edit)에서 id 확보
-    const rawId = (router.query.projectId ?? router.query.id) as string | string[] | undefined;
-    const parsedId = Number(Array.isArray(rawId) ? rawId[0] : rawId);
-    const projectId = Number.isFinite(parsedId) ? parsedId : 0;
+    sessionStorage.setItem(
+      PROJECT_GALLERY_DRAFT_KEY,
+      JSON.stringify({
+        title,
+        oneLiner,
+        generation,
+        leader,
+        leaderPart,
+        description,
+        teamMembers,
+        serviceStatus,
+        thumbnailUrl,
+      })
+    );
 
     router.push({
       pathname: '/project-gallery/preview',
       query: {
-        // ✅ 미리보기 화면용 데이터
-        title,
-        oneLiner,
-        generation: generation[0] ?? '',
-        leaderPart: leaderPart[0] ?? '',
-        description,
-        teamMembers: JSON.stringify(teamMembers),
-        serviceStatus,
-        leader: JSON.stringify(leader),
-        thumbnailUrl: thumbnailUrl ?? '',
-
-        // ✅ 기능을 위한 메타데이터
         mode: isEditMode ? 'edit' : 'create',
-        returnTo: router.asPath, // 작성/수정 어디든 정확히 복귀
-        projectId: isEditMode ? String(projectId) : '',
+        returnTo: router.asPath.split('?')[0],
       },
     });
   };

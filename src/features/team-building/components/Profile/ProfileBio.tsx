@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic';
 import { css } from '@emotion/react';
+import remarkBreaks from 'remark-breaks';
 
 import { colors } from '../../../../styles/constants';
 
@@ -43,6 +44,9 @@ export default function ProfileBio({
             preview="edit"
             hideToolbar={false}
             visibleDragbar={false}
+            previewOptions={{
+              remarkPlugins: [remarkBreaks],
+            }}
             textareaProps={{
               placeholder: "Github README 생성에 쓰이는 'markdown'을 이용해 작성해보세요.",
             }}
@@ -50,7 +54,10 @@ export default function ProfileBio({
         </div>
       ) : (
         <div css={boxCss} data-color-mode="light">
-          <MDPreview source={isEditing ? tempMarkdown : bioMarkdown} />
+          <MDPreview
+            source={isEditing ? tempMarkdown : bioMarkdown}
+            remarkPlugins={[remarkBreaks]}
+          />
         </div>
       )}
     </section>

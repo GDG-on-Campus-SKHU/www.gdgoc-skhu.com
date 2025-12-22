@@ -12,6 +12,7 @@ import {
   useSearchMembers,
   useUpdateProjectGallery,
 } from '@/lib/adminProjectGallery.api';
+import remarkBreaks from 'remark-breaks';
 import styled from 'styled-components';
 
 import '@uiw/react-md-editor/markdown-editor.css';
@@ -438,6 +439,9 @@ const ProjectGalleryEdit: React.FC = () => {
                       preview="live"
                       hideToolbar={false}
                       visibleDragbar={true}
+                      previewOptions={{
+                        remarkPlugins: [remarkBreaks],
+                      }}
                       textareaProps={{
                         placeholder: '프로젝트 설명을 마크다운으로 입력해주세요.',
                       }}
