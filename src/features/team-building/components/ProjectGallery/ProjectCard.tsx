@@ -63,6 +63,9 @@ const descCss = css`
   font-size: 14px;
   color: #979ca5;
   line-height: 160%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const badgeRowCss = css`
