@@ -548,7 +548,7 @@ export const ScheduleStepDate = styled.p`
 
   /* body/b2/b2 */
   font-family: Pretendard;
-  font-size: 20px;
+  font-size: 18px;
   font-style: normal;
   font-weight: 500;
   line-height: 160%; /* 32px */
