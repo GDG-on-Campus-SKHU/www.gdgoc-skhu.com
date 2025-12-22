@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useCreateProjectGallery, useUpdateProjectGallery } from '@/lib/projectGallery.api';
 
 import Modal from '../../components/Modal_Fix';
 import ProjectDetailView from '../../components/ProjectDetail/ProjectDetailView';
+import { PROJECT_GALLERY_DRAFT_KEY } from '../../components/ProjectGalleryPost/ProjectPostForm';
 import type {
   GenerationValue,
   Part,
@@ -43,38 +44,17 @@ type RawTeamMember = {
   badge?: string;
 };
 
-/** JSON.parse 안전 유틸 (preview query에서 공통으로 재사용 가능) */
-function safeParseJson<T>(value: unknown, fallback: T): T {
-  const raw = asString(value);
-  if (!raw) return fallback;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-function parseTeamMembers(value: unknown): RawTeamMember[] {
-  const parsed = safeParseJson<unknown>(value, []);
-  return Array.isArray(parsed) ? (parsed as RawTeamMember[]) : [];
-}
-
-function parseLeader(value: unknown): ProjectMemberBase | null {
-  const parsed = safeParseJson<unknown>(value, null);
-
-  if (!parsed || typeof parsed !== 'object') return null;
-  const obj = parsed as Partial<ProjectMemberBase>;
-
-  if (typeof obj.userId !== 'number') return null;
-  if (typeof obj.name !== 'string') return null;
-
-  return {
-    userId: obj.userId,
-    name: obj.name,
-    school: typeof obj.school === 'string' ? obj.school : '',
-    badge: typeof obj.badge === 'string' ? obj.badge : '',
-  };
-}
+type ProjectGalleryDraft = {
+  title: string;
+  oneLiner: string;
+  generation: string[];
+  leader: ProjectMemberBase;
+  leaderPart: string[];
+  description: string;
+  teamMembers: RawTeamMember[];
+  serviceStatus: ServiceStatus;
+  thumbnailUrl?: string | null;
+};
 
 /** 따로 분리하여 정리할 예정 */
 function parseGeneration(value: string): GenerationValue {
@@ -107,45 +87,56 @@ export default function ProjectPreviewPage() {
   const router = useRouter();
   const query = router.query as PreviewQuery;
 
-  const title = asString(query.title);
-  const oneLiner = asString(query.oneLiner);
-  const description = asString(query.description);
-
   const mode = asString(query.mode) || 'create'; // 'create' | 'edit'
   const returnTo = asString(query.returnTo) || '/project-gallery/post';
+
+  const draft = useMemo<ProjectGalleryDraft | null>(() => {
+    if (!router.isReady) return null;
+
+    const raw = sessionStorage.getItem(PROJECT_GALLERY_DRAFT_KEY);
+    if (!raw) return null;
+
+    try {
+      return JSON.parse(raw) as ProjectGalleryDraft;
+    } catch {
+      return null;
+    }
+  }, [router.isReady]);
 
   const projectId = useMemo(() => {
     const n = Number(asString(query.projectId));
     return Number.isFinite(n) ? n : 0;
   }, [query.projectId]);
 
-  const generation = useMemo<GenerationValue>(() => {
-    const raw = asString(query.generation);
-    return parseGeneration(raw);
-  }, [query.generation]);
-
-  const status = query.serviceStatus;
-
-  const teamMembers = useMemo(() => parseTeamMembers(query.teamMembers), [query.teamMembers]);
-
-  const leader = useMemo(() => {
-    const leaderFromQuery = parseLeader((router.query as any)?.leader);
-    const leaderPartUi = asString((router.query as any)?.leaderPart);
-
-    return {
-      name: leaderFromQuery?.name ?? '내 이름',
-      role: mapUiPartToEnum(leaderPartUi),
-      userId: leaderFromQuery?.userId ?? 0,
+  useEffect(() => {
+    const handleRouteChange = (url: string) => {
+      if (!url.startsWith('/project-gallery/post') && !url.startsWith('/project-gallery/preview')) {
+        sessionStorage.removeItem(PROJECT_GALLERY_DRAFT_KEY);
+      }
     };
-  }, [router.query]);
 
-  const members = useMemo(() => {
-    return teamMembers.map(m => ({
-      name: m.name,
-      role: mapUiPartToEnum(m.part?.[0] ?? ''),
-      userId: m.userId ?? 0,
-    }));
-  }, [teamMembers]);
+    router.events.on('routeChangeStart', handleRouteChange);
+    return () => {
+      router.events.off('routeChangeStart', handleRouteChange);
+    };
+  }, [router]);
+
+  useEffect(() => {
+    const clearDraft = () => {
+      sessionStorage.removeItem(PROJECT_GALLERY_DRAFT_KEY);
+    };
+
+    window.addEventListener('pagehide', clearDraft);
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        clearDraft();
+      }
+    });
+
+    return () => {
+      window.removeEventListener('pagehide', clearDraft);
+    };
+  }, []);
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -156,32 +147,49 @@ export default function ProjectPreviewPage() {
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
+  if (!draft) return null;
+
+  const title = draft.title;
+  const oneLiner = draft.oneLiner;
+  const description = draft.description;
+  const status = draft.serviceStatus;
+
+  const generation = parseGeneration(draft.generation[0]);
+
+  const leader = {
+    name: draft.leader.name,
+    role: mapUiPartToEnum(draft.leaderPart[0]),
+    userId: draft.leader.userId,
+  };
+
+  const members = draft.teamMembers.map(m => ({
+    name: m.name,
+    role: mapUiPartToEnum(m.part?.[0] ?? ''),
+    userId: m.userId ?? 0,
+  }));
+
   const handleBackToForm = () => {
     router.push(returnTo);
   };
 
   const buildBody = (): ProjectGalleryUpsertBody => {
-    const leaderPart = leader.role;
-    if (!leaderPart || !leader.userId) {
-      throw new Error('팀장 정보가 올바르지 않습니다.');
-    }
-
-    // teamMembers는 ProjectPostForm에서 userId 포함해서 넘기고 있으므로,
-    // 여기서도 userId가 있어야 서버 payload를 만들 수 있음.
-    const memberPayload = teamMembers.map(m => ({
-      userId: Number(m.userId),
-      part: mapUiPartToEnum(m.part?.[0] ?? '') as Part,
-    }));
+    if (!draft) throw new Error('임시 저장된 프로젝트가 없습니다.');
 
     return {
-      projectName: title.trim(),
-      generation,
-      shortDescription: oneLiner.trim(),
-      serviceStatus: status,
-      description: description.trim(),
-      leader: { userId: leader.userId, part: leaderPart },
-      members: memberPayload,
-      // thumbnailUrl: thumbnailUrl ?? null,
+      projectName: draft.title.trim(),
+      generation: parseGeneration(draft.generation[0]),
+      shortDescription: draft.oneLiner.trim(),
+      serviceStatus: draft.serviceStatus,
+      description: draft.description.trim(),
+      leader: {
+        userId: draft.leader.userId,
+        part: mapUiPartToEnum(draft.leaderPart[0])!,
+      },
+      members: draft.teamMembers.map(m => ({
+        userId: m.userId!,
+        part: mapUiPartToEnum(m.part?.[0] ?? '')!,
+      })),
+      thumbnailUrl: draft.thumbnailUrl ?? null,
     };
   };
 
