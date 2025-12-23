@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useMyProfile } from '@/lib/mypageProfile.api';
 import { useRemoveTeamMember } from '@/lib/myTeam.api';
 import { css } from '@emotion/react';
 
@@ -34,6 +35,9 @@ function PartColumn({ roster, isLeaderView, onOpenRemoveModal }: PartColumnProps
 
   const isRecruiting = maxMemberCount > 0;
 
+  const { data: myProfile } = useMyProfile();
+  const myUserId = myProfile?.userId;
+
   return (
     <div css={partColumnCss}>
       <div css={partHeaderCss}>
@@ -57,6 +61,8 @@ function PartColumn({ roster, isLeaderView, onOpenRemoveModal }: PartColumnProps
             return (
               <MyTeamMemberCard
                 key={member.userId}
+                userId={member.userId}
+                myUserId={myUserId!}
                 variant={variant}
                 name={member.memberName}
                 onClickRemove={

@@ -12,7 +12,7 @@ type IdeaItemProps = {
 
 const IdeaRow = styled(Link)`
   display: grid;
-  grid-template-columns: 93px 661.5px 80px 110px;
+  grid-template-columns: 93px 661.5px 85px 110px;
   align-items: center;
   column-gap: 40px;
   padding: 20px 0;

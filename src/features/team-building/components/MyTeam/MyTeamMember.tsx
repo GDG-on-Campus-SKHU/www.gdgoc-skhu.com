@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
@@ -8,24 +9,43 @@ import externalIcon from '../../assets/external.svg';
 export type MyTeamMemberVariant = 'leader' | 'managedMember' | 'member';
 
 type MyTeamMemberCardProps = {
+  userId?: number;
+  myUserId?: number;
   variant: MyTeamMemberVariant;
   name: string;
   onClickCard?: () => void;
-  /** 팀장의 입장에서 팀원 삭제 버튼 클릭 ('managedMember') */
   onClickRemove?: () => void;
-  /** 상위에서 넘기는 width 조절 */
   width?: string | number;
 };
 
 export default function MyTeamMemberCard({
+  userId,
+  myUserId,
   variant,
   name,
   onClickCard,
   onClickRemove,
   width = '100%',
 }: MyTeamMemberCardProps) {
+  const router = useRouter();
+
   const isLeader = variant === 'leader';
   const isManagedMember = variant === 'managedMember';
+
+  const handleClickExternal = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (userId === myUserId) {
+      // 본인 → 내 프로필
+      router.push('/mypage/profile');
+    } else {
+      // 다른 유저 → 타인 프로필
+      router.push({
+        pathname: '/mypage/profile/[userId]',
+        query: { userId },
+      });
+    }
+  };
 
   return (
     <div css={[baseBoxCss(width), memberBoxCss]}>
@@ -39,9 +59,14 @@ export default function MyTeamMemberCard({
 
           <span css={nameTextCss}>{name}</span>
 
-          <span css={externalIconWrapCss}>
-            <Image src={externalIcon} alt="프로필 보기" width={9} height={9} />
-          </span>
+          <button
+            type="button"
+            css={externalIconWrapCss}
+            onClick={handleClickExternal}
+            aria-label="프로필 보기"
+          >
+            <Image src={externalIcon} alt="" width={9} height={9} />
+          </button>
         </div>
       </div>
 
@@ -114,11 +139,6 @@ const nameTextCss = css`
   font-size: 20px;
   font-weight: 500;
   line-height: 32px;
-
-  &:hover {
-    text-decoration: underline;
-    color: ${colors.primary[600]};
-    cursor: pointer;
   }
 `;
 
@@ -127,6 +147,7 @@ const externalIconWrapCss = css`
   align-items: center;
   justify-content: center;
   margin-left: 2px;
+  cursor: pointer;
 `;
 
 const removeBtnCss = css`

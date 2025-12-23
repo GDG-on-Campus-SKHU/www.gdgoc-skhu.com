@@ -98,7 +98,7 @@ export type ApplyStatusRow = {
   name: string;
   partLabel: string; // "프론트엔드 (웹)" 같은 화면 표시용
   school: string;
-
+  applicantId: number;
   status: EnrollmentStatus;
   enrollmentAcceptable: boolean;
 };

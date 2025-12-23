@@ -8,6 +8,9 @@ interface ProfileHeaderProps {
   isPreviewMode: boolean;
   userName?: string;
   onEditClick: () => void;
+
+  hideMyPageTitle?: boolean;
+  hideEditButton?: boolean;
 }
 
 export default function ProfileHeader({
@@ -15,21 +18,27 @@ export default function ProfileHeader({
   isPreviewMode,
   userName,
   onEditClick,
+  hideMyPageTitle = false,
+  hideEditButton = false,
 }: ProfileHeaderProps) {
   return (
     <>
-      <div css={headerCss}>
-        <p css={titleCss}>
-          마이페이지 <span css={subTitleCss}>| Profile</span>
-        </p>
-      </div>
+      {!hideMyPageTitle && (
+        <div css={headerCss}>
+          <p css={titleCss}>
+            마이페이지 <span css={subTitleCss}>| Profile</span>
+          </p>
+        </div>
+      )}
+
       <div css={sectionHeaderCss}>
         <p css={userNameCss}>{userName}</p>
-        {!isEditing && (
+        {!isEditing && !hideEditButton && (
           <div css={buttonWrapperCss}>
             <Button title={'수정하기'} variant="secondary" onClick={onEditClick} />
           </div>
         )}
+
         {isPreviewMode && (
           <div css={isPreviewModeIndicatorCss}>
             <img src="/icon/eye.svg" alt="눈" />

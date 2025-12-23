@@ -489,14 +489,6 @@ export default function IdeaListPage() {
     return keyFromPart || null;
   }, [idea?.preferredPart]);
 
-  const filledTeam = React.useMemo(
-    () => ({
-      ...createEmptyTeamCounts(),
-      ...(idea?.filledTeam ?? {}),
-    }),
-    [idea?.filledTeam]
-  );
-
   const displayTotals = React.useMemo(() => {
     const totals: Record<(typeof TEAM_ROLES)[number]['key'], number> = {
       ...createEmptyTeamCounts(),
@@ -509,16 +501,18 @@ export default function IdeaListPage() {
   }, [preferredRoleKey, team]);
 
   const displayCurrents = React.useMemo(() => {
-    const currents: Record<(typeof TEAM_ROLES)[number]['key'], number> = createEmptyTeamCounts();
-    TEAM_ROLES.forEach(role => {
-      const limit = displayTotals[role.key] ?? 0;
-      const ownerSlot = preferredRoleKey === role.key ? 1 : 0;
-      const applied = filledTeam[role.key] ?? 0;
-      const totalApplied = ownerSlot + applied;
-      currents[role.key] = limit > 0 ? Math.min(totalApplied, limit) : totalApplied;
-    });
-    return currents;
-  }, [displayTotals, filledTeam, preferredRoleKey]);
+    // 서버에서 내려준 currentCount 그대로 표시
+    return {
+      ...createEmptyTeamCounts(),
+      ...(idea?.filledTeam ?? {}),
+    };
+  }, [idea?.filledTeam]);
+
+  const totalCurrentMembers = React.useMemo(() => {
+    return TEAM_ROLES.reduce((sum, role) => sum + (displayCurrents[role.key] ?? 0), 0);
+  }, [displayCurrents]);
+
+  const canDeleteIdea = isMyIdea && totalCurrentMembers < 2;
 
   const safeDescription = React.useMemo(
     () => sanitizeDescription(idea?.description || ''),
@@ -527,6 +521,11 @@ export default function IdeaListPage() {
 
   const handleOpenDeleteModal = () => {
     if (!isMyIdea) return;
+    if (!canDeleteIdea) {
+      alert('이미 지원자가 있어 삭제할 수 없습니다.');
+      return;
+    }
+
     setShowConfirmDelete(true);
   };
 
@@ -645,7 +644,7 @@ export default function IdeaListPage() {
 
         <ActionRow>
           {isMyIdea ? (
-            <div style={{ display: 'flex', gap: 15 }}>
+            <div style={{ display: 'flex', gap: 15, justifyContent: 'center', width: '100%' }}>
               <Button
                 title="수정하기"
                 variant="secondary"
@@ -655,11 +654,14 @@ export default function IdeaListPage() {
                 }}
                 css={{ width: '300px', height: '50px', fontSize: '18px', fontWeight: '500' }}
               />
-              <ButtonRed
-                title="삭제하기"
-                onClick={handleOpenDeleteModal}
-                css={{ width: '300px', height: '50px', fontSize: '18px', fontWeight: '500' }}
-              />
+
+              {canDeleteIdea && (
+                <ButtonRed
+                  title="삭제하기"
+                  onClick={handleOpenDeleteModal}
+                  css={{ width: '300px', height: '50px', fontSize: '18px', fontWeight: '500' }}
+                />
+              )}
             </div>
           ) : canEnroll ? (
             <Button

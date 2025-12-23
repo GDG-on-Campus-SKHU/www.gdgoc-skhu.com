@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useMyProfile } from '@/lib/mypageProfile.api';
 import {
   useDetermineEnrollment,
   useEnrollmentReadabilities,
@@ -69,6 +70,9 @@ export default function ApplyStatusSection() {
     retry: false,
   });
 
+  const { data: myProfile } = useMyProfile();
+  const myUserId = myProfile?.userId;
+
   // readable scheduleType만 추림
   const readableSet = useMemo(() => {
     const set = new Set<EnrollmentScheduleType>();
@@ -116,6 +120,7 @@ export default function ApplyStatusSection() {
     return list.map(e => ({
       id: e.enrollmentId,
       priorityLabel: choiceToLabel(e.choice),
+      applicantId: e.applicantId,
       name: e.applicantName,
       partLabel: partToLabel(e.applicantPart),
       school: e.applicantSchool,
@@ -226,6 +231,7 @@ export default function ApplyStatusSection() {
       ) : (
         <ApplyStatusTable
           rows={rows}
+          myUserId={myUserId!}
           onAccept={handleClickAccept}
           onReject={handleClickReject}
           scheduleEnded={scheduleEnded}
