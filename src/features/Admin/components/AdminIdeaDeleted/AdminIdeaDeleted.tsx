@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
+import Button from '@/features/team-building/components/Button';
 import {
   AdminIdeaDetail as AdminIdeaDetailType,
   deleteAdminIdea,
@@ -370,12 +371,8 @@ export default function AdminIdeaDeleted() {
               <ModalActions>
                 <ModalButtonContainer>
                   {/* 복구 버튼 스타일 (Primary 색상 재사용하거나 커스텀) */}
-                  <MyConfirmButton type="button" onClick={handleRestoreConfirm}>
-                    <MySuccessButtonText>복구하기</MySuccessButtonText>
-                  </MyConfirmButton>
-                  <MyCancelButton type="button" onClick={handleCloseModal}>
-                    <CancelButtonText>취소</CancelButtonText>
-                  </MyCancelButton>
+                  <Button title="복구하기" onClick={handleRestoreConfirm} />
+                  <Button title="취소" onClick={handleCloseModal} variant="secondary" />
                 </ModalButtonContainer>
               </ModalActions>
             </ModalCard>
