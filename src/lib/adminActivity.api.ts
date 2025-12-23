@@ -161,9 +161,8 @@ function mapPostDetailDtoToDomain(dto: PostDetailDto): PostDetail {
 // 카테고리 목록 조회
 export async function fetchAdminCategories(): Promise<CategorySummary[]> {
   const res = await api.get<CategorySummaryDto[]>('/admin/activity');
-  return res.data ?? [];
+  return (res.data ?? []).sort((a, b) => b.categoryId - a.categoryId);
 }
-
 export function useAdminCategories(
   options?: Omit<UseQueryOptions<CategorySummary[], Error>, 'queryKey' | 'queryFn'>
 ) {

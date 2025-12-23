@@ -98,7 +98,8 @@ function mapCategoryDtoToDomain(dto: ActivityCategoryDto): ActivityCategory {
 export async function fetchPublishedActivities(): Promise<ActivityCategory[]> {
   try {
     const res = await api.get<GetPublishedActivitiesResponse>('/activity/published');
-    return (res.data ?? []).map(mapCategoryDtoToDomain);
+    // categoryId 기준 내림차순 정렬 (최신순)
+    return (res.data ?? []).map(mapCategoryDtoToDomain).sort((a, b) => b.categoryId - a.categoryId);
   } catch (error: any) {
     // 등록된 액티비티가 없는 경우 빈 배열 반환
     if (error?.response?.status === 404) return [];

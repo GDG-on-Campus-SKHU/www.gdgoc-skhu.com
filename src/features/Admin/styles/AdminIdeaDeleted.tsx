@@ -204,7 +204,7 @@ export const NavString = styled.span<{ $active?: boolean }>`
   text-align: left;
 `;
 export const ImageContainer = styled.div`
-  aspect-ratio: 30/19;4
+  aspect-ratio: 30/19;
   width: 60px;
   height: 38px;
 `;

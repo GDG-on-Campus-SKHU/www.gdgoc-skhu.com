@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
+import Button from '@/features/team-building/components/Button';
 import {
   AdminIdeaDetail as AdminIdeaDetailType,
   deleteAdminIdea,
@@ -11,12 +12,10 @@ import { colors } from '@/styles/constants';
 import styled from 'styled-components';
 
 import {
-  CancelButtonText,
   ContentContainer,
   CountNum,
   CountStat,
   CountUnit,
-  DeleteButtonText,
   DeletedMark,
   DeletedMarkContainer,
   DeletedText,
@@ -43,9 +42,7 @@ import {
   ModalSuccessCard,
   ModalSuccessCardTitle,
   ModalTitle,
-  MyCancelButton,
   MyConfirmButton,
-  MyDeleteButton,
   MySuccessButtonText,
   PreviewCanvas,
   ResponsiveWrapper,
@@ -370,12 +367,8 @@ export default function AdminIdeaDeleted() {
               <ModalActions>
                 <ModalButtonContainer>
                   {/* 복구 버튼 스타일 (Primary 색상 재사용하거나 커스텀) */}
-                  <MyConfirmButton type="button" onClick={handleRestoreConfirm}>
-                    <MySuccessButtonText>복구하기</MySuccessButtonText>
-                  </MyConfirmButton>
-                  <MyCancelButton type="button" onClick={handleCloseModal}>
-                    <CancelButtonText>취소</CancelButtonText>
-                  </MyCancelButton>
+                  <Button title="복구하기" onClick={handleRestoreConfirm} />
+                  <Button title="취소" onClick={handleCloseModal} variant="secondary" />
                 </ModalButtonContainer>
               </ModalActions>
             </ModalCard>
@@ -387,18 +380,12 @@ export default function AdminIdeaDeleted() {
               <ModalInfo>
                 <ModalTitle>{ideaData.title}</ModalTitle>
                 <ModalMessage>아이디어를 완전히 삭제할까요?</ModalMessage>
-                <ModalMessage style={{ color: '#f44242' }}>
-                  이 작업은 되돌릴 수 없으며 DB에서 영구 삭제됩니다.
-                </ModalMessage>
+                <ModalMessage>이 작업은 되돌릴 수 없습니다.</ModalMessage>
               </ModalInfo>
               <ModalActions>
                 <ModalButtonContainer>
-                  <MyDeleteButton type="button" onClick={handleDeleteConfirm}>
-                    <DeleteButtonText>영구 삭제</DeleteButtonText>
-                  </MyDeleteButton>
-                  <MyCancelButton type="button" onClick={handleCloseModal}>
-                    <CancelButtonText>취소</CancelButtonText>
-                  </MyCancelButton>
+                  <Button title="삭제하기" onClick={handleDeleteConfirm} />
+                  <Button title="취소" onClick={handleCloseModal} variant="secondary" />
                 </ModalButtonContainer>
               </ModalActions>
             </ModalCard>
