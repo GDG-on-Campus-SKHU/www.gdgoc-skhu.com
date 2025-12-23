@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
+import Button from '@/features/team-building/components/Button';
 import {
   AdminIdeaDetail as AdminIdeaDetailType,
   deleteAdminIdea,
@@ -394,12 +395,12 @@ export default function AdminIdeaDetail() {
             </ModalInfo>
             <ModalActions>
               <ModalButtonContainer>
-                <MyDeleteButton onClick={handleDeleteIdea}>
-                  <DeleteButtonText>삭제하기</DeleteButtonText>
-                </MyDeleteButton>
-                <MyCancelButton onClick={() => setIdeaModalState('closed')}>
-                  <CancelButtonText>취소</CancelButtonText>
-                </MyCancelButton>
+                <Button title="삭제하기" onClick={handleDeleteIdea} />
+                <Button
+                  title="취소"
+                  onClick={() => setIdeaModalState('closed')}
+                  variant="secondary"
+                />
               </ModalButtonContainer>
             </ModalActions>
           </ModalCard>
