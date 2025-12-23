@@ -175,6 +175,12 @@ const titleItemCss = css`
   font-weight: 600;
   color: #111111;
   line-height: 140%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
 `;
 
 const descItemCss = css`
@@ -183,6 +189,12 @@ const descItemCss = css`
   font-weight: 400;
   color: #979ca5;
   line-height: 150%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
 `;
 
 const badgeRowCss = css`
