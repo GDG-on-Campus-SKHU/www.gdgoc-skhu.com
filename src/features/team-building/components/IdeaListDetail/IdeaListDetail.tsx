@@ -2,6 +2,8 @@ import React from 'react';
 import { useRouter } from 'next/router';
 import { useMyProfile } from '@/lib/mypageProfile.api';
 import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
 import styled from 'styled-components';
 
 import { deleteIdea, fetchCurrentTeamBuildingProject, fetchIdeaDetail } from '../../api/ideas';
@@ -10,7 +12,6 @@ import ButtonRed from '../ButtonRed';
 import Modal from '../Modal_Fix';
 import { partToLabel } from '../MyTeam/ApplyStatusSection';
 import { createEmptyTeamCounts, Idea } from '../store/IdeaStore';
-import { sanitizeDescription } from '../utils/sanitizeDescription';
 
 const SMALL_BREAKPOINT = '600px';
 const TEAM_ROLES = [
@@ -514,11 +515,6 @@ export default function IdeaListPage() {
 
   const canDeleteIdea = isMyIdea && totalCurrentMembers < 2;
 
-  const safeDescription = React.useMemo(
-    () => sanitizeDescription(idea?.description || ''),
-    [idea?.description]
-  );
-
   const handleOpenDeleteModal = () => {
     if (!isMyIdea) return;
     if (!canDeleteIdea) {
@@ -632,13 +628,11 @@ export default function IdeaListPage() {
 
           <DescriptionSection>
             <SectionTitle>아이디어 설명</SectionTitle>
-            <DescriptionBox
-              dangerouslySetInnerHTML={{
-                __html:
-                  safeDescription ||
-                  '',
-              }}
-            />
+            <DescriptionBox>
+              <ReactMarkdown remarkPlugins={[remarkBreaks]}>
+                {idea?.description ?? ''}
+              </ReactMarkdown>
+            </DescriptionBox>
           </DescriptionSection>
         </ResponsiveWrapper>
 

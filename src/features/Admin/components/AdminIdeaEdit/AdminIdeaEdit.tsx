@@ -43,7 +43,9 @@ import {
   getAdminProjectIdeaDetail,
   updateAdminIdea,
 } from '@/lib/adminIdea.api';
+import { useUploadImage } from '@/lib/image.api';
 import { css } from '@emotion/react';
+import remarkBreaks from 'remark-breaks';
 
 // --- Styles Imports (Admin Idea Edit) ---
 import {
@@ -116,6 +118,32 @@ const API_PART_TO_KOREAN: Record<'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' 
   BACKEND: '백엔드',
   AI: 'AI/ML',
 };
+
+function insertAtCursor(
+  current: string,
+  insertText: string,
+  textarea: HTMLTextAreaElement | null,
+  onChange: (next: string) => void
+) {
+  // textarea 접근이 불가하면 그냥 뒤에 붙이기(안전 fallback)
+  if (!textarea) {
+    onChange((current ?? '') + insertText);
+    return;
+  }
+
+  const start = textarea.selectionStart ?? current.length;
+  const end = textarea.selectionEnd ?? current.length;
+
+  const next = current.slice(0, start) + insertText + current.slice(end);
+  onChange(next);
+
+  // 커서 위치를 삽입 텍스트 뒤로 이동
+  const nextPos = start + insertText.length;
+  requestAnimationFrame(() => {
+    textarea.focus();
+    textarea.setSelectionRange(nextPos, nextPos);
+  });
+}
 
 export default function AdminIdeaEdit() {
   const router = useRouter();
@@ -285,6 +313,67 @@ export default function AdminIdeaEdit() {
   const titleCount = `${form.title.length}/${TITLE_MAX_LENGTH}`;
   const introCount = `${form.intro.length}/${INTRO_MAX_LENGTH}`;
 
+  const uploadMutation = useUploadImage();
+
+  const insertImageMarkdown = (url: string, file: File, textarea: HTMLTextAreaElement | null) => {
+    const alt = file.name.replace(/\.[^/.]+$/, '') || 'image';
+    const md = `\n![${alt}](${url})\n`;
+
+    insertAtCursor(form.description, md, textarea, next =>
+      setForm(prev => ({
+        ...prev,
+        description: next,
+      }))
+    );
+  };
+
+  const uploadOneProjectImage = async (file: File): Promise<string> => {
+    const uploaded = await uploadMutation.mutateAsync({
+      file,
+      directory: 'project',
+    });
+    return uploaded.url;
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    const textarea = e.currentTarget;
+
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    if (files.length === 0) return;
+
+    for (const file of files) {
+      try {
+        const url = await uploadOneProjectImage(file);
+        insertImageMarkdown(url, file, textarea);
+      } catch (err) {
+        console.error('이미지 업로드 실패:', err);
+      }
+    }
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const textarea = e.currentTarget;
+
+    const items = Array.from(e.clipboardData.items);
+    const imageItems = items.filter(it => it.type.startsWith('image/'));
+    if (imageItems.length === 0) return;
+
+    e.preventDefault();
+
+    for (const item of imageItems) {
+      const file = item.getAsFile();
+      if (!file) continue;
+
+      try {
+        const url = await uploadOneProjectImage(file);
+        insertImageMarkdown(url, file, textarea);
+      } catch (err) {
+        console.error('이미지 업로드 실패:', err);
+      }
+    }
+  };
+
   return (
     <Content css={contentFullWidthCss}>
       <ContentContainer css={contentContainerFullWidthCss}>
@@ -417,8 +506,15 @@ export default function AdminIdeaEdit() {
                 onChange={val => setForm(prev => ({ ...prev, description: val || '' }))}
                 height={400}
                 hideToolbar={false}
+                visibleDragbar={true}
+                previewOptions={{
+                  remarkPlugins: [remarkBreaks],
+                }}
                 textareaProps={{
-                  placeholder: "Github README 생성에 쓰이는 'markdown'을 이용해 작성해보세요.",
+                  placeholder: "Github README 작성에 쓰이는 'markdown'을 이용해 작성해보세요.",
+                  onDrop: handleDrop,
+                  onPaste: handlePaste,
+                  onDragOver: e => e.preventDefault(),
                 }}
               />
             </div>

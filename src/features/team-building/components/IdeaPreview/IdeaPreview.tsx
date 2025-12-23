@@ -3,6 +3,8 @@ import { useRouter } from 'next/router';
 import { useMyProfile } from '@/lib/mypageProfile.api';
 import axios from 'axios';
 import ReactDOM from 'react-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
 import styled from 'styled-components';
 
 import {
@@ -13,7 +15,6 @@ import {
   updateIdeaBeforeEnrollment,
 } from '../../api/ideas';
 import { resolveCreatorPart, toMemberCompositions } from '../IdeaForm/IdeaFormUtils';
-import { sanitizeDescription } from '../utils/sanitizeDescription';
 
 const TEAM_ROLES = [
   { key: 'planning', label: '기획' },
@@ -713,11 +714,6 @@ export default function IdeaPreview({ form, onBack, mode }: Props) {
     return currents;
   }, [preferredRoleKey]);
 
-  const safeDescription = React.useMemo(
-    () => sanitizeDescription(resolvedForm?.description ?? ''),
-    [resolvedForm?.description]
-  );
-
   const roleMap = React.useMemo(
     () =>
       TEAM_ROLES.reduce(
@@ -769,9 +765,7 @@ export default function IdeaPreview({ form, onBack, mode }: Props) {
 
         <SubjectRow>
           <SubjectLabel>아이디어 주제</SubjectLabel>
-          <SubjectValue>
-            {resolvedForm?.topic || ''}
-          </SubjectValue>
+          <SubjectValue>{resolvedForm?.topic || ''}</SubjectValue>
         </SubjectRow>
 
         <MembersSection>
@@ -800,13 +794,11 @@ export default function IdeaPreview({ form, onBack, mode }: Props) {
 
         <DescriptionSection>
           <SectionTitle>아이디어 설명</SectionTitle>
-          <DescriptionBox
-            dangerouslySetInnerHTML={{
-              __html:
-                safeDescription ||
-                '',
-            }}
-          />
+          <DescriptionBox>
+            <ReactMarkdown remarkPlugins={[remarkBreaks]}>
+              {resolvedForm?.description ?? ''}
+            </ReactMarkdown>
+          </DescriptionBox>
         </DescriptionSection>
 
         <ActionRow>
