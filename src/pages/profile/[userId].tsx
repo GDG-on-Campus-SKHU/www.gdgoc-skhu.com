@@ -1,5 +1,5 @@
-import ProfilePage from '@/features/team-building/pages/Profie';
 import { useRouter } from 'next/router';
+import ProfilePage from '@/features/team-building/pages/Profie';
 
 export default function OtherUserProfilePage() {
   const router = useRouter();

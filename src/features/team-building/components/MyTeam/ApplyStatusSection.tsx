@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useMyProfile } from '@/lib/mypageProfile.api';
 import {
   useDetermineEnrollment,
   useEnrollmentReadabilities,
@@ -17,7 +18,6 @@ import {
 import Modal from '../Modal_Fix';
 import ApplyPeriodToggle, { SupportPhase } from './ApplyPeriodToggle';
 import ApplyStatusTable from './ApplyStatusTable';
-import { useMyProfile } from '@/lib/mypageProfile.api';
 
 type PendingAction = 'ACCEPT' | 'REJECT';
 

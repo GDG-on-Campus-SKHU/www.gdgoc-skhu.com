@@ -1,16 +1,16 @@
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
 import crownIcon from '../../assets/crown.svg';
 import externalIcon from '../../assets/external.svg';
-import { useRouter } from 'next/router';
 
 export type MyTeamMemberVariant = 'leader' | 'managedMember' | 'member';
 
 type MyTeamMemberCardProps = {
-  userId: number;
-  myUserId: number;
+  userId?: number;
+  myUserId?: number;
   variant: MyTeamMemberVariant;
   name: string;
   onClickCard?: () => void;
@@ -33,6 +33,8 @@ export default function MyTeamMemberCard({
   const isManagedMember = variant === 'managedMember';
 
   const handleClickExternal = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
     if (userId === myUserId) {
       // 본인 → 내 프로필
       router.push('/mypage/profile');

@@ -489,14 +489,6 @@ export default function IdeaListPage() {
     return keyFromPart || null;
   }, [idea?.preferredPart]);
 
-  const filledTeam = React.useMemo(
-    () => ({
-      ...createEmptyTeamCounts(),
-      ...(idea?.filledTeam ?? {}),
-    }),
-    [idea?.filledTeam]
-  );
-
   const displayTotals = React.useMemo(() => {
     const totals: Record<(typeof TEAM_ROLES)[number]['key'], number> = {
       ...createEmptyTeamCounts(),

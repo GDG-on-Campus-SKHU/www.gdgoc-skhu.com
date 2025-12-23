@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useMyProfile } from '@/lib/mypageProfile.api';
 import { useRemoveTeamMember } from '@/lib/myTeam.api';
 import { css } from '@emotion/react';
 
@@ -8,7 +9,6 @@ import { partToLabel } from './ApplyStatusSection';
 import MyTeamCount from './MyTeamCount';
 import MyTeamMemberCard, { MyTeamMemberVariant } from './MyTeamMember';
 import MyTeamStatusCard from './MyTeamStatus';
-import { useMyProfile } from '@/lib/mypageProfile.api';
 
 type PartColumnProps = {
   roster: CurrentTeamRoster;

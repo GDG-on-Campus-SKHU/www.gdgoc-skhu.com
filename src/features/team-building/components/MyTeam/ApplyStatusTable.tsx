@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
 
 import { colors } from '../../../../styles/constants';
@@ -6,7 +7,6 @@ import externalIcon from '../../assets/external.svg';
 import type { ApplyStatusRow } from '../../types/applyStatusData';
 import Button from '../Button';
 import ButtonRed from '../ButtonRed';
-import { useRouter } from 'next/router';
 
 type ApplyStatusTableProps = {
   rows: ApplyStatusRow[];
