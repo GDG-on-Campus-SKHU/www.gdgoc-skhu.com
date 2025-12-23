@@ -384,18 +384,12 @@ export default function AdminIdeaDeleted() {
               <ModalInfo>
                 <ModalTitle>{ideaData.title}</ModalTitle>
                 <ModalMessage>아이디어를 완전히 삭제할까요?</ModalMessage>
-                <ModalMessage style={{ color: '#f44242' }}>
-                  이 작업은 되돌릴 수 없으며 DB에서 영구 삭제됩니다.
-                </ModalMessage>
+                <ModalMessage>이 작업은 되돌릴 수 없습니다.</ModalMessage>
               </ModalInfo>
               <ModalActions>
                 <ModalButtonContainer>
-                  <MyDeleteButton type="button" onClick={handleDeleteConfirm}>
-                    <DeleteButtonText>영구 삭제</DeleteButtonText>
-                  </MyDeleteButton>
-                  <MyCancelButton type="button" onClick={handleCloseModal}>
-                    <CancelButtonText>취소</CancelButtonText>
-                  </MyCancelButton>
+                  <Button title='삭제하기' onClick={handleDeleteConfirm}/>
+                  <Button title='취소' onClick={handleCloseModal} variant='secondary'/>
                 </ModalButtonContainer>
               </ModalActions>
             </ModalCard>
