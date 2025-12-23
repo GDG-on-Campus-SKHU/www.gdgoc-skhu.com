@@ -18,6 +18,7 @@ import {
 import { colors } from '@/styles/constants';
 import { css } from '@emotion/react';
 import MDEditor from '@uiw/react-md-editor';
+import remarkBreaks from 'remark-breaks';
 import styled from 'styled-components';
 
 import SelectBoxBasic from '../../../team-building/components/SelectBoxBasic';
@@ -464,6 +465,9 @@ const AdminMemberProfileEdit: NextPage = () => {
                   preview="live"
                   hideToolbar={false}
                   visibleDragbar={true}
+                  previewOptions={{
+                    remarkPlugins: [remarkBreaks],
+                  }}
                   textareaProps={{
                     onDrop: handleDrop,
                     onPaste: handlePaste,

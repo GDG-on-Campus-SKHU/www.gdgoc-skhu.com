@@ -7,14 +7,14 @@ import { Generation, MyProfile, TechStack, UpdateProfileData, UserLink } from '.
 interface UserSummaryDto {
   users: UserSummaryItemDto[];
   pageInfo: {
-    pageNumber: number;
+    pageNumber?: number;
     pageSize: number;
     totalElements: number;
     totalPages: number;
   };
 }
 
-interface UserSummaryItemDto {
+export interface UserSummaryItemDto {
   id: number;
   userName: string;
   email: string | null;
@@ -176,10 +176,23 @@ function mapProfileDtoToDomain(dto: GetMyProfileResponse): MyProfile {
 /* =========================================================
  * API: Get User Summary
  * ======================================================= */
-export async function fetchUserSummaryList(): Promise<UserSummary[]> {
-  const res = await api.get<UserSummaryDto>('/admin/approved/users');
-  console.log(res.data);
-  return res.data.users.map(mapUserSummaryToDomain);
+export async function fetchUserSummaryList(
+  page: number = 0,
+  size: number = 20
+): Promise<{ users: UserSummary[]; pageInfo: any }> {
+  const res = await api.get<UserSummaryDto>('/admin/approved/users', {
+    params: {
+      page,
+      size,
+      sortBy: 'id',
+      order: 'ASC',
+    },
+  });
+
+  return {
+    users: res.data.users.map(mapUserSummaryToDomain),
+    pageInfo: res.data.pageInfo,
+  };
 }
 
 /* =========================================================
@@ -271,3 +284,119 @@ export const fetchSearchedUser = async ({
 
   return response.data;
 };
+
+export type ApprovalStatusParam = 'WAITING' | 'APPROVED' | 'REJECTED' | 'APPROVED,REJECTED';
+
+export async function fetchWaitingUsers({
+  page,
+  size,
+  order = 'DESC',
+}: {
+  page: number;
+  size: number;
+  order?: 'ASC' | 'DESC';
+}): Promise<UserSummaryDto> {
+  const res = await api.get<UserSummaryDto>('/admin/waiting/users', {
+    params: {
+      page,
+      size,
+      sortBy: 'id',
+      order,
+    },
+  });
+
+  return res.data;
+}
+
+export async function fetchDecidedUsers({
+  page,
+  size,
+  order = 'DESC',
+}: {
+  page: number;
+  size: number;
+  order?: 'ASC' | 'DESC';
+}): Promise<UserSummaryDto> {
+  const res = await api.get<UserSummaryDto>('/admin/decided/users', {
+    params: {
+      page,
+      size,
+      sortBy: 'id',
+      order,
+    },
+  });
+
+  return res.data;
+}
+
+/* =========================================================
+ * API: Search Users by School
+ * ======================================================= */
+export async function searchUsersBySchool(
+  school: string,
+  page: number = 0,
+  size: number = 20
+): Promise<{ users: UserSummary[]; pageInfo: any }> {
+  const res = await api.get<UserSummaryDto>('/admin/approved/search-school', {
+    params: {
+      school,
+      page,
+      size,
+      sortBy: 'id',
+      order: 'ASC',
+    },
+  });
+
+  return {
+    users: res.data.users.map(mapUserSummaryToDomain),
+    pageInfo: res.data.pageInfo,
+  };
+}
+
+/* =========================================================
+ * API: Search Users by Part
+ * ======================================================= */
+export async function searchUsersByPart(
+  part: string,
+  page: number = 0,
+  size: number = 20
+): Promise<{ users: UserSummary[]; pageInfo: any }> {
+  const res = await api.get<UserSummaryDto>('/admin/approved/search-part', {
+    params: {
+      part,
+      page,
+      size,
+      sortBy: 'id',
+      order: 'ASC',
+    },
+  });
+
+  return {
+    users: res.data.users.map(mapUserSummaryToDomain),
+    pageInfo: res.data.pageInfo,
+  };
+}
+
+/* =========================================================
+ * API: Search Users by Name
+ * ======================================================= */
+export async function searchUsersByName(
+  name: string,
+  page: number = 0,
+  size: number = 20
+): Promise<{ users: UserSummary[]; pageInfo: any }> {
+  const res = await api.get<UserSummaryDto>('/admin/approved/search-name', {
+    params: {
+      name,
+      page,
+      size,
+      sortBy: 'id',
+      order: 'ASC',
+    },
+  });
+
+  return {
+    users: res.data.users.map(mapUserSummaryToDomain),
+    pageInfo: res.data.pageInfo,
+  };
+}

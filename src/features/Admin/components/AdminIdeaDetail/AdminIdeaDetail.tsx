@@ -8,6 +8,7 @@ import {
   removeAdminIdeaMember,
 } from '@/lib/adminIdea.api';
 import { colors } from '@/styles/constants';
+import remarkBreaks from 'remark-breaks';
 import styled from 'styled-components';
 
 import MyTeamCount from '../../../team-building/components/MyTeam/MyTeamCount';
@@ -295,7 +296,7 @@ export default function AdminIdeaDetail() {
           <DescriptionSection>
             <SectionTitle>아이디어 설명</SectionTitle>
             <MarkdownPreviewBox data-color-mode="light">
-              <MDPreview source={ideaData.description} />
+              <MDPreview source={ideaData.description} remarkPlugins={[remarkBreaks]} />
             </MarkdownPreviewBox>
           </DescriptionSection>
         </ResponsiveWrapper>

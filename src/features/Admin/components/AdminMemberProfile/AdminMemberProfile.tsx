@@ -13,6 +13,7 @@ import {
 } from '@/lib/mypageProfile.api';
 import { colors } from '@/styles/constants';
 import { css } from '@emotion/react';
+import remarkBreaks from 'remark-breaks';
 import styled from 'styled-components';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -203,7 +204,7 @@ const AdminMemberProfile = ({ memberProps, onBack }: Props) => {
           <IntroSection>
             <FieldLabel>자기소개</FieldLabel>
             <div css={boxCss} data-color-mode="light">
-              <MDPreview source={member.introduction} />
+              <MDPreview source={member.introduction} remarkPlugins={[remarkBreaks]} />
             </div>
           </IntroSection>
         </ProfileSection>
