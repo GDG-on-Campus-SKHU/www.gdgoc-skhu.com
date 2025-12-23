@@ -12,12 +12,10 @@ import { colors } from '@/styles/constants';
 import styled from 'styled-components';
 
 import {
-  CancelButtonText,
   ContentContainer,
   CountNum,
   CountStat,
   CountUnit,
-  DeleteButtonText,
   DeletedMark,
   DeletedMarkContainer,
   DeletedText,
@@ -44,9 +42,7 @@ import {
   ModalSuccessCard,
   ModalSuccessCardTitle,
   ModalTitle,
-  MyCancelButton,
   MyConfirmButton,
-  MyDeleteButton,
   MySuccessButtonText,
   PreviewCanvas,
   ResponsiveWrapper,
@@ -388,8 +384,8 @@ export default function AdminIdeaDeleted() {
               </ModalInfo>
               <ModalActions>
                 <ModalButtonContainer>
-                  <Button title='삭제하기' onClick={handleDeleteConfirm}/>
-                  <Button title='취소' onClick={handleCloseModal} variant='secondary'/>
+                  <Button title="삭제하기" onClick={handleDeleteConfirm} />
+                  <Button title="취소" onClick={handleCloseModal} variant="secondary" />
                 </ModalButtonContainer>
               </ModalActions>
             </ModalCard>
