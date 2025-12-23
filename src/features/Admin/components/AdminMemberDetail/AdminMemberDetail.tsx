@@ -66,8 +66,11 @@ const AdminMemberDetail: NextPage = () => {
     if (!parsedUserId) return;
 
     const fetchData = async () => {
-      const member = await fetchUserInfo(parsedUserId);
-      setMember(member);
+      const data = await fetchUserInfo(parsedUserId);
+      setMember({
+        ...data,
+        generations: Array.isArray(data.generations) ? data.generations : [],
+      });
     };
 
     fetchData();
@@ -91,9 +94,9 @@ const AdminMemberDetail: NextPage = () => {
   }, [isModalOpen, mounted]);
 
   const sortedGenerations = useMemo(() => {
-    if (!member) return [];
+    const gens = Array.isArray(member?.generations) ? member.generations : [];
 
-    return [...member.generations].sort((a, b) => {
+    return [...gens].sort((a, b) => {
       if (a.isMain === b.isMain) return 0;
       return a.isMain ? -1 : 1;
     });
@@ -354,6 +357,10 @@ const AdminMemberDetail: NextPage = () => {
     }
   };
 
+  const isDeleted = member.status === 'DELETED';
+  const generations = Array.isArray(member?.generations) ? member.generations : [];
+  const generationCount = generations.length;
+
   return (
     <Container>
       <MainContent>
@@ -364,116 +371,171 @@ const AdminMemberDetail: NextPage = () => {
 
         <DetailHeader>
           <MemberName>{member.name}</MemberName>
-          <ProfileButton type="button" onClick={() => handleUserProfile(parsedUserId)}>
-            프로필 보기
-          </ProfileButton>
-        </DetailHeader>
-        <ContentCard>
-          <FormGrid>
-            <FieldGroup>
-              <FieldLabel>학교</FieldLabel>
-              <Input
-                value={member.school ?? ''}
-                onChange={e => setField('school', e.target.value)}
-              />
-            </FieldGroup>
-            <FieldGroup>
-              <FieldLabel>파트</FieldLabel>
-              <SelectBoxWrapper>
-                <SelectBoxBasic
-                  className="admin-member-select"
-                  options={PART_OPTIONS}
-                  placeholder="파트 선택"
-                  value={[member.part]}
-                  onChange={selected => setField('part', selected[0] ?? member.part)}
-                />
-              </SelectBoxWrapper>
-            </FieldGroup>
-
-            <FieldGroup>
-              <FieldLabel>이메일</FieldLabel>
-              <MutedInput value={member.email ?? ''} readOnly />
-            </FieldGroup>
-            <FieldGroup>
-              <FieldLabel>전화번호</FieldLabel>
-              <MutedInput value={member?.phoneNum ?? ''} readOnly />
-            </FieldGroup>
-
-            <FieldGroup>
-              <FieldLabel>가입일</FieldLabel>
-              <MutedInput value={member.approveAt ?? ''} readOnly />
-            </FieldGroup>
-            <FieldGroup>
-              <FieldLabel>상태</FieldLabel>
-              <StatusHistoryBox>
-                {statusDisplay.map((text, idx) => (
-                  <StatusHistoryItem key={idx}>{text}</StatusHistoryItem>
-                ))}
-              </StatusHistoryBox>
-            </FieldGroup>
-          </FormGrid>
-          {member.status === 'BANNED' && member.banReason && (
-            <SoftbanReasonSection>
-              <SoftbanReasonLabel>소프트밴 사유</SoftbanReasonLabel>
-              <SoftbanReasonBox>
-                <SoftbanReasonText>{member.banReason}</SoftbanReasonText>
-              </SoftbanReasonBox>
-            </SoftbanReasonSection>
+          {!isDeleted && (
+            <ProfileButton type="button" onClick={() => handleUserProfile(parsedUserId)}>
+              프로필 보기
+            </ProfileButton>
           )}
-          <RoleHeaderRow>
-            <RoleHeader>
-              <RoleTitle>역할</RoleTitle>
-              <RoleHelper>선택된 역할이 기본 역할로 설정됩니다.</RoleHelper>
-            </RoleHeader>
-            <AddButtonCTNR>
-              <AddButton type="button" onClick={handleAddGeneration}>
-                추가
-              </AddButton>
-            </AddButtonCTNR>
-          </RoleHeaderRow>
+        </DetailHeader>
 
-          <RoleList>
-            {sortedGenerations.map((gen, index) => (
-              <RoleRow key={getGenerationKey(gen, index)}>
-                <Radio checked={gen.isMain} onChange={() => handleMainGenerationChange(index)} />
+        <ContentCard>
+          {isDeleted ? (
+            <FormGrid>
+              <FieldGroup>
+                <FieldLabel>학교</FieldLabel>
+                <MutedInput value={member.school ?? ''} readOnly />
+              </FieldGroup>
 
-                <SelectBoxBasic
-                  options={GENERATION_OPTIONS}
-                  value={gen.generation ? [gen.generation] : []}
-                  onChange={selected => handleGenerationChange(index, selected?.[0] ?? '')}
-                />
+              <FieldGroup>
+                <FieldLabel>파트</FieldLabel>
+                <MutedInput value={member.part ?? ''} readOnly />
+              </FieldGroup>
 
-                <SelectBoxBasic
-                  options={POSITION_OPTIONS}
-                  value={gen.position ? [enumToPosition(gen.position)] : []}
-                  onChange={selected =>
-                    handlePositionChange(index, positionToEnum(selected?.[0] ?? 'Member'))
-                  }
-                />
+              <FieldGroup>
+                <FieldLabel>이메일</FieldLabel>
+                <MutedInput value={member.email ?? ''} readOnly />
+              </FieldGroup>
 
-                <DeleteIconCTNR
-                  src="/deleteicon_admin.svg"
-                  alt="삭제"
-                  width={16}
-                  height={16}
-                  onClick={() => handleDeleteGeneration(gen)}
-                />
-              </RoleRow>
-            ))}
-          </RoleList>
+              <FieldGroup>
+                <FieldLabel>전화번호</FieldLabel>
+                <MutedInput value={member.phoneNum ?? ''} readOnly />
+              </FieldGroup>
 
-          <ActionRow $roleCount={member.generations.length}>
-            {member.status === 'BANNED' ? (
-              <OutlineDangerButton onClick={handleReleaseSoftban}>
-                소프트밴 해제
-              </OutlineDangerButton>
-            ) : member.status === 'ACTIVE' ? (
-              <OutlineDangerButton onClick={handleOpenSoftbanModal}>소프트밴</OutlineDangerButton>
-            ) : null}
-            <PrimaryButton type="button" onClick={handleSaveClick}>
-              저장하기
-            </PrimaryButton>
-          </ActionRow>
+              <FieldGroup>
+                <FieldLabel>가입일</FieldLabel>
+                <MutedInput value={member.approveAt ?? ''} readOnly />
+              </FieldGroup>
+
+              <FieldGroup>
+                <FieldLabel>상태</FieldLabel>
+                <MutedInput value="탈퇴" readOnly />
+              </FieldGroup>
+
+              <FieldGroup>
+                <FieldLabel>탈퇴일</FieldLabel>
+                <MutedInput value={member.deletedAt ?? ''} readOnly />
+              </FieldGroup>
+            </FormGrid>
+          ) : (
+            <>
+              {/* ✅ 기존 FormGrid – 편집 UI */}
+              <FormGrid>
+                <FieldGroup>
+                  <FieldLabel>학교</FieldLabel>
+                  <Input
+                    value={member.school ?? ''}
+                    onChange={e => setField('school', e.target.value)}
+                  />
+                </FieldGroup>
+
+                <FieldGroup>
+                  <FieldLabel>파트</FieldLabel>
+                  <SelectBoxWrapper>
+                    <SelectBoxBasic
+                      options={PART_OPTIONS}
+                      value={[member.part]}
+                      onChange={selected => setField('part', selected[0] ?? member.part)}
+                    />
+                  </SelectBoxWrapper>
+                </FieldGroup>
+
+                <FieldGroup>
+                  <FieldLabel>이메일</FieldLabel>
+                  <MutedInput value={member.email ?? ''} readOnly />
+                </FieldGroup>
+
+                <FieldGroup>
+                  <FieldLabel>전화번호</FieldLabel>
+                  <MutedInput value={member.phoneNum ?? ''} readOnly />
+                </FieldGroup>
+
+                <FieldGroup>
+                  <FieldLabel>가입일</FieldLabel>
+                  <MutedInput value={member.approveAt ?? ''} readOnly />
+                </FieldGroup>
+
+                <FieldGroup>
+                  <FieldLabel>상태</FieldLabel>
+                  <StatusHistoryBox>
+                    {statusDisplay.map((text, idx) => (
+                      <StatusHistoryItem key={idx}>{text}</StatusHistoryItem>
+                    ))}
+                  </StatusHistoryBox>
+                </FieldGroup>
+              </FormGrid>
+
+              {member.status === 'BANNED' && member.banReason && (
+                <SoftbanReasonSection>
+                  <SoftbanReasonLabel>소프트밴 사유</SoftbanReasonLabel>
+                  <SoftbanReasonBox>
+                    <SoftbanReasonText>{member.banReason}</SoftbanReasonText>
+                  </SoftbanReasonBox>
+                </SoftbanReasonSection>
+              )}
+
+              {/* 역할 */}
+              <RoleHeaderRow>
+                <RoleHeader>
+                  <RoleTitle>역할</RoleTitle>
+                  <RoleHelper>선택된 역할이 기본 역할로 설정됩니다.</RoleHelper>
+                </RoleHeader>
+                <AddButtonCTNR>
+                  <AddButton type="button" onClick={handleAddGeneration}>
+                    추가
+                  </AddButton>
+                </AddButtonCTNR>
+              </RoleHeaderRow>
+
+              <RoleList>
+                {sortedGenerations.map((gen, index) => (
+                  <RoleRow key={getGenerationKey(gen, index)}>
+                    <Radio
+                      checked={gen.isMain}
+                      onChange={() => handleMainGenerationChange(index)}
+                    />
+
+                    <SelectBoxBasic
+                      options={GENERATION_OPTIONS}
+                      value={gen.generation ? [gen.generation] : []}
+                      onChange={selected => handleGenerationChange(index, selected?.[0] ?? '')}
+                    />
+
+                    <SelectBoxBasic
+                      options={POSITION_OPTIONS}
+                      value={[enumToPosition(gen.position)]}
+                      onChange={selected =>
+                        handlePositionChange(index, positionToEnum(selected?.[0] ?? 'Member'))
+                      }
+                    />
+
+                    <DeleteIconCTNR
+                      src="/deleteicon_admin.svg"
+                      alt="삭제"
+                      width={16}
+                      height={16}
+                      onClick={() => handleDeleteGeneration(gen)}
+                    />
+                  </RoleRow>
+                ))}
+              </RoleList>
+
+              <ActionRow $roleCount={generationCount}>
+                {member.status === 'BANNED' ? (
+                  <OutlineDangerButton onClick={handleReleaseSoftban}>
+                    소프트밴 해제
+                  </OutlineDangerButton>
+                ) : member.status === 'ACTIVE' ? (
+                  <OutlineDangerButton onClick={handleOpenSoftbanModal}>
+                    소프트밴
+                  </OutlineDangerButton>
+                ) : null}
+
+                <PrimaryButton type="button" onClick={handleSaveClick}>
+                  저장하기
+                </PrimaryButton>
+              </ActionRow>
+            </>
+          )}
         </ContentCard>
       </MainContent>
       {mounted && isModalOpen
@@ -708,6 +770,10 @@ const FieldGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
+`;
+
+const HiddenFieldGroup = styled(FieldGroup)`
+  visibility: hidden;
 `;
 
 const FieldLabel = styled.label`
