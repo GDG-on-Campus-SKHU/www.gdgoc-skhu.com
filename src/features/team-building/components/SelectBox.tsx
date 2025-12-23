@@ -9,6 +9,7 @@ import {
   selectBoxListCss,
   selectBoxPlaceholderCss,
   selectBoxSearchCss,
+  selectBoxSearchWrapperCss,
   selectBoxSelectedCss,
   selectBoxWrapperCss,
 } from '../styles/selectbox';
@@ -192,17 +193,20 @@ export default function SelectBox({
       {isOpen && !disabled && (
         <div css={selectBoxDropdownCss} role="listbox" id={listboxId}>
           {searchable && (
-            <input
-              css={selectBoxSearchCss}
-              type="text"
-              placeholder="기술 스택을 검색해주세요."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              onClick={e => e.stopPropagation()}
-              autoFocus
-              aria-label="옵션 검색"
-            />
+            <div css={selectBoxSearchWrapperCss}>
+              <input
+                css={selectBoxSearchCss}
+                type="text"
+                placeholder="기술 스택을 검색해주세요."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                onClick={e => e.stopPropagation()}
+                autoFocus
+                aria-label="옵션 검색"
+              />
+            </div>
           )}
+
           <ul css={selectBoxListCss}>
             {filteredOptions.length > 0 ? (
               filteredOptions.map(option => (
