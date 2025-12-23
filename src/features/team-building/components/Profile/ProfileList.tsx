@@ -196,14 +196,14 @@ const profileItemCss = css`
 `;
 
 const labelCss = css`
-  min-width: 150px;
-  font-size: 24px;
+  min-width: 100px;
+  font-size: 18px;
   font-weight: 700;
   flex-shrink: 0;
 `;
 
 const valueCss = css`
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 400;
 `;
 

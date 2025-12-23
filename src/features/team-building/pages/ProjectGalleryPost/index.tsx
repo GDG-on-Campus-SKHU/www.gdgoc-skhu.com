@@ -150,7 +150,7 @@ const innerCss = css`
 `;
 
 const pageTitleCss = css`
-  font-size: 50px;
+  font-size: 36px;
   font-weight: 700;
   line-height: 160%;
   margin: 60px 0 55px;

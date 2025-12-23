@@ -79,8 +79,8 @@ const emptyBoxCss = css`
 `;
 
 const emptyTextCss = css`
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 500;
   line-height: 38.4px;
-  color: ${colors.grayscale[900]};
+  color: ${colors.grayscale[400]};
 `;

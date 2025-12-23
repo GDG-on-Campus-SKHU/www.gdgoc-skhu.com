@@ -18,9 +18,9 @@ const getWrapCss = (disabled: boolean) => css`
   text-align: center;
   background-color: ${disabled ? colors.grayscale[300] : '#D9E7FD'};
   color: ${disabled ? colors.grayscale[600] : colors.gdscBlue};
-  font-size: 18px;
+  font-size: 16px;
   font-style: normal;
   font-weight: 700;
-  line-height: 160%;
+  line-height: 180%;
   border-radius: 4px;
 `;

@@ -249,8 +249,8 @@ const emptyResultCardCss = css`
   align-items: center;
   justify-content: center;
 
-  font-size: 24px;
-  font-weight: 500;
+  font-size: 20px;
+  font-weight: 400;
   line-height: 38.4px;
   color: ${colors.grayscale[500]};
 `;
