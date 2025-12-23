@@ -214,7 +214,7 @@ const ModalCard = styled.div`
   display: flex;
   position: absolute;
   width: 500px;
-  height: 240px;
+  height: 217px;
   left: calc(50% - 500px / 2);
   top: calc(50% - 240px / 2 + 0.5px);
   padding: 40px 20px 20px;
@@ -230,10 +230,10 @@ const ModalTitle = styled.h3`
   color: var(--grayscale-1000, #040405);
   text-align: center;
   font-family: Pretendard;
-  font-size: 36px;
+  font-size: 24px;
   font-style: normal;
   font-weight: 700;
-  line-height: 160%;
+  line-height: 38.4px;
 `;
 
 const ModalTitleComplete = styled.h3`
@@ -251,10 +251,10 @@ const ModalMessage = styled.p`
   color: var(--grayscale-600, #7e8590);
   text-align: center;
   font-family: Pretendard;
-  font-size: 20px;
+  font-size: 18px;
   font-style: normal;
   font-weight: 500;
-  line-height: 160%;
+  line-height: 28.8px;
 `;
 
 const ModalActions = styled.div`

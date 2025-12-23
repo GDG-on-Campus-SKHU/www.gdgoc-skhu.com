@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { useMyProfile } from '@/lib/mypageProfile.api';
+import { useMyProfile, useUserProfile } from '@/lib/mypageProfile.api';
 import { css } from '@emotion/react';
 
 import { colors, layoutCss } from '../../../../styles/constants';
@@ -9,12 +9,28 @@ import ProfileHeader from '../../components/Profile/ProfileHeader';
 import ProfileList from '../../components/Profile/ProfileList';
 import { useProfileEditor } from '../../hooks/useProfileEditor';
 
-export default function ProfilePage() {
-  const { data: profile, isLoading, error } = useMyProfile();
+type ProfileMode = 'me' | 'other';
+
+type ProfilePageProps = { mode?: 'me'; userId?: never } | { mode: 'other'; userId: number };
+
+export default function ProfilePage(props: ProfilePageProps) {
+  const mode: ProfileMode = props.mode ?? 'me';
+  const isOtherUser = mode === 'other';
+
+  const myQuery = useMyProfile({ enabled: !isOtherUser });
+  const otherQuery = useUserProfile(props.mode === 'other' ? props.userId : undefined, {
+    enabled: isOtherUser,
+  });
+
+  const profile = isOtherUser ? otherQuery.data : myQuery.data;
+  const isLoading = isOtherUser ? otherQuery.isLoading : myQuery.isLoading;
+  const error = isOtherUser ? otherQuery.error : myQuery.error;
+
+  const editor = useProfileEditor(profile);
+  const isEditing = isOtherUser ? false : editor.isEditing;
+  const isPreviewMode = isOtherUser ? false : editor.isPreviewMode;
 
   const {
-    isEditing,
-    isPreviewMode,
     bioMarkdown,
     tempMarkdown,
     selectedTechStack,
@@ -27,7 +43,7 @@ export default function ProfilePage() {
     handleEditClick,
     handleSave,
     togglePreview,
-  } = useProfileEditor(profile);
+  } = editor;
 
   if (isLoading) {
     return (
@@ -52,12 +68,16 @@ export default function ProfilePage() {
   return (
     <main css={mainCss}>
       <div css={innerCss}>
+        {isOtherUser && <div css={emptyCss}></div>}
+
         <div>
           <ProfileHeader
             isEditing={isEditing}
             isPreviewMode={isPreviewMode}
             userName={profile.name}
             onEditClick={handleEditClick}
+            hideMyPageTitle={isOtherUser}
+            hideEditButton={isOtherUser}
           />
 
           <ProfileList
@@ -79,18 +99,24 @@ export default function ProfilePage() {
           />
         </div>
 
-        {!isEditing ? (
-          <Link href={'/mypage/secession'}>
-            <button css={secessionCss}>탈퇴하기</button>
-          </Link>
-        ) : (
-          <ProfileEditButtons
-            isPreviewMode={isPreviewMode}
-            onPreview={togglePreview}
-            onBackToEdit={togglePreview}
-            onSave={handleSave}
-          />
+        {!isOtherUser && (
+          <>
+            {!isEditing ? (
+              <Link href={'/mypage/secession'}>
+                <button css={secessionCss}>탈퇴하기</button>
+              </Link>
+            ) : (
+              <ProfileEditButtons
+                isPreviewMode={isPreviewMode}
+                onPreview={togglePreview}
+                onBackToEdit={togglePreview}
+                onSave={handleSave}
+              />
+            )}
+          </>
         )}
+
+        {isOtherUser && <div css={emptyCss}></div>}
       </div>
     </main>
   );
@@ -145,4 +171,9 @@ const errorCss = css`
   min-height: 400px;
   font-size: 18px;
   color: #e53e3e;
+`;
+
+const emptyCss = css`
+  display: flex;
+  margin-top: 60px;
 `;

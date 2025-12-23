@@ -6,9 +6,11 @@ import externalIcon from '../../assets/external.svg';
 import type { ApplyStatusRow } from '../../types/applyStatusData';
 import Button from '../Button';
 import ButtonRed from '../ButtonRed';
+import { useRouter } from 'next/router';
 
 type ApplyStatusTableProps = {
   rows: ApplyStatusRow[];
+  myUserId: number;
   onAccept: (enrollmentId: number) => void;
   onReject: (enrollmentId: number) => void;
   scheduleEnded: boolean;
@@ -19,6 +21,7 @@ type ApplyStatusTableProps = {
 
 export default function ApplyStatusTable({
   rows,
+  myUserId,
   onAccept,
   onReject,
   scheduleEnded,
@@ -42,6 +45,7 @@ export default function ApplyStatusTable({
             <ApplyStatusRow
               key={row.id}
               row={row}
+              myUserId={myUserId}
               onAccept={onAccept}
               onReject={onReject}
               scheduleEnded={scheduleEnded}
@@ -59,6 +63,7 @@ export default function ApplyStatusTable({
 
 type ApplyStatusRowProps = {
   row: ApplyStatusRow;
+  myUserId: number;
   onAccept: (enrollmentId: number) => void;
   onReject: (enrollmentId: number) => void;
   scheduleEnded: boolean;
@@ -69,12 +74,30 @@ type ApplyStatusRowProps = {
 
 function ApplyStatusRow({
   row,
+  myUserId,
   onAccept,
   onReject,
   scheduleEnded,
   isDetermining,
   pending,
 }: ApplyStatusRowProps) {
+  const router = useRouter();
+
+  const handleClickExternal = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (row.applicantId === myUserId) {
+      // 본인 → 내 프로필
+      router.push('/mypage/profile');
+    } else {
+      // 다른 유저 → 타인 프로필
+      router.push({
+        pathname: '/profile/[userId]',
+        query: { userId: row.applicantId },
+      });
+    }
+  };
+
   const enrollmentId = row.id;
 
   // 버튼 비활성화 규칙
@@ -92,9 +115,9 @@ function ApplyStatusRow({
       <td css={[cellCss, colNameCss]}>
         <div css={nameButtonCss}>
           <span>{row.name}</span>
-          <span css={nameIconWrapCss}>
+          <button type="button" css={nameIconWrapCss} onClick={handleClickExternal}>
             <Image src={externalIcon} alt="프로필 보기" width={9} height={9} />
-          </span>
+          </button>
         </div>
       </td>
 
@@ -217,11 +240,6 @@ const nameButtonCss = css`
   padding: 0;
 
   cursor: pointer;
-
-  &:hover {
-    text-decoration: underline;
-    color: ${colors.primary[600]};
-  }
 `;
 
 const nameIconWrapCss = css`

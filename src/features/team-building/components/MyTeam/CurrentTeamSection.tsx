@@ -8,6 +8,7 @@ import { partToLabel } from './ApplyStatusSection';
 import MyTeamCount from './MyTeamCount';
 import MyTeamMemberCard, { MyTeamMemberVariant } from './MyTeamMember';
 import MyTeamStatusCard from './MyTeamStatus';
+import { useMyProfile } from '@/lib/mypageProfile.api';
 
 type PartColumnProps = {
   roster: CurrentTeamRoster;
@@ -34,6 +35,9 @@ function PartColumn({ roster, isLeaderView, onOpenRemoveModal }: PartColumnProps
 
   const isRecruiting = maxMemberCount > 0;
 
+  const { data: myProfile } = useMyProfile();
+  const myUserId = myProfile?.userId;
+
   return (
     <div css={partColumnCss}>
       <div css={partHeaderCss}>
@@ -57,6 +61,8 @@ function PartColumn({ roster, isLeaderView, onOpenRemoveModal }: PartColumnProps
             return (
               <MyTeamMemberCard
                 key={member.userId}
+                userId={member.userId}
+                myUserId={myUserId!}
                 variant={variant}
                 name={member.memberName}
                 onClickRemove={

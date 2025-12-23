@@ -394,7 +394,7 @@ export default function IdeaFormEditPage() {
             const status = e.response?.status;
             const msg = normalizeErrorMessage(e.response?.data);
             if (status === 400 && msg) {
-              alert(msg); // "일정이 지났습니다."
+              alert('지원 기간에는 작성자의 파트 및 팀원 구성 수정이 불가능합니다.'); // "일정이 지났습니다."
               return false;
             }
           }

@@ -1,3 +1,5 @@
-import ProfilePage from '../../features/team-building/pages/Profie';
+import ProfilePage from '@/features/team-building/pages/Profie';
 
-export default ProfilePage;
+export default function MyProfilePage() {
+  return <ProfilePage mode="me" />;
+}

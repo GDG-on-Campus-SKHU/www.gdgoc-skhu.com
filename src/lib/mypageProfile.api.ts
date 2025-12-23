@@ -8,6 +8,7 @@ import { api } from './api';
 export const mypageProfileKeys = {
   all: ['mypageProfile'] as const,
   profile: () => [...mypageProfileKeys.all, 'profile'] as const,
+  userProfile: (userId: number) => [...mypageProfileKeys.all, 'userProfile', userId] as const,
   userLinkOptions: () => [...mypageProfileKeys.all, 'userLinkOptions'] as const,
   techStackOptions: () => [...mypageProfileKeys.all, 'techStackOptions'] as const,
 };
@@ -181,6 +182,30 @@ export function useMyProfile(
     queryKey: mypageProfileKeys.profile(),
     queryFn: fetchMyProfile,
     staleTime: 1000 * 60 * 5, // 5분
+    ...options,
+  });
+}
+
+/* =========================================================
+ *  API: Get Other User Profile
+ * ======================================================= */
+export async function fetchUserProfile(userId: number): Promise<MyProfile> {
+  const res = await api.get<GetMyProfileResponse>(`/mypage/profile/${userId}`);
+  return mapProfileDtoToDomain(res.data);
+}
+
+export function useUserProfile(
+  userId: number | null | undefined,
+  options?: Omit<UseQueryOptions<MyProfile, Error>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery<MyProfile, Error>({
+    queryKey:
+      typeof userId === 'number'
+        ? mypageProfileKeys.userProfile(userId)
+        : ['mypageProfile', 'userProfile', 'disabled'],
+    queryFn: () => fetchUserProfile(userId as number),
+    enabled: typeof userId === 'number' && userId > 0,
+    staleTime: 1000 * 60 * 5,
     ...options,
   });
 }
