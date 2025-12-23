@@ -586,10 +586,10 @@ export default function IdeaListPage() {
       <PreviewCanvas>
         <ResponsiveWrapper>
           <TitleSection>
-            <TitleText>{idea.title || '아이디어 제목'}</TitleText>
+            <TitleText>{idea.title || ''}</TitleText>
 
             <IntroRow>
-              <IntroText>{idea.intro || '아이디어 한줄소개'}</IntroText>
+              <IntroText>{idea.intro || ''}</IntroText>
               {creatorInfo && (
                 <MentorContainer>
                   <MentorPart>
@@ -603,7 +603,7 @@ export default function IdeaListPage() {
 
           <SubjectRow>
             <SubjectLabel>아이디어 주제</SubjectLabel>
-            <SubjectValue>{idea.topic || '주제 없음'}</SubjectValue>
+            <SubjectValue>{idea.topic || ''}</SubjectValue>
           </SubjectRow>
 
           <MembersSection>
@@ -636,7 +636,7 @@ export default function IdeaListPage() {
               dangerouslySetInnerHTML={{
                 __html:
                   safeDescription ||
-                  '<p>Github README 작성에 쓰이는 "markdown"을 이용해 작성해보세요.</p>',
+                  '',
               }}
             />
           </DescriptionSection>

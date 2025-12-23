@@ -743,7 +743,7 @@ export default function IdeaPreview({ form, onBack, mode }: Props) {
       <PreviewCanvas>
         <TitleSection>
           <TitleHeader>
-            <TitleText>{resolvedForm?.title || '아이디어 제목'}</TitleText>
+            <TitleText>{resolvedForm?.title || ''}</TitleText>
 
             <PreviewBadge>
               <PreviewBadgeIcon />
@@ -751,7 +751,7 @@ export default function IdeaPreview({ form, onBack, mode }: Props) {
             </PreviewBadge>
           </TitleHeader>
           <TitleInfoRow>
-            <IntroText>{resolvedForm?.intro || '아이디어 한줄소개'}</IntroText>
+            <IntroText>{resolvedForm?.intro || ''}</IntroText>
             <WriterContainer>
               <WriterContent>
                 {writerSchool && writerPartLabel
@@ -770,7 +770,7 @@ export default function IdeaPreview({ form, onBack, mode }: Props) {
         <SubjectRow>
           <SubjectLabel>아이디어 주제</SubjectLabel>
           <SubjectValue>
-            {resolvedForm?.topic || '청년 세대의 경제적, 사회적 어려움을 해결하기 위한 솔루션'}
+            {resolvedForm?.topic || ''}
           </SubjectValue>
         </SubjectRow>
 
@@ -804,7 +804,7 @@ export default function IdeaPreview({ form, onBack, mode }: Props) {
             dangerouslySetInnerHTML={{
               __html:
                 safeDescription ||
-                '<p>Github README 작성에 쓰이는 "markdown"을 이용해 작성해보세요.</p>',
+                '',
             }}
           />
         </DescriptionSection>
