@@ -53,6 +53,12 @@ export default function ProjectDescriptionEditor({
 }: ProjectDescriptionEditorProps) {
   const uploadMutation = useUploadImage();
 
+  const insertImageMarkdown = (url: string, file: File, textarea: HTMLTextAreaElement) => {
+    const alt = file.name.replace(/\.[^/.]+$/, '') || 'image';
+    const md = `\n![${alt}](${url})\n`;
+    insertAtCursor(value, md, textarea, onChange);
+  };
+
   const uploadOneProjectImage = async (file: File): Promise<string> => {
     const uploaded = await uploadMutation.mutateAsync({
       file,
@@ -71,8 +77,7 @@ export default function ProjectDescriptionEditor({
     for (const file of files) {
       try {
         const url = await uploadOneProjectImage(file);
-        const md = `${url}`;
-        insertAtCursor(value, md, textarea, onChange);
+        insertImageMarkdown(url, file, textarea);
       } catch (err) {
         console.error('이미지 업로드 실패:', err);
       }
@@ -94,8 +99,7 @@ export default function ProjectDescriptionEditor({
 
       try {
         const url = await uploadOneProjectImage(file);
-        const md = `${url}`;
-        insertAtCursor(value, md, textarea, onChange);
+        insertImageMarkdown(url, file, textarea);
       } catch (err) {
         console.error('이미지 업로드 실패:', err);
       }

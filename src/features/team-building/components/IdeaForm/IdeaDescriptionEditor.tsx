@@ -58,7 +58,8 @@ export default function IdeaDescriptionEditor({ value, onChange }: Props) {
     for (const file of files) {
       try {
         const url = await uploadOneImage(file);
-        insertAtCursor(value, `${url}`, textarea, onChange);
+        const alt = file.name.replace(/\.[^/.]+$/, '');
+        insertAtCursor(value, `\n![${alt}](${url})\n`, textarea, onChange);
       } catch (err) {
         console.error('이미지 업로드 실패:', err);
       }
@@ -80,7 +81,8 @@ export default function IdeaDescriptionEditor({ value, onChange }: Props) {
 
       try {
         const url = await uploadOneImage(file);
-        insertAtCursor(value, `${url}`, textarea, onChange);
+        const alt = file.name.replace(/\.[^/.]+$/, '');
+        insertAtCursor(value, `\n![${alt}](${url})\n`, textarea, onChange);
       } catch (err) {
         console.error('이미지 업로드 실패:', err);
       }
