@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { mediaQuery } from '@/styles/constants/media';
 import { css } from '@emotion/react';
 
 import DropdownMenu from '../../features/team-building/components/MyPage/DropdownMenu';
@@ -9,7 +8,6 @@ import { useAuthStore } from '../../lib/authStore';
 import { layoutCss } from '../../styles/constants/layout';
 
 const GDG_OC_LINK = 'https://sites.google.com/view/gdeveloperskorea/gdg-on-campus';
-
 const AUTH_PAGES = ['/login', '/signup', '/forgot-password'];
 
 const navItemCss = css`
@@ -19,12 +17,6 @@ const navItemCss = css`
   cursor: pointer;
   color: inherit;
   text-decoration: none;
-
-  ${mediaQuery('xs')} {
-    &:not([data-mobile-visible]) {
-      display: none;
-    }
-  }
 `;
 
 export default function Nav() {
@@ -34,6 +26,7 @@ export default function Nav() {
 
   const isLoggedIn = !!accessToken;
   const isAuthPage = AUTH_PAGES.includes(router.pathname);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 480;
 
   useEffect(() => {
     hydrateFromSession();
@@ -84,18 +77,23 @@ export default function Nav() {
             align-items: center;
           `}
         >
-          {(isAuthPage || !isLoggedIn) && (
+          {isMobile && (
             <>
-              <a
-                href={GDG_OC_LINK}
-                target="_blank"
-                rel="noreferrer"
-                css={navItemCss}
-                data-mobile-visible
-              >
+              <a href={GDG_OC_LINK} target="_blank" rel="noreferrer" css={navItemCss}>
                 About
               </a>
-              <Link href="/contact" scroll={false} css={navItemCss} data-mobile-visible>
+              <Link href="/contact" scroll={false} css={navItemCss}>
+                Contact
+              </Link>
+            </>
+          )}
+
+          {!isMobile && (isAuthPage || !isLoggedIn) && (
+            <>
+              <a href={GDG_OC_LINK} target="_blank" rel="noreferrer" css={navItemCss}>
+                About
+              </a>
+              <Link href="/contact" scroll={false} css={navItemCss}>
                 Contact
               </Link>
               <Link href="/login" scroll={false} css={navItemCss}>
@@ -104,7 +102,7 @@ export default function Nav() {
             </>
           )}
 
-          {!isAuthPage && isLoggedIn && (
+          {!isMobile && !isAuthPage && isLoggedIn && (
             <>
               {participated && (
                 <Link href="/WelcomeOpen" scroll={false} css={navItemCss}>
@@ -118,7 +116,7 @@ export default function Nav() {
                 </Link>
               )}
 
-              <Link href="/project-gallery" scroll={false} css={navItemCss} data-mobile-visible>
+              <Link href="/project-gallery" scroll={false} css={navItemCss}>
                 Gallery
               </Link>
 

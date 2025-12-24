@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { css } from '@emotion/react';
 import { motion } from 'framer-motion';
@@ -17,32 +17,23 @@ export default function ProjectSection() {
 
   const [page, setPage] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 480);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
-
-  const itemsPerPage = isMobile ? 1 : 3;
-
+  const itemsPerPage = 3;
   const maxPage = Math.max(0, Math.floor((projects.length - 1) / itemsPerPage));
 
   const prev = () => {
     setDirection(-1);
-    setPage(prev => (prev === 0 ? maxPage : prev - 1));
+    setPage(p => (p === 0 ? maxPage : p - 1));
   };
 
   const next = () => {
     setDirection(1);
-    setPage(prev => (prev === maxPage ? 0 : prev + 1));
+    setPage(p => (p === maxPage ? 0 : p + 1));
   };
 
   const visible = useMemo(
     () => projects.slice(page * itemsPerPage, page * itemsPerPage + itemsPerPage),
-    [projects, page, itemsPerPage]
+    [projects, page]
   );
 
   const hasEnoughProjects = projects.length >= 1;
@@ -59,23 +50,16 @@ export default function ProjectSection() {
       )}
 
       <div css={carouselWrapCss}>
-        <div css={arrowSideCss}>
-          <button onClick={prev} css={leftArrowCss} disabled={projects.length <= itemsPerPage}>
-            <img src="/leftarrow.svg" alt="prev" css={leftArrowIconCss} />
-          </button>
-        </div>
+        <button onClick={prev} css={pcLeftArrowCss} disabled={projects.length <= itemsPerPage}>
+          <img src="/leftarrow.svg" alt="prev" css={iconCss} />
+        </button>
 
         <div css={viewportCss}>
           <motion.div
             key={page}
             initial={{ x: direction * 80, opacity: 0, scale: 0.98 }}
             animate={{ x: 0, opacity: 1, scale: 1 }}
-            transition={{
-              type: 'spring',
-              stiffness: 220,
-              damping: 26,
-              mass: 0.8,
-            }}
+            transition={{ type: 'spring', stiffness: 220, damping: 26, mass: 0.8 }}
             css={cardRowCss}
           >
             {visible.map(item => (
@@ -102,19 +86,17 @@ export default function ProjectSection() {
           </motion.div>
         </div>
 
-        <div css={arrowSideCss}>
-          <button onClick={next} css={rightArrowCss} disabled={projects.length <= itemsPerPage}>
-            <img src="/rightarrow.svg" alt="next" css={rightArrowIconCss} />
-          </button>
-        </div>
+        <button onClick={next} css={pcRightArrowCss} disabled={projects.length <= itemsPerPage}>
+          <img src="/rightarrow.svg" alt="next" css={iconCss} />
+        </button>
       </div>
 
-      <div css={mobileArrowRowCss}>
-        <button onClick={prev} css={mobileArrowCss}>
-          ‹
+      <div css={bottomArrowRowCss}>
+        <button onClick={prev} css={arrowCss} disabled={projects.length <= itemsPerPage}>
+          <img src="/leftarrow.svg" alt="prev" css={iconCss} />
         </button>
-        <button onClick={next} css={mobileArrowCss}>
-          ›
+        <button onClick={next} css={arrowCss} disabled={projects.length <= itemsPerPage}>
+          <img src="/rightarrow.svg" alt="next" css={iconCss} />
         </button>
       </div>
 
@@ -124,8 +106,6 @@ export default function ProjectSection() {
     </section>
   );
 }
-
-/* ---------- styles ---------- */
 
 const linkResetCss = css`
   text-decoration: none;
@@ -138,6 +118,7 @@ const sectionCss = css`
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow: visible;
 `;
 
 const headerWrapCss = css`
@@ -158,22 +139,24 @@ const emptyNoticeCss = css`
 const carouselWrapCss = css`
   position: relative;
   width: 100%;
-  display: flex;
-  align-items: center;
 `;
 
 const viewportCss = css`
-  overflow: hidden;
   width: 100%;
+  overflow: hidden;
   display: flex;
   justify-content: center;
 `;
 
 const cardRowCss = css`
   display: grid;
+  gap: 32px;
   grid-template-columns: repeat(3, 312px);
-  gap: 40px;
   justify-content: center;
+
+  @media (max-width: 1023px) {
+    grid-template-columns: repeat(2, 312px);
+  }
 
   @media (max-width: 479px) {
     grid-template-columns: 312px;
@@ -182,37 +165,40 @@ const cardRowCss = css`
 
 const cardCss = css`
   width: 312px;
-  min-width: 312px;
-  max-width: 312px;
+  border-radius: 12px;
 `;
 
 const thumbFrameCss = css`
   height: 245px;
   border-radius: 12px;
-  border: 1px solid var(--grayscale-900, #25282c);
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  box-shadow:
+    0 10px 10px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04);
 `;
 
 const logoCss = css`
   width: 220px;
   height: 220px;
   object-fit: contain;
-  display: block;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
 `;
 
 const metaCss = css`
   margin-top: 20px;
-  max-width: 100%;
   overflow: hidden;
 `;
 
 const titleItemCss = css`
   font-size: 24px;
   font-weight: 600;
-  line-height: 140%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -221,9 +207,7 @@ const titleItemCss = css`
 const descItemCss = css`
   margin-top: 5px;
   font-size: 16px;
-  font-weight: 400;
   color: #979ca5;
-  line-height: 150%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -234,92 +218,57 @@ const badgeRowCss = css`
   min-height: 28px;
   display: flex;
   align-items: center;
-  max-width: 100%;
-  overflow: hidden;
 `;
 
-const arrowBaseCss = css`
-  position: absolute;
-  top: 100px;
+const arrowCss = css`
   width: 52px;
   height: 52px;
   border-radius: 14px;
   border: 2px solid #d9d9d9;
   background: #ffffff;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 `;
 
-const arrowSideCss = css`
-  @media (max-width: 479px) {
+const iconCss = css`
+  width: 20px;
+  height: 20px;
+`;
+
+const pcLeftArrowCss = css`
+  ${arrowCss};
+  position: absolute;
+  left: 0;
+  top: 120px;
+  transform: translateX(-80px);
+
+  @media (max-width: 1023px) {
     display: none;
   }
 `;
 
-const mobileArrowRowCss = css`
-  display: none;
-  margin-top: 24px;
-  gap: 16px;
-
-  @media (max-width: 479px) {
-    display: flex;
-    justify-content: center;
-  }
-`;
-
-const mobileArrowCss = css`
-  width: 44px;
-  height: 44px;
-  border-radius: 15%;
-  border: 1px solid #d9d9d9;
-  background: #ffffff;
-  font-size: 20px;
-  cursor: pointer;
-`;
-
-const leftArrowIconCss = css`
-  width: 20px;
-  height: 20px;
-  display: block;
-  transform: translateX(-1px);
-`;
-
-const rightArrowIconCss = css`
-  width: 20px;
-  height: 20px;
-  display: block;
-  transform: translateX(1px);
-`;
-
-const leftArrowCss = css`
-  ${arrowBaseCss};
-  left: 0;
-  transform: translateX(-80px);
-
-  &:hover:not(:disabled) {
-    background: #f1f3f4;
-    border-color: #bdbdbd;
-  }
-
-  &:active:not(:disabled) {
-    background: #e8eaed;
-  }
-`;
-
-const rightArrowCss = css`
-  ${arrowBaseCss};
+const pcRightArrowCss = css`
+  ${arrowCss};
+  position: absolute;
   right: 0;
+  top: 120px;
   transform: translateX(80px);
 
-  &:hover:not(:disabled) {
-    background: #f1f3f4;
-    border-color: #bdbdbd;
+  @media (max-width: 1023px) {
+    display: none;
   }
+`;
 
-  &:active:not(:disabled) {
-    background: #e8eaed;
+const bottomArrowRowCss = css`
+  margin-top: 24px;
+  display: none;
+  gap: 16px;
+  justify-content: center;
+
+  @media (max-width: 1023px) {
+    display: flex;
   }
 `;
 
@@ -332,9 +281,8 @@ const moreBtnCss = css`
   font-size: 16px;
   font-weight: 500;
   text-decoration: none;
-  cursor: pointer;
 
-  &:hover {
-    background: #2171f2;
+  @media (max-width: 479px) {
+    display: none;
   }
 `;
