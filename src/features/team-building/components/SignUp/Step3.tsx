@@ -267,13 +267,16 @@ const agreeRow = css`
 `;
 
 const agreeCheck = (checked: boolean) => css`
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   background: ${checked ? colors.primary[600] : colors.grayscale[300]};
   color: white;
   display: flex;
   justify-content: center;
   align-items: center;
+  border-radius: 4px;
+  border: 1px solid ${checked ? colors.primary[600] : colors.grayscale[400]};
+  cursor: pointer;
 `;
 
 const agreeBtn = css`

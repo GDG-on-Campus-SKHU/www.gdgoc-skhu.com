@@ -143,7 +143,6 @@ export default function TermsContent() {
     </div>
   );
 }
-
 const content = css`
   width: 100%;
   line-height: 1.7;
@@ -162,12 +161,20 @@ const content = css`
   }
 
   ol {
-    margin: 8px 0 16px 20px;
+    list-style-type: decimal;
+    list-style-position: outside;
+    margin: 8px 0 16px 24px;
     padding: 0;
   }
 
+  ol > li > ul {
+    list-style-type: lower-alpha;
+    margin-top: 6px;
+    margin-left: 20px;
+  }
+
   ul {
-    margin: 8px 0 16px 20px;
+    list-style-position: outside;
     padding: 0;
   }
 
