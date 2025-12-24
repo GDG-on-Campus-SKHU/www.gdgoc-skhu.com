@@ -41,7 +41,7 @@ export default function MyTeamMemberCard({
     } else {
       // 다른 유저 → 타인 프로필
       router.push({
-        pathname: '/mypage/profile/[userId]',
+        pathname: '/profile/[userId]',
         query: { userId },
       });
     }
