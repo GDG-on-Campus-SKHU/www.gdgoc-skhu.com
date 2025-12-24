@@ -173,19 +173,17 @@ const logoCss = css`
 
 const metaCss = css`
   margin-top: 20px;
+  max-width: 100%;
+  overflow: hidden;
 `;
 
 const titleItemCss = css`
   font-size: 24px;
   font-weight: 600;
   line-height: 140%;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  word-break: break-word;
-  white-space: nowrap;
 `;
 
 const descItemCss = css`
@@ -194,13 +192,9 @@ const descItemCss = css`
   font-weight: 400;
   color: #979ca5;
   line-height: 150%;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  word-break: break-word;
-  white-space: nowrap;
 `;
 
 const badgeRowCss = css`
@@ -244,12 +238,30 @@ const leftArrowCss = css`
   ${arrowBaseCss};
   left: 0;
   transform: translateX(-80px);
+
+  &:hover:not(:disabled) {
+    background: #f1f3f4;
+    border-color: #bdbdbd;
+  }
+
+  &:active:not(:disabled) {
+    background: #e8eaed;
+  }
 `;
 
 const rightArrowCss = css`
   ${arrowBaseCss};
   right: 0;
   transform: translateX(80px);
+
+  &:hover:not(:disabled) {
+    background: #f1f3f4;
+    border-color: #bdbdbd;
+  }
+
+  &:active:not(:disabled) {
+    background: #e8eaed;
+  }
 `;
 
 const moreBtnCss = css`
