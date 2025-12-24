@@ -765,9 +765,7 @@ export default function IdeaPreview({ form, onBack, mode }: Props) {
 
         <SubjectRow>
           <SubjectLabel>아이디어 주제</SubjectLabel>
-          <SubjectValue>
-            {resolvedForm?.topic || ''}
-          </SubjectValue>
+          <SubjectValue>{resolvedForm?.topic || ''}</SubjectValue>
         </SubjectRow>
 
         <MembersSection>
