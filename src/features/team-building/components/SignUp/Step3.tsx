@@ -70,7 +70,7 @@ export default function Step3({
   useEffect(() => {
     if (orgType === 'internal') setSchool('성공회대학교');
     if (!cohort) setCohort('25-26');
-    if (!part) setPart('PM');
+    if (!part) setPart('BACKEND');
     if (!role) setRole('MEMBER');
   }, [orgType, cohort, part, role, setSchool, setCohort, setPart, setRole]);
 
@@ -88,12 +88,11 @@ export default function Step3({
     if (!cohort) newErrors.cohort = '기수를 선택해주세요.';
     if (!part) newErrors.part = '파트를 선택해주세요.';
     if (!role) newErrors.role = '분류를 선택해주세요.';
-    if (!agree) newErrors.agree = '약관에 동의해주세요.';
 
     setLocalErrors(newErrors);
-  }, [school, cohort, part, role, agree, orgType]);
+  }, [school, cohort, part, role, orgType]);
 
-  const isDisabled = Object.keys(localErrors).length > 0;
+  const isDisabled = Object.keys(localErrors).length > 0 || !agree;
 
   // 약관 전문 JSX
   const termsContentNode = (
@@ -472,7 +471,7 @@ export default function Step3({
             <label css={labelCss}>기수</label>
             <SelectBoxBasic
               options={['25-26', '24-25', '23-24', '22-23']}
-              placeholder="25-26"
+              value={[cohort]}
               onChange={([value]) => setCohort(value)}
             />
             {!!localErrors.cohort && <p css={errorText}>{localErrors.cohort}</p>}
@@ -482,7 +481,7 @@ export default function Step3({
             <label css={labelCss}>파트</label>
             <SelectBoxBasic
               options={['PM', 'DESIGN', 'WEB', 'MOBILE', 'BACKEND', 'AI']}
-              placeholder="PM"
+              value={[part]}
               onChange={([value]) => setPart(value)}
             />
             {!!localErrors.part && <p css={errorText}>{localErrors.part}</p>}
@@ -516,7 +515,6 @@ export default function Step3({
               이용 약관 및 개인정보 처리 방침
             </button>
           </div>
-          {!!localErrors.agree && <p css={errorText}>{localErrors.agree}</p>}
         </div>
 
         <div css={buttonBox}>
@@ -563,37 +561,37 @@ export default function Step3({
 // --- Styles ---
 
 const modalCustomStyle = css`
-  /* 1. 모달 박스 스타일 재정의 (너비, 높이) */
+  & > div {
+    overflow: hidden;
+    display: flex;
+    align-items: flex-start;
+    padding-top: 15vh;
+  }
+
   & > div > div {
-    width: 510px !important;
-    max-width: 90vw;
-    max-height: 90vh; /* 화면보다 클 경우 대비 */
+    width: 33vw;
+    height: 78vh;
     display: flex;
     flex-direction: column;
+    padding: 24px;
   }
 
-  /* 2. 내부 스크롤 영역(메시지 박스)이 남은 공간을 채우도록 설정 */
-  /* Modal 내부 구조상 scrollBoxCss가 적용된 div를 타겟팅해야 합니다. */
-  /* 보통 헤더(h2) 다음 요소이거나, 특정 클래스를 가집니다. */
-  & > div > div > div[class*='scrollBoxCss'],
-  & > div > div > div:nth-of-type(2) {
-    flex: 1; /* 남은 높이 모두 차지 */
-    min-height: 0; /* flex 자식의 스크롤 동작을 위해 필수 */
-    overflow-y: auto; /* 세로 스크롤 허용 */
-    margin-bottom: 20px; /* 하단 여백 확보 */
-  }
-
-  /* 3. 하단 버튼 숨기기 (기존 유지) */
   & > div > div > button {
-    display: none !important;
+    display: none;
+    height: 0;
+    padding: 0;
+    margin: 0;
   }
 
-  /* 헤더의 닫기 버튼은 보이게 유지 */
-  button[class*='closeButtonCss'],
-  div[class*='modalHeaderCss'] button {
-    display: flex !important;
+  & > div > div > h2 + div {
+    flex: 1;
+    min-height: 0;
+    max-height: none !important;
+    margin-bottom: 0 !important;
+    overflow-y: auto;
   }
 `;
+
 
 const modalHeaderCss = css`
   display: flex;
@@ -616,6 +614,7 @@ const closeButtonCss = css`
 `;
 
 const termsWrapper = css`
+  margin-bottom: 16px;
   text-align: left;
   color: ${colors.grayscale[700]};
   font-size: 14px;
@@ -665,7 +664,7 @@ const termsWrapper = css`
 const sectionCss = css`
   width: 420px;
   background: ${colors.white};
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: 0 8px 36px rgba(0, 0, 0, 0.08);
   padding: 36px 36px 48px;
   margin-top: 120px;
@@ -684,14 +683,14 @@ const stepCountCss = css`
 const formBox = css`
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 22px;
   margin-top: 8px;
 `;
 
 const formGroup = css`
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 `;
 
 const labelCss = css`
@@ -710,6 +709,7 @@ const radioGroup = css`
   display: flex;
   gap: 18px;
   margin-top: 4px;
+  margin-bottom: 6px;
 `;
 
 const radioLabel = css`
@@ -737,6 +737,7 @@ const agreeRow = css`
   align-items: center;
   gap: 10px;
   margin-top: 4px;
+  margin-bottom: 22px;
 `;
 
 const agreeCheck = (checked: boolean) => css`
