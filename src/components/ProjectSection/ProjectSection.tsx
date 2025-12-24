@@ -78,7 +78,7 @@ export default function ProjectSection() {
                     <h3 css={titleItemCss}>{item.title}</h3>
                     <p css={descItemCss}>{item.description}</p>
                     <div css={badgeRowCss}>
-                      <StatusBadge status={item.status} />
+                      {item.status && <StatusBadge status={item.status} />}
                     </div>
                   </div>
                 </div>
@@ -179,7 +179,6 @@ const titleItemCss = css`
   font-size: 24px;
   font-weight: 600;
   line-height: 140%;
-
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -191,7 +190,6 @@ const descItemCss = css`
   font-weight: 400;
   color: #979ca5;
   line-height: 150%;
-
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
