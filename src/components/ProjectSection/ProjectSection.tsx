@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { css } from '@emotion/react';
 import { motion } from 'framer-motion';
@@ -18,7 +18,21 @@ export default function ProjectSection() {
   const [page, setPage] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
 
-  const itemsPerPage = 3;
+  const [itemsPerPage, setItemsPerPage] = useState(3);
+
+  useEffect(() => {
+    const updateItemsPerPage = () => {
+      const w = window.innerWidth;
+      if (w < 480) setItemsPerPage(1);
+      else if (w < 1024) setItemsPerPage(2);
+      else setItemsPerPage(3);
+    };
+
+    updateItemsPerPage();
+    window.addEventListener('resize', updateItemsPerPage);
+    return () => window.removeEventListener('resize', updateItemsPerPage);
+  }, []);
+
   const maxPage = Math.max(0, Math.floor((projects.length - 1) / itemsPerPage));
 
   const prev = () => {
@@ -33,7 +47,7 @@ export default function ProjectSection() {
 
   const visible = useMemo(
     () => projects.slice(page * itemsPerPage, page * itemsPerPage + itemsPerPage),
-    [projects, page]
+    [projects, page, itemsPerPage]
   );
 
   const hasEnoughProjects = projects.length >= 1;
