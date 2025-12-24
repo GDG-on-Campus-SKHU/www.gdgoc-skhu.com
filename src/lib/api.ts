@@ -25,7 +25,6 @@ const BLOCKED_PUBLIC_PATH_PATTERNS = [
   /^\/project-gallery\/\d+\/edit$/,
 ];
 
-
 /**
  * 기본 API 인스턴스
  * - accessToken은 Authorization 헤더로 전달
@@ -185,10 +184,13 @@ api.interceptors.response.use(
         sessionStorage.removeItem('accessToken');
 
         const currentPath = window.location.pathname;
-        const isBlockedPublicPath = BLOCKED_PUBLIC_PATH_PATTERNS.some(pattern => pattern.test(currentPath));
+        const isBlockedPublicPath = BLOCKED_PUBLIC_PATH_PATTERNS.some(pattern =>
+          pattern.test(currentPath)
+        );
 
-        const isPublicPath = !isBlockedPublicPath &&
-        (PUBLIC_PATHS.includes(currentPath) || /^\/project-gallery\/\d+$/.test(currentPath));
+        const isPublicPath =
+          !isBlockedPublicPath &&
+          (PUBLIC_PATHS.includes(currentPath) || /^\/project-gallery\/\d+$/.test(currentPath));
 
         if (!isPublicPath) {
           window.location.href = '/login';
