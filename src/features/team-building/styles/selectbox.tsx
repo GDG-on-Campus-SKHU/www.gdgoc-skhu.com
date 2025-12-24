@@ -9,7 +9,7 @@ export const selectBoxWrapperCss = css`
 
 export const selectBoxHeaderCss = css`
   width: 100%;
-  height: 3rem;
+  min-height: 3rem;
   padding: 0.75rem 1rem;
   background-color: white;
   border: 0.0625rem solid #e0e0e0;
@@ -38,13 +38,14 @@ export const selectBoxPlaceholderCss = css`
 
 export const selectBoxSelectedCss = css`
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
   flex: 1;
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
+  overflow: visible;
 
   scrollbar-width: none;
   &::-webkit-scrollbar {
@@ -72,9 +73,18 @@ export const selectBoxDropdownCss = css`
   background-color: white;
   border: 0.0625rem solid #e0e0e0;
   border-radius: 0.5rem;
-  max-height: 20rem;
-  overflow-y: auto;
   z-index: 1000;
+
+  display: flex;
+  flex-direction: column;
+`;
+
+export const selectBoxSearchWrapperCss = css`
+  padding: 0;
+  background-color: white;
+  border-bottom: 0.0625rem solid #e0e0e0;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
 `;
 
 export const selectBoxSearchCss = css`
@@ -82,11 +92,8 @@ export const selectBoxSearchCss = css`
   height: 3rem;
   padding: 0 1rem;
   border: none;
-  border-bottom: 0.0625rem solid #e0e0e0;
   outline: none;
   font-size: 1rem;
-  border-top-left-radius: 0.5rem;
-  border-top-right-radius: 0.5rem;
   box-sizing: border-box;
 
   &::placeholder {
@@ -94,7 +101,7 @@ export const selectBoxSearchCss = css`
   }
 
   &:focus {
-    border-bottom-color: ${colors.gdscBlue};
+    border-bottom: 0.125rem solid ${colors.gdscBlue};
   }
 `;
 
@@ -102,6 +109,9 @@ export const selectBoxListCss = css`
   list-style: none;
   padding: 0;
   margin: 0;
+
+  max-height: 17rem;
+  overflow-y: auto;
 `;
 
 export const selectBoxItemCss = css`

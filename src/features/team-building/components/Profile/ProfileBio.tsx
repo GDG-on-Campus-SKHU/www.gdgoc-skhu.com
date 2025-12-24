@@ -1,4 +1,5 @@
 import dynamic from 'next/dynamic';
+import { useUploadImage } from '@/lib/image.api';
 import { css } from '@emotion/react';
 import remarkBreaks from 'remark-breaks';
 
@@ -23,6 +24,32 @@ interface ProfileBioProps {
   setTempMarkdown: (value: string) => void;
 }
 
+function insertAtCursor(
+  current: string,
+  insertText: string,
+  textarea: HTMLTextAreaElement | null,
+  onChange: (next: string) => void
+) {
+  // textarea 접근이 불가하면 그냥 뒤에 붙이기(안전 fallback)
+  if (!textarea) {
+    onChange((current ?? '') + insertText);
+    return;
+  }
+
+  const start = textarea.selectionStart ?? current.length;
+  const end = textarea.selectionEnd ?? current.length;
+
+  const next = current.slice(0, start) + insertText + current.slice(end);
+  onChange(next);
+
+  // 커서 위치를 삽입 텍스트 뒤로 이동
+  const nextPos = start + insertText.length;
+  requestAnimationFrame(() => {
+    textarea.focus();
+    textarea.setSelectionRange(nextPos, nextPos);
+  });
+}
+
 export default function ProfileBio({
   isEditing,
   isPreviewMode,
@@ -31,10 +58,65 @@ export default function ProfileBio({
   setTempMarkdown,
 }: ProfileBioProps) {
   const showEditor = isEditing && !isPreviewMode;
+  const uploadMutation = useUploadImage();
+
+  const insertImageMarkdown = (url: string, file: File, textarea: HTMLTextAreaElement | null) => {
+    const alt = file.name.replace(/\.[^/.]+$/, '') || 'image';
+    const md = `\n![${alt}](${url})\n`;
+    insertAtCursor(tempMarkdown, md, textarea, setTempMarkdown);
+  };
+
+  const uploadOneProjectImage = async (file: File): Promise<string> => {
+    const uploaded = await uploadMutation.mutateAsync({
+      file,
+      directory: 'project',
+    });
+    return uploaded.url;
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    const textarea = e.currentTarget;
+
+    const files = Array.from(e.dataTransfer.files).filter(
+      f => f.type.startsWith('image/') && f.size > 0
+    );
+    if (!files.length) return;
+
+    for (const file of files) {
+      try {
+        const url = await uploadOneProjectImage(file);
+        insertImageMarkdown(url, file, textarea);
+      } catch (err) {
+        console.error('이미지 업로드 실패:', err);
+      }
+    }
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const textarea = e.currentTarget;
+    const items = Array.from(e.clipboardData.items).filter(it => it.type.startsWith('image/'));
+
+    if (!items.length) return;
+    e.preventDefault();
+
+    for (const item of items) {
+      const file = item.getAsFile();
+      if (!file || file.size === 0) continue;
+
+      try {
+        const url = await uploadOneProjectImage(file);
+        insertImageMarkdown(url, file, textarea);
+      } catch (err) {
+        console.error('이미지 업로드 실패:', err);
+      }
+    }
+  };
 
   return (
     <section css={!isEditing && wrapCss}>
       <h3 css={labelCss}>자기소개</h3>
+
       {showEditor ? (
         <div css={editorContainerCss} data-color-mode="light">
           <MDEditor
@@ -44,11 +126,12 @@ export default function ProfileBio({
             preview="edit"
             hideToolbar={false}
             visibleDragbar={false}
-            previewOptions={{
-              remarkPlugins: [remarkBreaks],
-            }}
+            previewOptions={{ remarkPlugins: [remarkBreaks] }}
             textareaProps={{
               placeholder: "Github README 생성에 쓰이는 'markdown'을 이용해 작성해보세요.",
+              onDrop: handleDrop,
+              onPaste: handlePaste,
+              onDragOver: e => e.preventDefault(),
             }}
           />
         </div>

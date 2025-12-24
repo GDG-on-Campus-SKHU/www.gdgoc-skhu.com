@@ -12,6 +12,7 @@ import {
   useSearchMembers,
   useUpdateProjectGallery,
 } from '@/lib/adminProjectGallery.api';
+import { useUploadImage } from '@/lib/image.api';
 import remarkBreaks from 'remark-breaks';
 import styled from 'styled-components';
 
@@ -62,6 +63,32 @@ function useDebounce<T>(value: T, delay: number): T {
     return () => clearTimeout(handler);
   }, [value, delay]);
   return debouncedValue;
+}
+
+function insertAtCursor(
+  current: string,
+  insertText: string,
+  textarea: HTMLTextAreaElement | null,
+  onChange: (next: string) => void
+) {
+  // textarea 접근이 불가하면 그냥 뒤에 붙이기(안전 fallback)
+  if (!textarea) {
+    onChange((current ?? '') + insertText);
+    return;
+  }
+
+  const start = textarea.selectionStart ?? current.length;
+  const end = textarea.selectionEnd ?? current.length;
+
+  const next = current.slice(0, start) + insertText + current.slice(end);
+  onChange(next);
+
+  // 커서 위치를 삽입 텍스트 뒤로 이동
+  const nextPos = start + insertText.length;
+  requestAnimationFrame(() => {
+    textarea.focus();
+    textarea.setSelectionRange(nextPos, nextPos);
+  });
 }
 
 interface TeamMember {
@@ -266,6 +293,62 @@ const ProjectGalleryEdit: React.FC = () => {
     );
   };
 
+  const uploadMutation = useUploadImage();
+
+  const insertImageMarkdown = (url: string, file: File, textarea: HTMLTextAreaElement | null) => {
+    const alt = file.name.replace(/\.[^/.]+$/, '') || 'image';
+    const md = `\n![${alt}](${url})\n`;
+
+    insertAtCursor(projectDetail, md, textarea, next => setProjectDetail(next));
+  };
+
+  const uploadOneProjectImage = async (file: File): Promise<string> => {
+    const uploaded = await uploadMutation.mutateAsync({
+      file,
+      directory: 'project',
+    });
+    return uploaded.url;
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    const textarea = e.currentTarget;
+
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    if (files.length === 0) return;
+
+    for (const file of files) {
+      try {
+        const url = await uploadOneProjectImage(file);
+        insertImageMarkdown(url, file, textarea);
+      } catch (err) {
+        console.error('이미지 업로드 실패:', err);
+      }
+    }
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const textarea = e.currentTarget;
+
+    const items = Array.from(e.clipboardData.items);
+    const imageItems = items.filter(it => it.type.startsWith('image/'));
+    if (imageItems.length === 0) return;
+
+    e.preventDefault();
+
+    for (const item of imageItems) {
+      const file = item.getAsFile();
+      if (!file) continue;
+
+      try {
+        const url = await uploadOneProjectImage(file);
+        insertImageMarkdown(url, file, textarea);
+      } catch (err) {
+        console.error('이미지 업로드 실패:', err);
+      }
+    }
+  };
+
   if (isLoading) {
     return (
       <Container>
@@ -443,7 +526,11 @@ const ProjectGalleryEdit: React.FC = () => {
                         remarkPlugins: [remarkBreaks],
                       }}
                       textareaProps={{
-                        placeholder: '프로젝트 설명을 마크다운으로 입력해주세요.',
+                        placeholder:
+                          "Github README 작성에 쓰이는 'markdown'을 이용해 작성해보세요.",
+                        onDrop: handleDrop,
+                        onPaste: handlePaste,
+                        onDragOver: e => e.preventDefault(),
                       }}
                     />
                   </MarkdownContainer>
