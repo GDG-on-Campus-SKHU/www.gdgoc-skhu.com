@@ -213,6 +213,7 @@ const formBox = css`
   display: flex;
   flex-direction: column;
   gap: 22px;
+  margin-top: 8px;
 `;
 
 const formGroup = css`
@@ -223,6 +224,8 @@ const formGroup = css`
 
 const labelCss = css`
   font-weight: 700;
+  font-size: 15px;
+  color: ${colors.black};
 `;
 
 const gridRow = css`
@@ -234,11 +237,18 @@ const gridRow = css`
 const radioGroup = css`
   display: flex;
   gap: 18px;
+  margin-top: 4px;
+  margin-bottom: 6px;
 `;
 
 const radioLabel = css`
   display: inline-flex;
+  align-items: center;
   gap: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  color: ${colors.black};
 `;
 
 const radioInput = (checked: boolean) => css`
@@ -253,6 +263,7 @@ const radioInput = (checked: boolean) => css`
 const agreeRow = css`
   display: flex;
   gap: 10px;
+  margin-bottom: 22px;
 `;
 
 const agreeCheck = (checked: boolean) => css`
@@ -275,10 +286,12 @@ const agreeBtn = css`
 const errorText = css`
   color: ${colors.point.red};
   font-size: 13px;
+  margin-top: 6px;
 `;
 
 const buttonBox = css`
   display: flex;
+  width: 100%;
   gap: 12px;
 
   & > button:first-of-type {
