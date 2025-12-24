@@ -257,7 +257,7 @@ const rightBtn = css`
 export const sectionCss = (visible: boolean, step: Step, isMobile: boolean) => css`
   width: 420px;
   background: #fff;
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: 0 8px 36px rgba(0, 0, 0, 0.08);
   padding: 36px 36px 48px;
   margin-top: ${step === 2 ? (isMobile ? '130px' : '110px') : '0'};
