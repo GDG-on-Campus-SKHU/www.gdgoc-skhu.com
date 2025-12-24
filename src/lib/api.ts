@@ -176,7 +176,7 @@ api.interceptors.response.use(
         sessionStorage.removeItem('accessToken');
 
         const currentPath = window.location.pathname;
-        const isPublicPath = PUBLIC_PATHS.includes(currentPath);
+        const isPublicPath = PUBLIC_PATHS.includes(currentPath) || /^\/project-gallery\/\d+$/.test(currentPath);
 
         if (!isPublicPath) {
           window.location.href = '/login';
