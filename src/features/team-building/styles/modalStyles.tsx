@@ -2,6 +2,7 @@ import { css, keyframes } from '@emotion/react';
 
 import { colors } from '../../../styles/constants/colors';
 import { typography } from '../../../styles/constants/text';
+import { ModalType } from '../components/Modal.types';
 
 const fadeIn = keyframes`
   from { opacity: 0; }
@@ -51,12 +52,14 @@ export const closingOverlayCss = css`
   animation: ${fadeOut} 0.25s ease forwards;
 `;
 
-export const boxCss = css`
+export const boxCss = (type?: ModalType) => css`
   background: ${colors.white};
   border-radius: 12px;
-  width: 380px;
+  width: ${type === 'scroll' || type === 'terms' ? '460px' : '380px'};
+  max-height: 80vh;
   padding: 36px 28px 32px;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
   animation: ${scaleIn} 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 `;
@@ -143,9 +146,8 @@ export const buttonSecondaryCss = css`
 `;
 
 export const scrollBoxCss = css`
-  max-height: 380px;
+  flex: 1;
   overflow-y: auto;
-  margin-bottom: 20px;
   padding-right: 6px;
   text-align: left;
   ${typography.b4};

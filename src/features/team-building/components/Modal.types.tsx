@@ -7,7 +7,8 @@ export type ModalType =
   | 'textConfirm'
   | 'scroll'
   | 'titleConfirm'
-  | 'smallConfirm';
+  | 'smallConfirm'
+  | 'terms';
 
 export interface ModalProps {
   type?: ModalType;

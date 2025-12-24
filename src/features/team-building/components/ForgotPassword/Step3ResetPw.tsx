@@ -59,16 +59,35 @@ export default function Step3ResetPw({ email, code, onPrev }: Props) {
       });
     } catch (err: any) {
       const status = err?.response?.status;
+      const serverMsg = err?.response?.data;
+
+      if (status === 400 && serverMsg === '새 비밀번호는 기존 비밀번호와 달라야 합니다.') {
+        setModal({
+          title: '비밀번호 재설정 안내',
+          message:
+            '비밀번호 재설정이 완료되지 않았습니다.\n기존 비밀번호와 동일한 비밀번호는 사용할 수 없습니다.\n다시 인증 후 비밀번호를 재설정해 주세요.',
+          onClose: () => {
+            setModal(null);
+            router.push('/forgot-password');
+          },
+        });
+        return;
+      }
+
+      if (status === 400) {
+        setModal({
+          title: '비밀번호 재설정 실패',
+          message: '인증번호가 만료되었거나 유효하지 않습니다.\n다시 시도해주세요.',
+          onClose: () => setModal(null),
+        });
+        return;
+      }
+
       setModal({
         title: '비밀번호 재설정 실패',
-        message:
-          status === 400
-            ? '인증번호가 만료되었거나 유효하지 않습니다.\n다시 시도해주세요.'
-            : '알 수 없는 오류가 발생했습니다.\n잠시 후 다시 시도해주세요.',
+        message: '알 수 없는 오류가 발생했습니다.\n잠시 후 다시 시도해주세요.',
         onClose: () => setModal(null),
       });
-    } finally {
-      setLoading(false);
     }
   };
 

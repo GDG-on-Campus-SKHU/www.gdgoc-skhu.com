@@ -244,12 +244,30 @@ const leftArrowCss = css`
   ${arrowBaseCss};
   left: 0;
   transform: translateX(-80px);
+
+  &:hover:not(:disabled) {
+    background: #f1f3f4;
+    border-color: #bdbdbd;
+  }
+
+  &:active:not(:disabled) {
+    background: #e8eaed;
+  }
 `;
 
 const rightArrowCss = css`
   ${arrowBaseCss};
   right: 0;
   transform: translateX(80px);
+
+  &:hover:not(:disabled) {
+    background: #f1f3f4;
+    border-color: #bdbdbd;
+  }
+
+  &:active:not(:disabled) {
+    background: #e8eaed;
+  }
 `;
 
 const moreBtnCss = css`

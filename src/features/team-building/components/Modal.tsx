@@ -20,6 +20,7 @@ import { ModalProps } from './Modal.types';
 export default function Modal({
   type = 'default',
   title,
+  titleNode,
   message,
   subText,
   buttonText = '확인',
@@ -28,7 +29,7 @@ export default function Modal({
   onClose,
   onConfirm,
   customTitleAlign = 'center',
-}: ModalProps & { customTitleAlign?: 'left' | 'center' }) {
+}: ModalProps) {
   const [closing, setClosing] = useState(false);
 
   useEffect(() => {
@@ -54,9 +55,9 @@ export default function Modal({
 
   return (
     <div css={[overlayCss, closing && closingOverlayCss]} onClick={handleClose}>
-      <div css={[boxCss, closing && closingBoxCss]} onClick={e => e.stopPropagation()}>
-        {title && (
-          <h2
+      <div css={[boxCss(type), closing && closingBoxCss]} onClick={e => e.stopPropagation()}>
+        {(titleNode || title) && (
+          <div
             css={[
               titleCss,
               css`
@@ -64,13 +65,13 @@ export default function Modal({
               `,
             ]}
           >
-            {title}
-          </h2>
+            {titleNode ?? title}
+          </div>
         )}
 
         {(type === 'default' || type === 'textOnly') && <p css={messageCss}>{message}</p>}
 
-        {type === 'scroll' && (
+        {(type === 'scroll' || type === 'terms') && (
           <div
             css={[
               scrollBoxCss,
@@ -85,18 +86,20 @@ export default function Modal({
 
         {subText && <p css={subTextCss}>{subText}</p>}
 
-        {(type === 'default' || type === 'textOnly' || type === 'scroll') && (
+        {(type === 'default' || type === 'textOnly' || type === 'scroll') && buttonText && (
           <Button type="button" title={buttonText} onClick={handleClose} css={buttonCss} />
         )}
 
         {(type === 'confirm' || type === 'textConfirm') && (
           <div css={buttonRowCss}>
-            <Button
-              type="button"
-              title={cancelText}
-              onClick={handleClose}
-              css={buttonSecondaryCss}
-            />
+            {buttonText && (
+              <Button
+                type="button"
+                title={cancelText}
+                onClick={handleClose}
+                css={buttonSecondaryCss}
+              />
+            )}
             <Button type="button" title={confirmText} onClick={handleConfirm} css={buttonCss} />
           </div>
         )}
