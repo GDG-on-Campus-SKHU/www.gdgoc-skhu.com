@@ -29,6 +29,8 @@ type AppliedVariantProps = {
   data: MemberSentApplyCard;
   /** "지원 취소" */
   onCancel?: (card: MemberSentApplyCard) => void;
+
+  onClick?: () => void;
 };
 
 type EmptyVariantProps = {
@@ -37,13 +39,15 @@ type EmptyVariantProps = {
   /* 결과 발표 전 / 후 */
   emptyType?: 'apply' | 'result';
   onClickApply?: () => void;
+
+  onClick?: () => void;
 };
 
 type MyApplyCardProps = AppliedVariantProps | EmptyVariantProps;
 
 export default function MyApplyCard(props: MyApplyCardProps) {
   if (props.variant === 'empty') {
-    const { priority, emptyType = 'apply', onClickApply } = props;
+    const { priority, emptyType = 'apply', onClickApply, onClick } = props;
 
     // 결과 발표 후: 클릭 불가, 회색 배경
     if (emptyType === 'result') {
@@ -56,23 +60,30 @@ export default function MyApplyCard(props: MyApplyCardProps) {
 
     // 결과 발표 전: 지원 유도 카드 (기존 UI)
     return (
-      <article css={emptyCardCss} onClick={onClickApply}>
+      <article
+        css={emptyCardCss}
+        onClick={() => {
+          onClick?.();
+          onClickApply?.();
+        }}
+      >
         <span>+</span>
         <span>{priority}지망 아이디어에 지원해보세요!</span>
       </article>
     );
   }
 
-  const { data, onCancel } = props;
+  const { data, onCancel, onClick } = props;
   const isPending = data.status === 'WAITING';
 
-  const handleCancel = () => {
+  const handleCancel = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!isPending) return;
     onCancel?.(data);
   };
 
   return (
-    <article css={cardCss}>
+    <article css={cardCss} onClick={onClick}>
       {/* 상단: 지망 뱃지 + 상태 뱃지 */}
       <header css={cardHeaderCss}>
         <span css={priorityTagCss}>{data.priority}지망</span>

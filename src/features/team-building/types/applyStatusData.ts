@@ -105,6 +105,8 @@ export type ApplyStatusRow = {
 
 export type SentEnrollment = {
   enrollmentId: number;
+  ideaId: number;
+
   choice: EnrollmentChoice;
   enrollmentStatus: EnrollmentStatus;
 
@@ -137,6 +139,8 @@ export type MemberSentApplyCard = {
   enrollmentId: number;
   phase: ApplyPhase;
   priority: EnrollmentPriority;
+
+  ideaId?: number;
 
   projectName: string;
   oneLiner: string;

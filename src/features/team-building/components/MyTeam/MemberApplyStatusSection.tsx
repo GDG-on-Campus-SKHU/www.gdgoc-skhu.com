@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 import {
   useCancelEnrollment,
   useEnrollmentReadabilities,
@@ -52,6 +53,8 @@ function toMemberCardStatus(scheduleEnded: boolean, enrollmentStatus: Enrollment
 export default function MemberApplyStatusSection({
   enabled = true,
 }: MemberApplyStatusSectionProps) {
+  const router = useRouter();
+
   const [activePhase, setActivePhase] = useState<SupportPhase>('first');
 
   /** 1) 조회 가능 여부 */
@@ -110,6 +113,8 @@ export default function MemberApplyStatusSection({
       phase: activePhase,
       priority: choiceToPriority(e.choice),
 
+      ideaId: e.ideaId,
+
       projectName: e.ideaTitle,
       oneLiner: e.ideaIntroduction,
 
@@ -158,6 +163,20 @@ export default function MemberApplyStatusSection({
     console.log(`${priority}지망 아이디어 지원하기 클릭`);
   };
 
+  const handleClickCard = (card?: MemberSentApplyCard) => {
+    // 1) 지원한 아이디어가 있으면 -> 해당 아이디어 상세
+    if (card?.ideaId) {
+      router.push({
+        pathname: '/IdeaListDetail',
+        query: { id: card.ideaId },
+      });
+      return;
+    }
+
+    // 2) 지원한 아이디어가 없는 카드(빈 카드) -> 아이디어 목록
+    router.push('/WelcomeOpen');
+  };
+
   const renderPriorityBlock = (priority: EnrollmentPriority) => {
     const item = currentCards.find(card => card.priority === priority);
 
@@ -168,6 +187,7 @@ export default function MemberApplyStatusSection({
           variant="empty"
           priority={priority}
           emptyType={isResultAnnounced ? 'result' : 'apply'}
+          onClick={() => handleClickCard(undefined)}
           onClickApply={isResultAnnounced ? undefined : () => handleClickEmptyPriority(priority)}
         />
       );
@@ -178,6 +198,7 @@ export default function MemberApplyStatusSection({
         key={item.enrollmentId}
         variant="applied"
         data={item}
+        onClick={() => handleClickCard(item)}
         onCancel={() => handleCancel(item)}
       />
     );

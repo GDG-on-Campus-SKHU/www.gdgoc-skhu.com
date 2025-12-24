@@ -109,6 +109,8 @@ function mapReceivedEnrollmentsDtoToDomain(
 function mapSentEnrollmentDto(dto: SentEnrollmentDto) {
   return {
     enrollmentId: dto.enrollmentId,
+    ideaId: dto.ideaId,
+
     choice: dto.choice,
     enrollmentStatus: dto.enrollmentStatus,
 
