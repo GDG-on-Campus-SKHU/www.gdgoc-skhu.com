@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 import {
   useCancelEnrollment,
   useEnrollmentReadabilities,
@@ -18,7 +19,6 @@ import {
 import Modal from '../Modal_Fix';
 import ApplyPeriodToggle, { SupportPhase } from './ApplyPeriodToggle';
 import MyApplyCard from './MyApplyCard';
-import { useRouter } from 'next/router';
 
 type MemberApplyStatusSectionProps = {
   /** 탭 전환 시 불필요한 호출 방지용 */
