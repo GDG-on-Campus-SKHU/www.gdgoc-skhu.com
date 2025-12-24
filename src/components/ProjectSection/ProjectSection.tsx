@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { css } from '@emotion/react';
 import { motion } from 'framer-motion';
@@ -17,8 +17,18 @@ export default function ProjectSection() {
 
   const [page, setPage] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
+  const [isMobile, setIsMobile] = useState(false);
 
-  const maxPage = Math.max(0, Math.floor((projects.length - 1) / 3));
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 480);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  const itemsPerPage = isMobile ? 1 : 3;
+
+  const maxPage = Math.max(0, Math.floor((projects.length - 1) / itemsPerPage));
 
   const prev = () => {
     setDirection(-1);
@@ -30,7 +40,10 @@ export default function ProjectSection() {
     setPage(prev => (prev === maxPage ? 0 : prev + 1));
   };
 
-  const visible = useMemo(() => projects.slice(page * 3, page * 3 + 3), [projects, page]);
+  const visible = useMemo(
+    () => projects.slice(page * itemsPerPage, page * itemsPerPage + itemsPerPage),
+    [projects, page, itemsPerPage]
+  );
 
   const hasEnoughProjects = projects.length >= 1;
 
@@ -46,9 +59,11 @@ export default function ProjectSection() {
       )}
 
       <div css={carouselWrapCss}>
-        <button onClick={prev} css={leftArrowCss} disabled={projects.length <= 3}>
-          <img src="/leftarrow.svg" alt="prev" css={leftArrowIconCss} />
-        </button>
+        <div css={arrowSideCss}>
+          <button onClick={prev} css={leftArrowCss} disabled={projects.length <= itemsPerPage}>
+            <img src="/leftarrow.svg" alt="prev" css={leftArrowIconCss} />
+          </button>
+        </div>
 
         <div css={viewportCss}>
           <motion.div
@@ -87,8 +102,19 @@ export default function ProjectSection() {
           </motion.div>
         </div>
 
-        <button onClick={next} css={rightArrowCss} disabled={projects.length <= 3}>
-          <img src="/rightarrow.svg" alt="next" css={rightArrowIconCss} />
+        <div css={arrowSideCss}>
+          <button onClick={next} css={rightArrowCss} disabled={projects.length <= itemsPerPage}>
+            <img src="/rightarrow.svg" alt="next" css={rightArrowIconCss} />
+          </button>
+        </div>
+      </div>
+
+      <div css={mobileArrowRowCss}>
+        <button onClick={prev} css={mobileArrowCss}>
+          ‹
+        </button>
+        <button onClick={next} css={mobileArrowCss}>
+          ›
         </button>
       </div>
 
@@ -98,6 +124,8 @@ export default function ProjectSection() {
     </section>
   );
 }
+
+/* ---------- styles ---------- */
 
 const linkResetCss = css`
   text-decoration: none;
@@ -146,6 +174,10 @@ const cardRowCss = css`
   grid-template-columns: repeat(3, 312px);
   gap: 40px;
   justify-content: center;
+
+  @media (max-width: 479px) {
+    grid-template-columns: 312px;
+  }
 `;
 
 const cardCss = css`
@@ -218,6 +250,33 @@ const arrowBaseCss = css`
   display: flex;
   align-items: center;
   justify-content: center;
+`;
+
+const arrowSideCss = css`
+  @media (max-width: 479px) {
+    display: none;
+  }
+`;
+
+const mobileArrowRowCss = css`
+  display: none;
+  margin-top: 24px;
+  gap: 16px;
+
+  @media (max-width: 479px) {
+    display: flex;
+    justify-content: center;
+  }
+`;
+
+const mobileArrowCss = css`
+  width: 44px;
+  height: 44px;
+  border-radius: 15%;
+  border: 1px solid #d9d9d9;
+  background: #ffffff;
+  font-size: 20px;
+  cursor: pointer;
 `;
 
 const leftArrowIconCss = css`
