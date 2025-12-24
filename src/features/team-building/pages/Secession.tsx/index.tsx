@@ -51,7 +51,7 @@ export default function SecessionPage() {
           alignItems: 'center',
         }}
       >
-        <img width={'25%'} src="/icon/redflag.svg" alt="경고" />
+        <img width={'20%'} src="/icon/redflag.svg" alt="경고" />
         <h1 css={titleCss}>탈퇴하기 전에 확인해주세요.</h1>
         <h2 css={subtitleCss}>
           탈퇴 후에는 다시 복구할 수 없습니다. <br />
@@ -83,6 +83,7 @@ export default function SecessionPage() {
             subtitleCss,
             {
               color: `${colors.grayscale[1000]}`,
+              fontSize: 20,
             },
           ]}
         >
@@ -116,7 +117,7 @@ const mainCss = css`
 //font
 const titleCss = css`
   margin-top: 30px;
-  font-size: 50px;
+  font-size: 36px;
   font-style: normal;
   font-weight: 700;
   line-height: 160%;
@@ -124,7 +125,7 @@ const titleCss = css`
   color: ${colors.grayscale[1000]};
 `;
 const subtitleCss = css`
-  font-size: 24px;
+  font-size: 18px;
   font-style: normal;
   font-weight: 400;
   line-height: 160%;

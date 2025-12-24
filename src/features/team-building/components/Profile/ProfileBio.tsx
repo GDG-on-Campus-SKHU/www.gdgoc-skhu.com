@@ -149,7 +149,7 @@ export default function ProfileBio({
 
 const labelCss = css`
   min-width: 150px;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 700;
   flex-shrink: 0;
   margin-top: 2rem;

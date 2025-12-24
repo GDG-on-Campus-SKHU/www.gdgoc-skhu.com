@@ -22,10 +22,10 @@ export default function ProjectDetailMeta({ generation, leader, members }: Props
             <Badge
               text={generation}
               customCss={css`
-                font-size: 18px;
+                font-size: 16px;
                 font-weight: 700;
                 padding: 2px 8px;
-                line-height: 28.8px;
+                line-height: 20px;
               `}
             />
           </dd>
@@ -77,13 +77,13 @@ const rowCss = css`
   align-items: center;
 `;
 const dtCss = css`
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
 `;
 const ddCss = css`
   display: flex;
   gap: 12px 16px;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 500;
 `;
 const memberCss = css`

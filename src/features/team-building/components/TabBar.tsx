@@ -39,12 +39,12 @@ const tabsWrapCss = css`
 const labelCss = (active: boolean) => css`
   position: relative;
 
-  padding: 18px 12px;
+  padding: 10px 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 38.4px;
   color: ${active ? colors.grayscale[1000] : colors.grayscale[500]};

@@ -98,7 +98,7 @@ const sectionContainerCss = css`
 
 // Typography
 const titleCss = css`
-  font-size: 50px;
+  font-size: 36px;
   font-weight: 700;
   line-height: 160%;
 `;

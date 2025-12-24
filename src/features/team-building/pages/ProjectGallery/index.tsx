@@ -81,7 +81,7 @@ const headerCss = css`
 `;
 
 const titleCss = css`
-  font-size: 50px;
+  font-size: 36px;
   font-weight: 700;
   line-height: 160%;
 `;
@@ -124,7 +124,7 @@ const tabBtnCss = (active: boolean) => css`
   padding: 8px 0;
   cursor: pointer;
 
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 160%;
   color: ${active ? '#111111' : '#9aa0a6'};

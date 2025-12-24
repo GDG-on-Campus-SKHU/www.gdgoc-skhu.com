@@ -33,12 +33,12 @@ const titleRowCss = css`
   flex-wrap: wrap;
 `;
 const titleCss = css`
-  font-size: 36px;
+  font-size: 24px;
   font-weight: 700;
   line-height: 160%;
 `;
 const subtitleCss = css`
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 500;
   color: #979ca5;
   line-height: 160%;

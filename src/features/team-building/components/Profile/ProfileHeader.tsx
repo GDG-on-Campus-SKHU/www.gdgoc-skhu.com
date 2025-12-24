@@ -77,7 +77,7 @@ const sectionHeaderCss = css`
 `;
 
 const userNameCss = css`
-  font-size: 50px;
+  font-size: 36px;
   font-style: normal;
   font-weight: 700;
   line-height: 160%;

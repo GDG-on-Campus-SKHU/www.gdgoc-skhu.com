@@ -151,7 +151,7 @@ const topRowCss = css`
 
 const pageTitleCss = css`
   margin-top: 60px;
-  font-size: 50px;
+  font-size: 36px;
   font-weight: 700;
   line-height: 160%;
 `;
