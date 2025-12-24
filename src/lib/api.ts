@@ -18,6 +18,14 @@ const PUBLIC_PATHS = [
 ];
 
 /**
+ * 인증이 필요한 페이지 경로 정의
+ */
+const BLOCKED_PUBLIC_PATH_PATTERNS = [
+  /^\/project-gallery\/post$/,
+  /^\/project-gallery\/\d+\/edit$/,
+];
+
+/**
  * 기본 API 인스턴스
  * - accessToken은 Authorization 헤더로 전달
  * - refreshToken은 HttpOnly Cookie로 자동 전달
@@ -43,6 +51,7 @@ interface ReissueAccessTokenResponse {
   email: string;
   name: string;
   role: string;
+  participated: boolean;
 }
 
 /* =========================
@@ -141,7 +150,7 @@ api.interceptors.response.use(
         }
       );
 
-      const { accessToken, email, name, role } = res.data;
+      const { accessToken, email, name, role, participated } = res.data;
 
       // Zustand 스토어 업데이트
       useAuthStore.getState().setAuth({
@@ -149,6 +158,7 @@ api.interceptors.response.use(
         email,
         name,
         role,
+        participated,
       });
 
       // 세션 스토리지 업데이트
@@ -176,7 +186,13 @@ api.interceptors.response.use(
         sessionStorage.removeItem('accessToken');
 
         const currentPath = window.location.pathname;
-        const isPublicPath = PUBLIC_PATHS.includes(currentPath);
+        const isBlockedPublicPath = BLOCKED_PUBLIC_PATH_PATTERNS.some(pattern =>
+          pattern.test(currentPath)
+        );
+
+        const isPublicPath =
+          !isBlockedPublicPath &&
+          (PUBLIC_PATHS.includes(currentPath) || /^\/project-gallery\/\d+$/.test(currentPath));
 
         if (!isPublicPath) {
           window.location.href = '/login';

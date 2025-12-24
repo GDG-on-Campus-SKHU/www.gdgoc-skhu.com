@@ -5,7 +5,14 @@ interface AuthState {
   email: string | null;
   name: string | null;
   role: string | null;
-  setAuth: (data: { accessToken: string; email?: string; name?: string; role?: string }) => void;
+  participated: boolean | null;
+  setAuth: (data: {
+    accessToken: string;
+    email?: string;
+    name?: string;
+    role?: string;
+    participated?: boolean;
+  }) => void;
   clearAuth: () => void;
   hydrateFromSession: () => void;
 }
@@ -15,18 +22,22 @@ export const useAuthStore = create<AuthState>(set => ({
   email: null,
   name: null,
   role: null,
-  setAuth: ({ accessToken, email, name, role }) => {
+  participated: null,
+  setAuth: ({ accessToken, email, name, role, participated }) => {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('accessToken', accessToken);
       if (email) sessionStorage.setItem('auth.email', email);
       if (name) sessionStorage.setItem('auth.name', name);
       if (role) sessionStorage.setItem('auth.role', role);
+      if (participated !== undefined)
+        sessionStorage.setItem('auth.participated', String(participated));
     }
     set({
       accessToken,
       email: email ?? null,
       name: name ?? null,
       role: role ?? null,
+      participated: participated ?? null,
     });
   },
   clearAuth: () => {
@@ -35,12 +46,14 @@ export const useAuthStore = create<AuthState>(set => ({
       sessionStorage.removeItem('auth.email');
       sessionStorage.removeItem('auth.name');
       sessionStorage.removeItem('auth.role');
+      sessionStorage.removeItem('auth.participated');
     }
     set({
       accessToken: null,
       email: null,
       name: null,
       role: null,
+      participated: null,
     });
   },
   hydrateFromSession: () => {
@@ -49,11 +62,13 @@ export const useAuthStore = create<AuthState>(set => ({
     const email = sessionStorage.getItem('auth.email');
     const name = sessionStorage.getItem('auth.name');
     const role = sessionStorage.getItem('auth.role');
+    const participated = sessionStorage.getItem('auth.participated');
     set({
       accessToken: accessToken || null,
       email: email || null,
       name: name || null,
       role: role || null,
+      participated: participated === null ? null : participated === 'true',
     });
   },
 }));

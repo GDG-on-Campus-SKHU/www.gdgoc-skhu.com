@@ -298,13 +298,14 @@ export default function WelcomeView() {
         page: Math.max(0, currentPage - 1),
         size: IDEAS_PER_PAGE,
         sortBy: 'id',
-        order: 'DESC' as const,
+        order: 'ASC' as const,
         recruitingOnly: excludeClosed,
         ...(topicId !== undefined && { topicId }),
       };
 
       const response = await fetchIdeas(projectId, params);
       const data = response.data as IdeasApiResponse;
+      console.log(data);
 
       const ideasArray = Array.isArray(data?.ideas) ? data.ideas : [];
 
@@ -552,7 +553,7 @@ export default function WelcomeView() {
 
               {ideas.map((idea: Idea, idx: number) => (
                 <IdeaItemCTNR key={idea.id}>
-                  <IdeaItem idea={idea} index={totalIdeas - (startIndex + idx)} />
+                  <IdeaItem idea={idea} index={startIndex + idx + 1} />
                 </IdeaItemCTNR>
               ))}
 

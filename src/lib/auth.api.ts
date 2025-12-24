@@ -21,10 +21,10 @@ export interface SignUpResponse {
 
 export interface LoginResponse {
   accessToken: string;
-  refreshToken: string;
   email: string;
   name: string;
   role: string;
+  participated: boolean;
 }
 
 export interface ReissueAccessTokenResponse {
@@ -32,6 +32,7 @@ export interface ReissueAccessTokenResponse {
   email: string;
   name: string;
   role: string;
+  participated: boolean;
 }
 
 export const signUp = (data: SignUpRequest) => {

@@ -1,5 +1,8 @@
-import { useMemo } from 'react';
+/** @jsxImportSource @emotion/react */
+
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
+import { useAuthStore } from '@/lib/authStore';
 import { useCreateProjectGallery } from '@/lib/projectGallery.api';
 import { css } from '@emotion/react';
 
@@ -25,6 +28,14 @@ type FormLeaderPart =
 export default function ProjectGalleryPostPage() {
   const router = useRouter();
   const { query, isReady } = router;
+
+  // [Auth Guard] 로그인하지 않은 경우 작성 페이지 접근 차단
+  useEffect(() => {
+    const { accessToken } = useAuthStore.getState();
+    if (!accessToken) {
+      router.replace('/login');
+    }
+  }, [router]);
 
   const createMutation = useCreateProjectGallery({
     onSuccess: res => {
