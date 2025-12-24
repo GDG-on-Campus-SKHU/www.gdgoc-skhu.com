@@ -592,7 +592,6 @@ const modalCustomStyle = css`
   }
 `;
 
-
 const modalHeaderCss = css`
   display: flex;
   justify-content: space-between;

@@ -51,21 +51,29 @@ export default function LoginPage() {
       setAuth({ accessToken, email: userEmail, name, role });
       router.replace('/');
     } catch (err: any) {
-      const msg = err.response?.data;
+      if (err.response) {
+        const status = err.response.status;
+        const serverMsg = err.response.data;
 
-      if (err.response?.status === 400 && msg === '관리자 승인 대기 중입니다.') {
-        setModalType('pending');
-        setShowModal(true);
+        // 승인 대기
+        if (status === 400 && serverMsg === '관리자 승인 대기 중입니다.') {
+          setModalType('pending');
+          setShowModal(true);
+          return;
+        }
+
+        // 로그인 제한
+        if (status === 403 || serverMsg === '로그인 제한된 계정입니다.') {
+          setModalType('banned');
+          setShowModal(true);
+          return;
+        }
+
+        setError('이메일 또는 비밀번호를 확인해주세요.');
         return;
       }
 
-      if (err.response?.status === 403 || msg === '로그인 제한된 계정입니다.') {
-        setModalType('banned');
-        setShowModal(true);
-        return;
-      }
-
-      setError(msg || '이메일 또는 비밀번호를 확인해주세요.');
+      setError('서버가 응답하지 않습니다.');
     }
   };
 
