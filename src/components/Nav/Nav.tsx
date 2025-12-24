@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { mediaQuery } from '@/styles/constants/media';
 import { css } from '@emotion/react';
 
 import DropdownMenu from '../../features/team-building/components/MyPage/DropdownMenu';
@@ -17,6 +18,12 @@ const navItemCss = css`
   cursor: pointer;
   color: inherit;
   text-decoration: none;
+
+  ${mediaQuery('xs')} {
+    &:not([data-mobile-visible]) {
+      display: none;
+    }
+  }
 `;
 
 export default function Nav() {
@@ -90,10 +97,16 @@ export default function Nav() {
 
           {!isMobile && (isAuthPage || !isLoggedIn) && (
             <>
-              <a href={GDG_OC_LINK} target="_blank" rel="noreferrer" css={navItemCss}>
+              <a
+                href={GDG_OC_LINK}
+                target="_blank"
+                rel="noreferrer"
+                css={navItemCss}
+                data-mobile-visible
+              >
                 About
               </a>
-              <Link href="/contact" scroll={false} css={navItemCss}>
+              <Link href="/contact" scroll={false} css={navItemCss} data-mobile-visible>
                 Contact
               </Link>
               <Link href="/login" scroll={false} css={navItemCss}>
@@ -116,7 +129,7 @@ export default function Nav() {
                 </Link>
               )}
 
-              <Link href="/project-gallery" scroll={false} css={navItemCss}>
+              <Link href="/project-gallery" scroll={false} css={navItemCss} data-mobile-visible>
                 Gallery
               </Link>
 
