@@ -22,7 +22,7 @@ const navItemCss = css`
 
 export default function Nav() {
   const router = useRouter();
-  const { accessToken, role, clearAuth, hydrateFromSession } = useAuthStore();
+  const { accessToken, role, participated, clearAuth, hydrateFromSession } = useAuthStore();
   const [isMyPageHovered, setIsMyPageHovered] = useState(false);
 
   const isLoggedIn = !!accessToken;
@@ -93,9 +93,11 @@ export default function Nav() {
 
           {!isAuthPage && isLoggedIn && (
             <>
-              <Link href="/WelcomeOpen" scroll={false} css={navItemCss}>
-                TeamBuild
-              </Link>
+              {participated && (
+                <Link href="/WelcomeOpen" scroll={false} css={navItemCss}>
+                  TeamBuild
+                </Link>
+              )}
 
               {role === 'ROLE_SKHU_ADMIN' && (
                 <Link href="/admin" scroll={false} css={navItemCss}>
