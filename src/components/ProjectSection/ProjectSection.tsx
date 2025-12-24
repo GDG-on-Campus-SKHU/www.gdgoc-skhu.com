@@ -78,7 +78,7 @@ export default function ProjectSection() {
                     <h3 css={titleItemCss}>{item.title}</h3>
                     <p css={descItemCss}>{item.description}</p>
                     <div css={badgeRowCss}>
-                      <StatusBadge status={item.status} />
+                      {item.status && <StatusBadge status={item.status} />}
                     </div>
                   </div>
                 </div>
@@ -137,16 +137,21 @@ const carouselWrapCss = css`
 const viewportCss = css`
   overflow: hidden;
   width: 100%;
+  display: flex;
+  justify-content: center;
 `;
 
 const cardRowCss = css`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, 312px);
   gap: 40px;
+  justify-content: center;
 `;
 
 const cardCss = css`
-  width: 100%;
+  width: 312px;
+  min-width: 312px;
+  max-width: 312px;
 `;
 
 const thumbFrameCss = css`
@@ -173,7 +178,6 @@ const metaCss = css`
 const titleItemCss = css`
   font-size: 24px;
   font-weight: 600;
-  color: #111111;
   line-height: 140%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -181,6 +185,7 @@ const titleItemCss = css`
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   word-break: break-word;
+  white-space: nowrap;
 `;
 
 const descItemCss = css`
@@ -195,6 +200,7 @@ const descItemCss = css`
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   word-break: break-word;
+  white-space: nowrap;
 `;
 
 const badgeRowCss = css`
@@ -202,6 +208,8 @@ const badgeRowCss = css`
   min-height: 28px;
   display: flex;
   align-items: center;
+  max-width: 100%;
+  overflow: hidden;
 `;
 
 const arrowBaseCss = css`
