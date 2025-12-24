@@ -43,6 +43,7 @@ interface ReissueAccessTokenResponse {
   email: string;
   name: string;
   role: string;
+  participated: boolean;
 }
 
 /* =========================
@@ -141,7 +142,7 @@ api.interceptors.response.use(
         }
       );
 
-      const { accessToken, email, name, role } = res.data;
+      const { accessToken, email, name, role, participated } = res.data;
 
       // Zustand 스토어 업데이트
       useAuthStore.getState().setAuth({
@@ -149,6 +150,7 @@ api.interceptors.response.use(
         email,
         name,
         role,
+        participated,
       });
 
       // 세션 스토리지 업데이트

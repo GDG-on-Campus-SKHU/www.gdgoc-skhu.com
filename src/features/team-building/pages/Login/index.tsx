@@ -47,8 +47,8 @@ export default function LoginPage() {
 
     try {
       const res = await login(email, password);
-      const { accessToken, email: userEmail, name, role } = res.data;
-      setAuth({ accessToken, email: userEmail, name, role });
+      const { accessToken, email: userEmail, name, role, participated } = res.data;
+      setAuth({ accessToken, email: userEmail, name, role, participated });
       router.replace('/');
     } catch (err: any) {
       const msg = err.response?.data;
