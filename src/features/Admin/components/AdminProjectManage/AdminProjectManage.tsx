@@ -556,9 +556,8 @@ const AdminProjectManagement: NextPage = () => {
     return `${year}-${month}-${day}T${hours}:${minutes}:00`;
   };
 
-  // 카테고리에 따라 모달 타입 결정
   const getModalType = (category: string): 'period' | 'single' => {
-    if (category.includes('결과 발표')) {
+    if (category.includes('결과 발표') && category !== '최종 결과 발표') {
       return 'single';
     }
     return 'period';
@@ -588,7 +587,6 @@ const AdminProjectManagement: NextPage = () => {
     setTopics(prev => prev.filter((_, i) => i !== index));
   };
 
-  // 저장하기 버튼 클릭
   const handleSave = async () => {
     if (!projectId) return;
     setIsSaving(true);
@@ -599,7 +597,13 @@ const AdminProjectManagement: NextPage = () => {
       const schedulesData: Schedule[] = schedules.map(s => ({
         scheduleType: s.scheduleType,
         startAt: s.startAt,
-        endAt: s.scheduleType.includes('ANNOUNCEMENT') ? null : s.endAt,
+        // 최종 결과 발표는 endAt 포함, 나머지 ANNOUNCEMENT는 null
+        endAt:
+          s.scheduleType === 'FINAL_RESULT_ANNOUNCEMENT'
+            ? s.endAt
+            : s.scheduleType.includes('ANNOUNCEMENT')
+              ? null
+              : s.endAt,
       }));
 
       await updateProject(projectId, {
