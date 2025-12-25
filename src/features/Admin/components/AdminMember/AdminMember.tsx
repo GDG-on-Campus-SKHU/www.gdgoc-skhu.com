@@ -1,0 +1,743 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useEffect, useMemo, useState } from 'react';
+import type { NextPage } from 'next';
+import Image from 'next/image';
+import { useRouter } from 'next/router';
+import {
+  fetchUserSummaryList,
+  searchUsersByName,
+  searchUsersByPart,
+  searchUsersBySchool,
+} from '@/lib/adminMember.api';
+import styled from 'styled-components';
+
+import SelectBoxBasic from '../../../team-building/components/SelectBoxBasic';
+import { ArrowIcon, PageButton, PageInsertNum } from '../../styles/AdminIdeaProject';
+
+type SearchField = 'userName' | 'generation' | 'school' | 'part' | 'position';
+
+type Member = {
+  id: number;
+  userName: string;
+  generation?: string;
+  school?: string;
+  part?: string;
+  position?: string;
+};
+
+const TABLE_VISIBLE_ROWS = 10;
+const TABLE_ROW_HEIGHT = 72;
+
+const SEARCH_OPTIONS: Array<{ value: SearchField; label: string }> = [
+  { value: 'userName', label: '이름' },
+  { value: 'generation', label: '기수' },
+  { value: 'school', label: '학교' },
+  { value: 'part', label: '파트' },
+  { value: 'position', label: '분류' },
+];
+
+const AdminMember: NextPage = () => {
+  const router = useRouter();
+
+  const [members, setMembers] = useState<Member[]>([]);
+  const [searchField, setSearchField] = useState<SearchField>('userName');
+  const [inputKeyword, setInputKeyword] = useState('');
+  const [submittedKeyword, setSubmittedKeyword] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+
+  const selectedSearchLabel = useMemo(
+    () =>
+      SEARCH_OPTIONS.find(option => option.value === searchField)?.label ?? SEARCH_OPTIONS[0].label,
+    [searchField]
+  );
+
+  // 데이터 fetch 함수
+  const fetchData = async (page: number, keyword: string, field: SearchField) => {
+    try {
+      let result;
+
+      if (!keyword) {
+        // 검색어가 없으면 전체 목록
+        result = await fetchUserSummaryList(page, TABLE_VISIBLE_ROWS);
+      } else {
+        // 검색 필드에 따라 다른 API 호출
+        switch (field) {
+          case 'userName':
+            result = await searchUsersByName(keyword, page, TABLE_VISIBLE_ROWS);
+            break;
+          case 'school':
+            result = await searchUsersBySchool(keyword, page, TABLE_VISIBLE_ROWS);
+            break;
+          case 'part':
+            result = await searchUsersByPart(keyword, page, TABLE_VISIBLE_ROWS);
+            break;
+          case 'generation':
+          case 'position':
+            // generation과 position은 클라이언트 사이드 필터링을 위해 전체 조회
+            result = await fetchUserSummaryList(page, TABLE_VISIBLE_ROWS);
+            break;
+          default:
+            result = await fetchUserSummaryList(page, TABLE_VISIBLE_ROWS);
+        }
+      }
+
+      setMembers(result.users);
+      setTotalElements(result.pageInfo.totalElements);
+    } catch (error) {
+      console.error('Failed to fetch members:', error);
+      setMembers([]);
+      setTotalElements(0);
+    }
+  };
+
+  useEffect(() => {
+    fetchData(currentPage - 1, submittedKeyword, searchField);
+  }, [currentPage, submittedKeyword, searchField]);
+
+  const handleSearchFieldChange = (selected: string[]) => {
+    const nextLabel = selected[0];
+    const matchedOption = SEARCH_OPTIONS.find(option => option.label === nextLabel);
+    if (matchedOption) {
+      setSearchField(matchedOption.value);
+      // 검색 필드 변경 시 검색어 초기화
+      setInputKeyword('');
+      setSubmittedKeyword('');
+      setCurrentPage(1);
+    }
+  };
+
+  // generation과 position은 클라이언트 사이드 필터링
+  const filteredMembers = useMemo(() => {
+    if (!submittedKeyword || (searchField !== 'generation' && searchField !== 'position')) {
+      return members;
+    }
+
+    const keyword = submittedKeyword.trim().toLowerCase();
+    return members.filter(member => {
+      const target = member[searchField] ?? '';
+      return target.toLowerCase().includes(keyword);
+    });
+  }, [members, searchField, submittedKeyword]);
+
+  const totalPages = useMemo(
+    () => Math.max(Math.ceil(totalElements / TABLE_VISIBLE_ROWS), 1),
+    [totalElements]
+  );
+
+  const safeCurrentPage = useMemo(
+    () => Math.min(Math.max(currentPage, 1), totalPages),
+    [currentPage, totalPages]
+  );
+
+  const paginatedMembers = filteredMembers;
+
+  const pageSlots = useMemo(
+    () => Array.from({ length: totalPages }, (_, idx) => idx + 1),
+    [totalPages]
+  );
+
+  const handlePageChange = (page: number) => {
+    const next = Math.min(Math.max(page, 1), totalPages);
+    setCurrentPage(next);
+  };
+
+  const handleSearch = () => {
+    setSubmittedKeyword(inputKeyword.trim());
+    setCurrentPage(1);
+  };
+
+  const handleUserDetail = (userId: number) => {
+    router.push(`/admin-member/${userId}`);
+  };
+
+  return (
+    <Container>
+      <MainContent>
+        <HeaderBlock>
+          <Header>
+            <Title>멤버 관리</Title>
+            <Subtitle>승인된 모든 회원의 정보를 관리할 수 있습니다.</Subtitle>
+          </Header>
+        </HeaderBlock>
+
+        <TableCard>
+          <Filters>
+            <SelectBoxBasicCTNR>
+              <SelectBoxBasic
+                className="admin-member-select"
+                options={SEARCH_OPTIONS.map(option => option.label)}
+                placeholder="이름"
+                value={[selectedSearchLabel]}
+                onChange={handleSearchFieldChange}
+              />
+            </SelectBoxBasicCTNR>
+
+            <Search>
+              <SearchInput
+                type="text"
+                placeholder={`${selectedSearchLabel}을(를) 검색하세요.`}
+                value={inputKeyword}
+                onChange={event => setInputKeyword(event.target.value)}
+                onKeyDown={event => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    handleSearch();
+                  }
+                }}
+              />
+            </Search>
+
+            <SearchButton type="button" onClick={handleSearch}>
+              <SearchButtonText>검색</SearchButtonText>
+            </SearchButton>
+          </Filters>
+
+          <TableShell>
+            <TableHeaderRow>
+              <HeaderName>
+                <HeaderNameCell>이름</HeaderNameCell>
+              </HeaderName>
+              <HeaderGen>
+                <HeaderGenCell>기수</HeaderGenCell>
+              </HeaderGen>
+              <HeaderSchool>
+                <HeaderSchoolCell>학교</HeaderSchoolCell>
+              </HeaderSchool>
+              <HeaderPart>
+                <HeaderPartCell>파트</HeaderPartCell>
+              </HeaderPart>
+              <HeaderCategory>
+                <HeaderCategoryCell>분류</HeaderCategoryCell>
+              </HeaderCategory>
+            </TableHeaderRow>
+
+            <TableBody>
+              {paginatedMembers.map(member => (
+                <TableRow key={member.id} onClick={() => handleUserDetail(member.id)}>
+                  <BodyName>
+                    <BodyNameCell>{member.userName}</BodyNameCell>
+                  </BodyName>
+                  <BodyGen>
+                    <BodyGenCell>{member.generation}</BodyGenCell>
+                  </BodyGen>
+                  <BodySchool>
+                    <BodySchoolCell>{member.school}</BodySchoolCell>
+                  </BodySchool>
+                  <BodyPart>
+                    <BodyPartCell>{member.part}</BodyPartCell>
+                  </BodyPart>
+                  <BodyCategory>
+                    <BodyCategoryCell>{member.position}</BodyCategoryCell>
+                  </BodyCategory>
+                </TableRow>
+              ))}
+
+              {paginatedMembers.length === 0 && (
+                <EmptyRow>
+                  <EmptyRowText>검색 결과가 없습니다.</EmptyRowText>
+                </EmptyRow>
+              )}
+            </TableBody>
+          </TableShell>
+        </TableCard>
+
+        <Pagination>
+          <PageButton
+            $isArrow
+            onClick={() => handlePageChange(safeCurrentPage - 1)}
+            aria-label="Previous page"
+          >
+            <ArrowIcon $direction="left" />
+          </PageButton>
+
+          <PageNumberGroup>
+            {pageSlots.map(pageNumber => {
+              const isActive = pageNumber === safeCurrentPage;
+              return (
+                <PageInsertNum
+                  key={pageNumber}
+                  $active={isActive}
+                  aria-current={isActive ? 'page' : undefined}
+                  onClick={() => handlePageChange(pageNumber)}
+                >
+                  {pageNumber}
+                </PageInsertNum>
+              );
+            })}
+          </PageNumberGroup>
+
+          <PageButton
+            $isArrow
+            onClick={() => handlePageChange(safeCurrentPage + 1)}
+            aria-label="Next page"
+          >
+            <ArrowIcon $direction="right" />
+          </PageButton>
+        </Pagination>
+      </MainContent>
+    </Container>
+  );
+};
+
+export default AdminMember;
+
+const Container = styled.div`
+  width: 100%;
+  min-height: 100vh;
+  background-color: #fff;
+  display: flex;
+  line-height: normal;
+  letter-spacing: normal;
+`;
+
+const MenuItem = styled.div`
+  align-self: stretch;
+  background-color: #454b54;
+  border-bottom: 1px solid #626873;
+  display: flex;
+  height: 50px;
+  align-items: center;
+  padding: 12px 28px;
+  line-height: 160%;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:first-child {
+    border-top: 1px solid #626873;
+  }
+
+  &:hover {
+    background-color: #353a40;
+  }
+`;
+
+const MenuItemActive = styled(MenuItem)`
+  background: linear-gradient(#353a40, #353a40), #25282c;
+  font-weight: 700;
+  justify-content: space-between;
+`;
+
+const MenuArrowIcon = styled(Image)`
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+`;
+
+const MainContent = styled.main`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 100vh;
+`;
+
+const HeaderBlock = styled.div`
+  width: 100%;
+`;
+
+const Header = styled.div`
+  width: 100%;
+  max-width: 472px;
+`;
+
+const Title = styled.h1`
+  color: #000;
+  font-family: Pretendard;
+  font-size: 36px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 160%;
+  margin: 0;
+`;
+
+const Subtitle = styled.h3`
+  margin: 0;
+  align-self: stretch;
+  font-size: 20px;
+  line-height: 160%;
+  font-weight: 500;
+  color: #626873;
+
+  @media screen and (max-width: 450px) {
+    font-size: 16px;
+    line-height: 26px;
+  }
+`;
+
+const TableCard = styled.div`
+  width: 100%;
+  max-width: 1120px;
+  margin-top: 40px;
+  border-radius: 12px;
+  background: #fff;
+`;
+
+const Filters = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+  column-gap: 12px;
+`;
+
+const SelectBoxBasicCTNR = styled.div`
+  width: 200px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+
+  .admin-member-select {
+    width: 100%;
+  }
+
+  .admin-member-select > div:first-of-type {
+    position: relative;
+    padding-right: 2.5rem;
+  }
+
+  .admin-member-select > div:first-of-type::after {
+    content: '';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    background: url('/dropdownarrow.svg') no-repeat center;
+    background-size: contain;
+    pointer-events: none;
+    transition: transform 0.2s ease;
+  }
+
+  .admin-member-select > div:first-of-type.open::after {
+    transform: translateY(-50%) rotate(180deg);
+  }
+
+  .admin-member-select > div:first-of-type svg {
+    display: none;
+  }
+`;
+
+const SearchInput = styled.input`
+  height: 48px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #d0d5dd;
+  background: #fff;
+  padding: 0 14px;
+  font-size: 16px;
+  color: #15171a;
+  box-sizing: border-box;
+
+  &::placeholder {
+    color: #9da3ae;
+  }
+`;
+
+const SearchButton = styled.button`
+  display: flex;
+  width: 80px;
+  height: 50px;
+  padding: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  background: var(--primary-600-main, #4285f4);
+`;
+
+const TableShell = styled.div`
+  width: 100%;
+  background: #fff;
+  overflow: hidden;
+`;
+
+const TableHeaderRow = styled.div`
+  background: var(--grayscale-200, #ededef);
+  display: flex;
+  height: 45px;
+  padding: 0 20px;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+`;
+
+const TableBody = styled.div`
+  display: flex;
+  flex-direction: column;
+  min-height: ${TABLE_VISIBLE_ROWS * TABLE_ROW_HEIGHT}px;
+  background: #fff;
+`;
+
+const TableRow = styled.div`
+  display: flex;
+  height: 80px;
+  padding: 0 20px;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+`;
+
+const HeaderCell = styled.span<{ $align?: 'left' | 'center' }>`
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+  text-align: ${({ $align }) => ($align === 'center' ? 'center' : 'left')};
+`;
+
+const EmptyRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: ${TABLE_ROW_HEIGHT}px;
+  color: #979ca5;
+  font-size: 18px;
+  font-weight: 500;
+`;
+
+const EmptyRowText = styled.span``;
+
+const Pagination = styled.nav`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+  margin: 120px 0 40px;
+`;
+
+const PageNumberGroup = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const HeaderName = styled.div`
+  display: flex;
+  width: 120px;
+  padding: 8px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+`;
+const HeaderNameCell = styled(HeaderCell)`
+  color: var(--grayscale-600, #7e8590);
+  text-align: center;
+
+  /* body/b3/b3 */
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%; /* 28.8px */
+`;
+
+const HeaderGen = styled.div`
+  display: flex;
+  width: 100px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+`;
+const HeaderGenCell = styled(HeaderCell)`
+  color: var(--grayscale-600, #7e8590);
+  text-align: center;
+
+  /* body/b3/b3 */
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%; /* 28.8px */
+`;
+
+const HeaderSchool = styled.div`
+  display: flex;
+  width: 220px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+`;
+const HeaderSchoolCell = styled(HeaderCell)`
+  color: var(--grayscale-600, #7e8590);
+  text-align: center;
+
+  /* body/b3/b3 */
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%; /* 28.8px */
+`;
+
+const HeaderPart = styled.div`
+  display: flex;
+  width: 140px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+`;
+const HeaderPartCell = styled(HeaderCell)`
+  color: var(--grayscale-600, #7e8590);
+  text-align: center;
+
+  /* body/b3/b3 */
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%; /* 28.8px */
+`;
+
+const HeaderCategory = styled.div`
+  display: flex;
+  width: 140px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+`;
+const HeaderCategoryCell = styled(HeaderCell)`
+  color: var(--grayscale-600, #7e8590);
+  text-align: center;
+
+  /* body/b3/b3 */
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%; /* 28.8px */
+`;
+
+const BodyName = styled.div`
+  display: flex;
+  width: 120px;
+  padding: 8px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+`;
+const BodyNameCell = styled.div`
+  color: var(--grayscale-1000, #040405);
+  text-align: center;
+
+  /* body/b2/b2 */
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%; /* 32px */
+`;
+
+const BodyGen = styled.div`
+  display: flex;
+  width: 100px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+`;
+
+const BodyCell = styled.span<{ $align?: 'left' | 'center' }>`
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+  text-align: ${({ $align }) => ($align === 'center' ? 'center' : 'left')};
+  color: #040405;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+const BodyGenCell = styled(BodyCell)`
+  color: var(--grayscale-1000, #040405);
+  text-align: center;
+
+  /* body/b2/b2 */
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%; /* 32px */
+`;
+
+const BodySchool = styled.div`
+  display: flex;
+  width: 220px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+`;
+
+const BodySchoolCell = styled(BodyCell)`
+  color: var(--grayscale-1000, #040405);
+  text-align: center;
+
+  /* body/b2/b2 */
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%; /* 32px */
+`;
+
+const BodyPart = styled.div`
+  display: flex;
+  width: 140px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+`;
+
+const BodyPartCell = styled(BodyCell)`
+  color: var(--grayscale-1000, #040405);
+  text-align: center;
+
+  /* body/b2/b2 */
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%; /* 32px */
+`;
+
+const BodyCategory = styled.div`
+  display: flex;
+  width: 140px;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+`;
+
+const BodyCategoryCell = styled(BodyCell)`
+  color: var(--grayscale-1000, #040405);
+  text-align: center;
+
+  /* body/b2/b2 */
+  font-family: Pretendard;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%; /* 32px */
+`;
+
+const Search = styled.div`
+  display: flex;
+  width: 360px;
+  height: 48px;
+  align-items: center;
+`;
+
+const SearchButtonText = styled.span`
+  color: var(--grayscale-100, #f9f9fa);
+
+  /* body/b3/b3 */
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%; /* 28.8px */
+`;

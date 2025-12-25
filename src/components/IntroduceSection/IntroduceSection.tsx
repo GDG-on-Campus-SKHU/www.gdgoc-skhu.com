@@ -24,8 +24,8 @@ export default function IntroduceSection() {
           height: 95vh;
         `}
       >
-        <MotionSpan key="a">벌써 4번째,</MotionSpan>
-        <MotionSpan key="b">성장을 위한 도약</MotionSpan>
+        <MotionSpan key="a">2026년에도,</MotionSpan>
+        <MotionSpan key="b">성장을 위한 위대한 걸음</MotionSpan>
         <motion.span
           key="c"
           variants={defaultFadeInUpVariants}
@@ -63,7 +63,7 @@ export default function IntroduceSection() {
           </span>
           가
         </motion.span>
-        <MotionSpan key="d">올해에도 찾아옵니다.</MotionSpan>
+        <MotionSpan key="d">함께하겠습니다.</MotionSpan>
         <motion.p
           key="p-a"
           css={css`

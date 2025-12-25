@@ -1,14 +1,26 @@
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { css } from '@emotion/react';
 import { motion } from 'framer-motion';
 
 import SEO from '../components/common/SEO';
 import IntroduceSection from '../components/IntroduceSection';
 import PartSection from '../components/PartSection/PartSection';
+import ProjectSection from '../components/ProjectSection';
 import RecruitSection from '../components/RecruitSection';
 import { defaultFadeInVariants } from '../constants/motions';
 import { layoutCss } from '../styles/constants/layout';
 
 export default function Root() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (router.query.blocked === 'mobile') {
+      alert('PC 환경에 최적화되어 있습니다. PC 환경을 이용해주세요.');
+      router.replace('/', undefined, { shallow: true });
+    }
+  }, [router.query, router]);
+
   return (
     <>
       <SEO title="GDGoC SKHU" />
@@ -34,6 +46,7 @@ export default function Root() {
           `}
         >
           <IntroduceSection />
+          <ProjectSection />
           <PartSection />
           <RecruitSection />
         </div>

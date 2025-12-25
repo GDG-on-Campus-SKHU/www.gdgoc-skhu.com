@@ -24,3 +24,87 @@ export const bigCss = css`
     line-height: 4rem;
   }
 `;
+
+export const typography = {
+  h1Bold: css`
+    font-size: 50px;
+    font-weight: 700;
+    line-height: 150%;
+    color: ${colors.grayscale[1000]};
+    ${mediaQuery('sm')} {
+      font-size: 42px;
+    }
+  `,
+  h2Bold: css`
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 150%;
+    color: ${colors.grayscale[900]};
+    ${mediaQuery('sm')} {
+      font-size: 28px;
+    }
+  `,
+  b1: css`
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 160%;
+    color: ${colors.grayscale[800]};
+    ${mediaQuery('sm')} {
+      font-size: 20px;
+    }
+  `,
+  b2: css`
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 160%;
+    color: ${colors.grayscale[800]};
+    ${mediaQuery('sm')} {
+      font-size: 18px;
+    }
+  `,
+  b3: css`
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 160%;
+    color: ${colors.grayscale[700]};
+    ${mediaQuery('sm')} {
+      font-size: 16px;
+    }
+  `,
+  b4: css`
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 150%;
+    color: ${colors.grayscale[700]};
+    ${mediaQuery('sm')} {
+      font-size: 14px;
+    }
+  `,
+  caption: css`
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 150%;
+    color: ${colors.grayscale[600]};
+  `,
+};
+
+export const sectionTitleCss = css`
+  font-size: 2.65rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 18px;
+
+  ${mediaQuery('xs')} {
+    font-size: 2.1rem;
+  }
+`;
+
+export const sectionDescCss = css`
+  font-size: 1.7rem;
+  font-weight: 400;
+  color: ${colors.gray500};
+
+  ${mediaQuery('xs')} {
+    font-size: 1.3rem;
+  }
+`;
