@@ -189,7 +189,7 @@ export default function Step2({
 
         <FieldOfSignUp
           label="전화번호"
-          placeholder="- 포함 전화번호 입력"
+          placeholder="숫자로 전화번호를 입력해주세요."
           value={phone}
           onChange={e => {
             setTouched(v => ({ ...v, phone: true }));
