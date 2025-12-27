@@ -6,6 +6,7 @@ import {
   INTRO_MAX_LENGTH,
   TITLE_MAX_LENGTH,
   TOPIC_OPTIONS,
+  TOPIC_PLACEHOLDER,
 } from '@/features/team-building/components/IdeaForm/constants';
 import {
   PREFERRED_OPTIONS,
@@ -119,6 +120,16 @@ const API_PART_TO_KOREAN: Record<'PM' | 'DESIGN' | 'WEB' | 'MOBILE' | 'BACKEND' 
   AI: 'AI/ML',
 };
 
+const TOPIC_ID_TO_LABEL: Record<number, string> = {
+  1: '자유 주제(평소 만들고 싶은거 중 시중에 없는거나 차별점 개선)',
+  2: '사회를 바꾸는 넛지(Nudge)',
+  3: '일하는 방식을 효율적으로 바꾸는 서비스',
+};
+
+const TOPIC_LABEL_TO_ID: Record<string, number> = Object.fromEntries(
+  Object.entries(TOPIC_ID_TO_LABEL).map(([id, label]) => [label, Number(id)])
+);
+
 function insertAtCursor(
   current: string,
   insertText: string,
@@ -153,7 +164,6 @@ export default function AdminIdeaEdit() {
     title: '',
     intro: '',
     topic: '',
-    topicId: 0,
     preferredPart: '',
     description: '',
     team: { ...DEFAULT_TEAM },
@@ -194,8 +204,7 @@ export default function AdminIdeaEdit() {
         setForm({
           title: data.title,
           intro: data.introduction,
-          topic: data.topic,
-          topicId: data.topicId,
+          topic: TOPIC_ID_TO_LABEL[data.topicId] ?? '',
           preferredPart: API_PART_TO_KOREAN[data.creator.part] ?? '기획',
           description: data.description,
           team: loadedTeam,
@@ -254,6 +263,13 @@ export default function AdminIdeaEdit() {
     if (!id || !projectId) return;
 
     try {
+      const topicId = TOPIC_LABEL_TO_ID[form.topic];
+
+      if (!topicId) {
+        alert('주제를 선택해주세요.');
+        return;
+      }
+
       const compositions: AdminIdeaCompositionRequest[] = Object.entries(form.team).map(
         ([key, count]) => ({
           part: ROLE_UI_TO_API[key as TeamRole],
@@ -278,7 +294,7 @@ export default function AdminIdeaEdit() {
         title: form.title,
         introduction: form.intro,
         description: form.description,
-        topicId: form.topicId,
+        topicId,
         creatorPart: creatorPartEnum,
         compositions,
       };
@@ -435,8 +451,9 @@ export default function AdminIdeaEdit() {
                   onChange={handleInputChange}
                 >
                   <option value="" disabled>
-                    주제를 선택해주세요.
+                    {TOPIC_PLACEHOLDER}
                   </option>
+
                   {TOPIC_OPTIONS.map(option => (
                     <option key={option} value={option}>
                       {option}

@@ -4,7 +4,11 @@ export const MOBILE_BREAKPOINT = '900px';
 export const SMALL_BREAKPOINT = '600px';
 
 export const TOPIC_PLACEHOLDER = '주제를 선택해주세요.';
-export const TOPIC_OPTIONS = ['전체', '청년 세대의 경제적, 사회적 어려움을 해결하기 위한 솔루션'];
+export const TOPIC_OPTIONS = [
+  '자유 주제(평소 만들고 싶은거 중 시중에 없는거나 차별점 개선)',
+  '사회를 바꾸는 넛지(Nudge)',
+  '일하는 방식을 효율적으로 바꾸는 서비스',
+];
 
 export const TITLE_MAX_LENGTH = 20;
 export const INTRO_MAX_LENGTH = 50;
@@ -18,7 +22,7 @@ export const DEFAULT_TEAM_COUNTS: Record<TeamRole, number> = {
   aiMl: 0,
 };
 
-export const AUTO_SAVE_PLACEHOLDER = '임시저장 완료 0000.00.00 00:00';
+export const AUTO_SAVE_PLACEHOLDER = '임시저장중...완료!';
 export const SESSION_DRAFT_KEY = 'ideaFormData';
 export const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
