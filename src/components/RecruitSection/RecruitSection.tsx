@@ -42,10 +42,10 @@ export default function RecruitSection() {
       </div>
 
       <div css={buttonWrapCss}>
-        <RecruitAnchor href={FRONTEND_RECRUIT_LINK} text="🌎 Frontend 파트 멤버 지원하기" />
-        <RecruitAnchor href={BACKEND_RECRUIT_LINK} text="🔧 Backend 파트 멤버 지원하기" />
-        <RecruitAnchor href={PM_RECRUIT_LINK} text="🧭 PM 파트 멤버 지원하기" />
-        <RecruitAnchor href={DESIGN_RECRUIT_LINK} text="🎨 Design 파트 멤버 지원하기" />
+        <RecruitAnchor href={FRONTEND_RECRUIT_LINK} text="🌎 Frontend 파트 멤버 지원하기" disable />
+        <RecruitAnchor href={BACKEND_RECRUIT_LINK} text="🔧 Backend 파트 멤버 지원하기" disable />
+        <RecruitAnchor href={PM_RECRUIT_LINK} text="🧭 PM 파트 멤버 지원하기" disable />
+        <RecruitAnchor href={DESIGN_RECRUIT_LINK} text="🎨 Design 파트 멤버 지원하기" disable />
       </div>
     </motion.section>
   );

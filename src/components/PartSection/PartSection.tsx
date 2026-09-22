@@ -39,8 +39,8 @@ export default function PartSection() {
         <motion.article css={articleCss({})} variants={defaultFadeInUpVariants}>
           <h3>스터디 활동</h3>
           <p>
-            Web, Mobile, Server, PM(기획), DESIGN(디자인) 과정으로 나누어, 입문자를 기준으로 설계한
-            커리큘럼을 통해 파트별 스터디를 진행합니다.
+            Frontend, Backend, PM(기획), Design 과정으로 나누어, 입문자를 기준으로 설계한 커리큘럼을
+            통해 파트별 스터디를 진행합니다.
             <br />
             <br />
             빠르게 성장하고 싶은 열정과, 배우고자 하는 의지만 있다면 누구나 좋은 개발자, 기획자,
